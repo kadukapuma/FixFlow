@@ -26,6 +26,8 @@ Route::middleware(['auth:sanctum', 'super_admin'])->prefix('admin')->group(funct
     Route::get('/companies', [CompanyApprovalController::class, 'index']);
     Route::post('/companies/{company}/approve', [CompanyApprovalController::class, 'approve']);
     Route::post('/companies/{company}/reject', [CompanyApprovalController::class, 'reject']);
+    Route::post('/companies/{company}/deactivate', [CompanyApprovalController::class, 'deactivate']);
+    Route::post('/companies/{company}/activate', [CompanyApprovalController::class, 'activate']);
 });
 
 /*

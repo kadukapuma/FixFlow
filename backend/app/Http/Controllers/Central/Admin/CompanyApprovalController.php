@@ -61,4 +61,36 @@ class CompanyApprovalController extends Controller
             'company' => $company->fresh(),
         ]);
     }
+
+    public function deactivate(Company $company)
+    {
+        if ($company->status !== Company::STATUS_APPROVED || !$company->is_active) {
+            return response()->json([
+                'message' => 'Only active, approved companies can be deactivated.',
+            ], 422);
+        }
+
+        $company->update(['is_active' => false]);
+
+        return response()->json([
+            'message' => 'Company deactivated. Their team can no longer sign in.',
+            'company' => $company->fresh(),
+        ]);
+    }
+
+    public function activate(Company $company)
+    {
+        if ($company->status !== Company::STATUS_APPROVED || $company->is_active) {
+            return response()->json([
+                'message' => 'Only deactivated, approved companies can be reactivated.',
+            ], 422);
+        }
+
+        $company->update(['is_active' => true]);
+
+        return response()->json([
+            'message' => 'Company reactivated.',
+            'company' => $company->fresh(),
+        ]);
+    }
 }

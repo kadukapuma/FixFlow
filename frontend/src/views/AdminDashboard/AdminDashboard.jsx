@@ -7,7 +7,13 @@ import { STATUS_META } from "../../components/StatusBadge/statusMeta";
 import "./AdminDashboard.css";
 
 const ACTIONABLE_STATUSES = ["pending", "failed"];
-const FILTERS = ["all", "pending", "provisioning", "approved", "rejected", "failed"];
+const FILTERS = ["all", "pending", "provisioning", "approved", "deactivated", "rejected", "failed"];
+
+// A company keeps status "approved" while deactivated — is_active is what
+// actually blocks their sign-in — so the UI treats it as its own status.
+function effectiveStatus(company) {
+    return company.status === "approved" && !company.is_active ? "deactivated" : company.status;
+}
 
 function parseDate(value) {
     return new Date(value.replace(" ", "T"));
@@ -66,7 +72,7 @@ function exportCsv(companies) {
         c.subdomain,
         c.owner_name,
         c.owner_email,
-        c.status,
+        effectiveStatus(c),
         c.created_at ?? "",
     ]);
 
@@ -143,6 +149,38 @@ function AdminDashboard({ onLoggedOut }) {
         }
     }
 
+    async function deactivate(company) {
+        if (!window.confirm(`Deactivate ${company.name}? Their team will lose access immediately.`)) {
+            return;
+        }
+
+        setBusyId(company.id);
+        setError("");
+
+        try {
+            await api.post(`/admin/companies/${company.id}/deactivate`);
+            await loadCompanies();
+        } catch (err) {
+            setError(getErrorMessage(err, "Deactivation failed."));
+        } finally {
+            setBusyId(null);
+        }
+    }
+
+    async function activate(company) {
+        setBusyId(company.id);
+        setError("");
+
+        try {
+            await api.post(`/admin/companies/${company.id}/activate`);
+            await loadCompanies();
+        } catch (err) {
+            setError(getErrorMessage(err, "Reactivation failed."));
+        } finally {
+            setBusyId(null);
+        }
+    }
+
     function logout() {
         localStorage.removeItem("admin_token");
         localStorage.removeItem("admin_info");
@@ -160,16 +198,25 @@ function AdminDashboard({ onLoggedOut }) {
     }, []);
 
     const counts = useMemo(() => {
-        const base = { all: companies.length, pending: 0, provisioning: 0, approved: 0, rejected: 0, failed: 0 };
+        const base = {
+            all: companies.length,
+            pending: 0,
+            provisioning: 0,
+            approved: 0,
+            deactivated: 0,
+            rejected: 0,
+            failed: 0,
+        };
         companies.forEach((c) => {
-            base[c.status] = (base[c.status] ?? 0) + 1;
+            const key = effectiveStatus(c);
+            base[key] = (base[key] ?? 0) + 1;
         });
         return base;
     }, [companies]);
 
     const visibleCompanies = useMemo(() => {
         return companies.filter((c) => {
-            if (filter !== "all" && c.status !== filter) return false;
+            if (filter !== "all" && effectiveStatus(c) !== filter) return false;
             if (!search.trim()) return true;
             const q = search.trim().toLowerCase();
             return (
@@ -281,7 +328,7 @@ function AdminDashboard({ onLoggedOut }) {
                                 </div>
 
                                 <div className="admin-breakdown-grid">
-                                    {["provisioning", "approved", "rejected", "failed"].map((key) => (
+                                    {["provisioning", "approved", "deactivated", "rejected", "failed"].map((key) => (
                                         <div className="admin-breakdown-grid__item" key={key}>
                                             <i style={{ background: STATUS_META[key].color }} />
                                             {STATUS_META[key].label}
@@ -357,31 +404,58 @@ function AdminDashboard({ onLoggedOut }) {
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <StatusBadge status={company.status} />
+                                                    <StatusBadge status={effectiveStatus(company)} />
                                                     {company.status === "failed" && company.provisioning_error && (
                                                         <p className="admin-table-card__error">{company.provisioning_error}</p>
                                                     )}
                                                 </td>
                                                 <td>{company.created_at ? relativeTime(company.created_at) : "—"}</td>
                                                 <td>
-                                                    {ACTIONABLE_STATUSES.includes(company.status) && (
+                                                    {(ACTIONABLE_STATUSES.includes(company.status) ||
+                                                        company.status === "approved") && (
                                                         <div className="admin-table-card__actions">
-                                                            <button
-                                                                className="admin-btn admin-btn--primary admin-btn--sm"
-                                                                disabled={busyId === company.id}
-                                                                onClick={() => approve(company)}
-                                                                type="button"
-                                                            >
-                                                                {company.status === "failed" ? "Retry" : "Approve"}
-                                                            </button>
-                                                            <button
-                                                                className="admin-btn admin-btn--ghost admin-btn--sm"
-                                                                disabled={busyId === company.id}
-                                                                onClick={() => reject(company)}
-                                                                type="button"
-                                                            >
-                                                                Reject
-                                                            </button>
+                                                            {ACTIONABLE_STATUSES.includes(company.status) && (
+                                                                <>
+                                                                    <button
+                                                                        className="admin-btn admin-btn--primary admin-btn--sm"
+                                                                        disabled={busyId === company.id}
+                                                                        onClick={() => approve(company)}
+                                                                        type="button"
+                                                                    >
+                                                                        {company.status === "failed" ? "Retry" : "Approve"}
+                                                                    </button>
+                                                                    <button
+                                                                        className="admin-btn admin-btn--ghost admin-btn--sm"
+                                                                        disabled={busyId === company.id}
+                                                                        onClick={() => reject(company)}
+                                                                        type="button"
+                                                                    >
+                                                                        Reject
+                                                                    </button>
+                                                                </>
+                                                            )}
+
+                                                            {company.status === "approved" && company.is_active && (
+                                                                <button
+                                                                    className="admin-btn admin-btn--ghost admin-btn--sm"
+                                                                    disabled={busyId === company.id}
+                                                                    onClick={() => deactivate(company)}
+                                                                    type="button"
+                                                                >
+                                                                    Deactivate
+                                                                </button>
+                                                            )}
+
+                                                            {company.status === "approved" && !company.is_active && (
+                                                                <button
+                                                                    className="admin-btn admin-btn--primary admin-btn--sm"
+                                                                    disabled={busyId === company.id}
+                                                                    onClick={() => activate(company)}
+                                                                    type="button"
+                                                                >
+                                                                    Reactivate
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </td>
@@ -440,6 +514,8 @@ function statusHint(status) {
             return "Tenant database is being created";
         case "approved":
             return "Live and provisioned";
+        case "deactivated":
+            return "Disabled by an admin, sign-in blocked";
         case "rejected":
             return "Declined by an admin";
         case "failed":
