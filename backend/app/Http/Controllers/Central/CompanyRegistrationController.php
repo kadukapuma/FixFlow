@@ -46,7 +46,9 @@ class CompanyRegistrationController extends Controller
 
             // Tenant databases live on the same MySQL server as the
             // central database; only the database name differs per tenant.
-            'database_name' => Str::slug(config('app.name'), '_') . '_' . $subdomain,
+            // MySQL identifiers can't contain "-", but subdomains can
+            // (alpha_dash allows it), so normalize dashes to underscores.
+            'database_name' => Str::slug(config('app.name'), '_') . '_' . str_replace('-', '_', $subdomain),
             'database_host' => config('database.connections.mysql.host'),
             'database_port' => config('database.connections.mysql.port'),
             'database_username' => config('database.connections.mysql.username'),

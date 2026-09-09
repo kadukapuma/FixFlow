@@ -20,6 +20,7 @@ class Company extends Model
         'database_password',
         'is_active',
         'rejection_reason',
+        'provisioning_error',
     ];
 
     protected $hidden = [
@@ -32,6 +33,8 @@ class Company extends Model
     ];
 
     public const STATUS_PENDING = 'pending';
+    public const STATUS_PROVISIONING = 'provisioning';
     public const STATUS_APPROVED = 'approved';
     public const STATUS_REJECTED = 'rejected';
+    public const STATUS_FAILED = 'failed';
 }

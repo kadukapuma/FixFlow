@@ -1,23 +1,36 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api, { getErrorMessage, setAuthToken } from "../api";
 
 function statusLabel(status) {
     return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
+const ACTIONABLE_STATUSES = ["pending", "failed"];
+
 function AdminDashboard({ onLoggedOut }) {
     const [companies, setCompanies] = useState([]);
     const [error, setError] = useState("");
     const [busyId, setBusyId] = useState(null);
+    const pollRef = useRef(null);
 
     useEffect(() => {
         loadCompanies();
+
+        return () => clearTimeout(pollRef.current);
     }, []);
 
     async function loadCompanies() {
         try {
             const response = await api.get("/admin/companies");
             setCompanies(response.data);
+
+            clearTimeout(pollRef.current);
+
+            // Provisioning happens in a background job, so keep refreshing
+            // until every in-flight approval has settled into a final state.
+            if (response.data.some((company) => company.status === "provisioning")) {
+                pollRef.current = setTimeout(loadCompanies, 2000);
+            }
         } catch (err) {
             setError(getErrorMessage(err, "Unable to load companies."));
         }
@@ -87,12 +100,20 @@ function AdminDashboard({ onLoggedOut }) {
                                 {company.owner_name} <br />
                                 {company.owner_email}
                             </td>
-                            <td>{statusLabel(company.status)}</td>
                             <td>
-                                {company.status === "pending" && (
+                                {statusLabel(company.status)}
+                                {company.status === "provisioning" && " ..."}
+                                {company.status === "failed" && company.provisioning_error && (
+                                    <p role="alert" style={{ margin: "4px 0 0", fontSize: 12 }}>
+                                        {company.provisioning_error}
+                                    </p>
+                                )}
+                            </td>
+                            <td>
+                                {ACTIONABLE_STATUSES.includes(company.status) && (
                                     <>
                                         <button disabled={busyId === company.id} onClick={() => approve(company)}>
-                                            Approve
+                                            {company.status === "failed" ? "Retry" : "Approve"}
                                         </button>
                                         <button disabled={busyId === company.id} onClick={() => reject(company)}>
                                             Reject

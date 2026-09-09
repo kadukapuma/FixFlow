@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\Central\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProvisionTenantCompany;
 use App\Models\Company;
-use App\Services\TenantProvisioner;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class CompanyApprovalController extends Controller
 {
@@ -17,44 +16,33 @@ class CompanyApprovalController extends Controller
         );
     }
 
-    public function approve(Company $company, TenantProvisioner $provisioner)
+    public function approve(Company $company)
     {
-        if ($company->status !== Company::STATUS_PENDING) {
+        if (!in_array($company->status, [Company::STATUS_PENDING, Company::STATUS_FAILED], true)) {
             return response()->json([
-                'message' => 'Only pending companies can be approved.',
+                'message' => 'Only pending or failed companies can be approved.',
             ], 422);
         }
 
-        try {
-            $provisioner->provision($company);
-        } catch (\Throwable $e) {
-            Log::error('Tenant provisioning failed', [
-                'company_id' => $company->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Provisioning failed: ' . $e->getMessage(),
-            ], 500);
-        }
-
         $company->update([
-            'status' => Company::STATUS_APPROVED,
-            'is_active' => true,
+            'status' => Company::STATUS_PROVISIONING,
             'rejection_reason' => null,
+            'provisioning_error' => null,
         ]);
 
+        ProvisionTenantCompany::dispatch($company);
+
         return response()->json([
-            'message' => 'Company approved and provisioned.',
+            'message' => 'Approval queued. The tenant database is being provisioned.',
             'company' => $company->fresh(),
         ]);
     }
 
     public function reject(Request $request, Company $company)
     {
-        if ($company->status !== Company::STATUS_PENDING) {
+        if (!in_array($company->status, [Company::STATUS_PENDING, Company::STATUS_FAILED], true)) {
             return response()->json([
-                'message' => 'Only pending companies can be rejected.',
+                'message' => 'Only pending or failed companies can be rejected.',
             ], 422);
         }
 
