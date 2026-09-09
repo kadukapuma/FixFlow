@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Company;
+use App\Services\TenantProvisioner;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
@@ -33,6 +34,7 @@ class MigrateCompanies extends Command
         // Read companies from the central database.
         $companies = Company::on('mysql')
             ->where('is_active', true)
+            ->where('status', Company::STATUS_APPROVED)
             ->get();
 
         if ($companies->isEmpty()) {
@@ -53,20 +55,7 @@ class MigrateCompanies extends Command
 
             try {
                 // Configure the company database connection.
-                Config::set('database.connections.company', [
-                    'driver' => 'mysql',
-                    'host' => $company->database_host,
-                    'port' => $company->database_port,
-                    'database' => $company->database_name,
-                    'username' => $company->database_username,
-                    'password' => $company->database_password,
-                    'unix_socket' => '',
-                    'charset' => 'utf8mb4',
-                    'collation' => 'utf8mb4_unicode_ci',
-                    'prefix' => '',
-                    'strict' => true,
-                    'engine' => null,
-                ]);
+                Config::set('database.connections.company', TenantProvisioner::connectionConfig($company));
 
                 // Remove any existing connection.
                 DB::purge('company');

@@ -19,6 +19,7 @@ class CompanySeeder extends Seeder
                 'database_username' => 'root',
                 'database_password' => '',
                 'is_active' => true,
+                'status' => Company::STATUS_APPROVED,
             ]
         );
 
@@ -32,6 +33,7 @@ class CompanySeeder extends Seeder
                 'database_username' => 'root',
                 'database_password' => '',
                 'is_active' => true,
+                'status' => Company::STATUS_APPROVED,
             ]
         );
     }

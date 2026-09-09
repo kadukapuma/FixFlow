@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\IdentifyCompany;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -16,7 +17,18 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'company' => IdentifyCompany::class,
+            'super_admin' => EnsureSuperAdmin::class,
         ]);
+
+        // IdentifyCompany must resolve the tenant database connection before
+        // the "auth" middleware tries to look up a token/user, otherwise
+        // auth runs against the wrong (central) database connection. The
+        // priority list keys auth middleware by this interface, not the
+        // concrete Authenticate class.
+        $middleware->prependToPriorityList(
+            before: \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+            prepend: IdentifyCompany::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

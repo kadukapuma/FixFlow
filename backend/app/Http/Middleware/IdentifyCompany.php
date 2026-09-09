@@ -3,10 +3,9 @@
 namespace App\Http\Middleware;
 
 use App\Models\Company;
+use App\Services\TenantProvisioner;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class IdentifyCompany
@@ -39,7 +38,7 @@ class IdentifyCompany
             | Normal domain
             |--------------------------------------------------------------------------
             |
-            | company01.sinarico.local
+            | company01.fixflow.local
             |
             */
 
@@ -63,6 +62,7 @@ class IdentifyCompany
 
         $company = Company::where('subdomain', $subdomain)
             ->where('is_active', true)
+            ->where('status', Company::STATUS_APPROVED)
             ->first();
 
         if (!$company) {
@@ -79,25 +79,7 @@ class IdentifyCompany
         |--------------------------------------------------------------------------
         */
 
-        Config::set('database.connections.company', [
-            'driver' => 'mysql',
-            'host' => $company->database_host,
-            'port' => $company->database_port,
-            'database' => $company->database_name,
-            'username' => $company->database_username,
-            'password' => $company->database_password,
-
-            'unix_socket' => '',
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
-            'strict' => true,
-            'engine' => null,
-        ]);
-
-        DB::purge('company');
-
-        DB::reconnect('company');
+        TenantProvisioner::useConnection($company);
 
         /*
         |--------------------------------------------------------------------------
