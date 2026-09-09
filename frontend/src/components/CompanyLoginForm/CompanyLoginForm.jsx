@@ -1,6 +1,7 @@
 import { useState } from "react";
-import api, { getErrorMessage } from "../api";
-import { subdomainUrl } from "../lib/tenant";
+import api, { getErrorMessage } from "../../api";
+import { subdomainUrl } from "../../lib/tenant";
+import "./CompanyLoginForm.css";
 
 function CompanyLoginForm() {
     const [company, setCompany] = useState("");
@@ -24,22 +25,28 @@ function CompanyLoginForm() {
     }
 
     return (
-        <form onSubmit={handleSubmit}>
-            <h2>Log in to your company</h2>
-
+        <form onSubmit={handleSubmit} className="company-login-form">
             <label>
                 Company name or subdomain
                 <input
                     value={company}
                     onChange={(event) => setCompany(event.target.value)}
                     placeholder="e.g. acme"
+                    autoFocus
                     required
                 />
+                <span className="company-login-form__hint">
+                    We&apos;ll take you to your company&apos;s sign-in page.
+                </span>
             </label>
 
-            {error && <p role="alert">{error}</p>}
+            {error && (
+                <p className="auth-error" role="alert">
+                    {error}
+                </p>
+            )}
 
-            <button type="submit" disabled={submitting}>
+            <button type="submit" disabled={submitting} className="auth-submit">
                 {submitting ? "Checking..." : "Continue"}
             </button>
         </form>

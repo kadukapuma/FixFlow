@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { setAuthToken } from "../api";
-import AdminLogin from "./AdminLogin";
-import AdminDashboard from "./AdminDashboard";
+import AdminLogin from "../views/AdminLogin/AdminLogin";
+import AdminDashboard from "../views/AdminDashboard/AdminDashboard";
 
 function AdminApp() {
     const [token, setToken] = useState(() => localStorage.getItem("admin_token"));

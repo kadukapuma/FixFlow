@@ -1,0 +1,104 @@
+.admin-login {
+    min-height: 100svh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(circle at 15% 15%, rgba(221, 251, 94, 0.16), transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(221, 251, 94, 0.1), transparent 40%),
+        #f2f1ea;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.admin-login__card {
+    width: 100%;
+    max-width: 400px;
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 40px 36px 32px;
+    box-shadow: 0 20px 50px -20px rgba(20, 21, 26, 0.25);
+    box-sizing: border-box;
+}
+
+.admin-login__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+}
+
+.admin-login__brand span {
+    font-weight: 700;
+    font-size: 17px;
+    color: #14151a;
+    letter-spacing: -0.01em;
+}
+
+.admin-login__card h1 {
+    font-size: 26px;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+}
+
+.admin-login__subtitle {
+    color: #6b6b63;
+    font-size: 14px;
+    margin: 0 0 26px;
+}
+
+.admin-login__form {
+    gap: 16px;
+}
+
+.admin-login__form label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #14151a;
+}
+
+.admin-login__form input {
+    padding: 11px 14px;
+    border-radius: 12px;
+    border: 1px solid #e6e4da;
+    background: #fbfaf6;
+    font-size: 14px;
+}
+
+.admin-login__form input:focus {
+    outline: none;
+    border-color: #ddfb5e;
+    box-shadow: 0 0 0 3px rgba(221, 251, 94, 0.35);
+}
+
+.admin-login__submit {
+    margin-top: 4px;
+    background: #ddfb5e;
+    border: none;
+    color: #14151a;
+    font-weight: 700;
+    padding: 12px 16px;
+    border-radius: 12px;
+}
+
+.admin-login__submit:hover:not(:disabled) {
+    background: #d3f24d;
+}
+
+.admin-login__error {
+    background: #fadfe1;
+    color: #c22b3a;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 12px;
+    border-radius: 10px;
+    margin: 0;
+}
+
+.admin-login__footnote {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 12px;
+    color: #9b9a8f;
+}

@@ -1,0 +1,26 @@
+.central-auth-tabs {
+    display: flex;
+    gap: 4px;
+    background: #f2f1ea;
+    padding: 4px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+}
+
+.central-auth-tabs button {
+    flex: 1;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 10px;
+    border-radius: 9px;
+    border: none;
+    background: transparent;
+    color: #6b6b63;
+    cursor: pointer;
+}
+
+.central-auth-tabs button.is-active {
+    background: #14151a;
+    color: #f4f3ec;
+}
