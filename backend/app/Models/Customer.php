@@ -15,6 +15,11 @@ class Customer extends Model
         'nic',
         'phone',
         'address',
+        'is_suspended',
+    ];
+
+    protected $casts = [
+        'is_suspended' => 'boolean',
     ];
 
     public function items()

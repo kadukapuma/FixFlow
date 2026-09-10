@@ -45,6 +45,10 @@ function CustomerStep({ customer, submitting, error, onNext, onChangeCustomer })
     function handleNext(event) {
         event.preventDefault();
 
+        if (selected?.is_suspended) {
+            return;
+        }
+
         if (selected) {
             onNext({ mode: "existing", customer: selected });
         } else {
@@ -88,7 +92,10 @@ function CustomerStep({ customer, submitting, error, onNext, onChangeCustomer })
                     {visibleResults.map((result) => (
                         <li key={result.id}>
                             <button type="button" className="wizard-result" onClick={() => handleSelect(result)}>
-                                <strong>{result.name}</strong>
+                                <strong>
+                                    {result.name}
+                                    {result.is_suspended && <span className="wizard-suspended-tag">Suspended</span>}
+                                </strong>
                                 <span>
                                     {result.nic} · {result.phone || "—"}
                                 </span>
@@ -101,9 +108,17 @@ function CustomerStep({ customer, submitting, error, onNext, onChangeCustomer })
             {selected ? (
                 <div className="wizard-confirmed wizard-full">
                     <div className="wizard-confirmed__card">
-                        <strong>{selected.name}</strong>
+                        <strong>
+                            {selected.name}
+                            {selected.is_suspended && <span className="wizard-suspended-tag">Suspended</span>}
+                        </strong>
                         <span>{selected.nic}</span>
                         <span>{selected.phone || "—"}</span>
+                        {selected.is_suspended && (
+                            <p className="tenant-alert wizard-suspended-warning">
+                                This customer is suspended and can&apos;t be booked for a new service.
+                            </p>
+                        )}
                     </div>
                     <button type="button" className="tenant-btn tenant-btn--ghost tenant-btn--sm" onClick={() => setSelected(null)}>
                         Choose someone else
@@ -142,7 +157,11 @@ function CustomerStep({ customer, submitting, error, onNext, onChangeCustomer })
             )}
 
             <div className="tenant-form__actions">
-                <button type="submit" className="tenant-btn tenant-btn--primary" disabled={submitting}>
+                <button
+                    type="submit"
+                    className="tenant-btn tenant-btn--primary"
+                    disabled={submitting || selected?.is_suspended}
+                >
                     {submitting ? "Saving..." : "Next"}
                 </button>
             </div>

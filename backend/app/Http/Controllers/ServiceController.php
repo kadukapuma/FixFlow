@@ -41,6 +41,14 @@ class ServiceController extends Controller
             'price' => ['nullable', 'numeric', 'min:0'],
         ]);
 
+        $customer = Customer::find($validated['customer_id']);
+
+        if ($customer->is_suspended) {
+            return response()->json([
+                'message' => "This customer is suspended and can't be booked for a new service.",
+            ], 422);
+        }
+
         $service = Service::create($validated);
 
         return response()->json([

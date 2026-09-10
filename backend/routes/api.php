@@ -6,6 +6,7 @@ use App\Http\Controllers\Central\CompanyLoginLookupController;
 use App\Http\Controllers\Central\CompanyRegistrationController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ServiceController;
@@ -50,9 +51,15 @@ Route::middleware('company')->group(function () {
 
         Route::get('/company', [CompanyController::class, 'test']);
 
+        Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
+
         Route::get('/customers', [CustomerController::class, 'index']);
         Route::get('/customers/search', [CustomerController::class, 'search']);
         Route::post('/customers', [CustomerController::class, 'store']);
+        Route::put('/customers/{id}', [CustomerController::class, 'update']);
+        Route::delete('/customers/{id}', [CustomerController::class, 'destroy']);
+        Route::post('/customers/{id}/suspend', [CustomerController::class, 'suspend']);
+        Route::post('/customers/{id}/unsuspend', [CustomerController::class, 'unsuspend']);
 
         Route::get('/employees', [EmployeeController::class, 'index']);
         Route::post('/employees', [EmployeeController::class, 'store']);

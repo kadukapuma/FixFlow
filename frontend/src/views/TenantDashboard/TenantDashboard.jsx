@@ -1,52 +1,42 @@
 import { useEffect, useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
+import StatCard from "../../components/StatCard/StatCard";
+import { SERVICE_STATUS_META } from "../../components/StatusBadge/serviceStatusMeta";
 import "./TenantDashboard.css";
 
-const EMPTY_FORM = { name: "", nic: "", phone: "", address: "" };
+const STATUS_ORDER = ["pending", "in_progress", "completed", "delivered"];
+
+function formatMoney(value) {
+    return `Rs. ${Number(value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 function TenantDashboard({ shellProps, company }) {
-    const [customers, setCustomers] = useState([]);
-    const [form, setForm] = useState(EMPTY_FORM);
+    const [summary, setSummary] = useState(null);
     const [error, setError] = useState("");
-    const [submitting, setSubmitting] = useState(false);
+
+    async function loadSummary() {
+        try {
+            const response = await api.get("/dashboard/summary");
+            setSummary(response.data);
+        } catch (err) {
+            setError(getErrorMessage(err, "Unable to load dashboard data."));
+        }
+    }
 
     useEffect(() => {
-        loadCustomers();
+        // Same fetch-on-mount pattern as Employees/Services; the compiler linter
+        // only flags it on smaller files — see Services.jsx for detail.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        loadSummary();
     }, []);
 
-    async function loadCustomers() {
-        try {
-            const response = await api.get("/customers");
-            setCustomers(response.data);
-        } catch (err) {
-            setError(getErrorMessage(err, "Unable to load customers."));
-        }
-    }
-
-    function updateField(field, value) {
-        setForm((prev) => ({ ...prev, [field]: value }));
-    }
-
-    async function handleAddCustomer(event) {
-        event.preventDefault();
-
-        setSubmitting(true);
-        setError("");
-
-        try {
-            await api.post("/customers", form);
-            setForm(EMPTY_FORM);
-            loadCustomers();
-        } catch (err) {
-            setError(getErrorMessage(err, "Unable to create customer."));
-        } finally {
-            setSubmitting(false);
-        }
-    }
+    const chart = summary?.revenue_last_7_days ?? [];
+    const maxChartValue = Math.max(1, ...chart.map((day) => day.total));
+    const totalServices = summary?.totals?.services ?? 0;
 
     return (
-        <TenantShell {...shellProps} title="Dashboard" subtitle="Your workspace overview." error={error}>
+        <TenantShell {...shellProps} title="Dashboard" subtitle="Your business at a glance." error={error}>
             {company && (
                 <section className="tenant-card tenant-company-card">
                     <div>
@@ -64,96 +54,151 @@ function TenantDashboard({ shellProps, company }) {
                 </section>
             )}
 
-            <section className="tenant-card">
-                <div className="tenant-card__head">
-                    <h2>Add customer</h2>
-                </div>
-
-                <form className="tenant-form" onSubmit={handleAddCustomer}>
-                    <label>
-                        Name
-                        <input
-                            value={form.name}
-                            onChange={(e) => updateField("name", e.target.value)}
-                            placeholder="Customer name"
-                            required
+            {summary && (
+                <>
+                    <section className="tenant-stat-row">
+                        <StatCard
+                            variant="dark"
+                            label="Revenue"
+                            value={formatMoney(summary.revenue)}
+                            hint="From delivered services"
                         />
-                    </label>
-
-                    <label>
-                        NIC
-                        <input
-                            value={form.nic}
-                            onChange={(e) => updateField("nic", e.target.value)}
-                            placeholder="National ID number"
-                            required
+                        <StatCard
+                            variant="light"
+                            label="Cost"
+                            value={formatMoney(summary.cost)}
+                            hint="Work cost on delivered services"
                         />
-                    </label>
-
-                    <label>
-                        Phone
-                        <input
-                            value={form.phone}
-                            onChange={(e) => updateField("phone", e.target.value)}
-                            placeholder="07X XXX XXXX"
+                        <StatCard
+                            variant="lime"
+                            label="Profit"
+                            value={formatMoney(summary.profit)}
+                            hint="Revenue minus cost"
                         />
-                    </label>
+                    </section>
 
-                    <label>
-                        Address
-                        <input
-                            value={form.address}
-                            onChange={(e) => updateField("address", e.target.value)}
-                            placeholder="Street, city"
-                        />
-                    </label>
+                    <div className="tenant-dashboard-row">
+                        <section className="tenant-card tenant-dashboard-row__main">
+                            <div className="tenant-card__head">
+                                <h2>Revenue, last 7 days</h2>
+                            </div>
 
-                    <button className="tenant-btn tenant-btn--primary" type="submit" disabled={submitting}>
-                        {submitting ? "Adding..." : "Add customer"}
-                    </button>
-                </form>
-            </section>
-
-            <section className="tenant-card">
-                <div className="tenant-card__head">
-                    <h2>Customers</h2>
-                </div>
-
-                <div className="tenant-table-scroll">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>NIC</th>
-                                <th>Phone</th>
-                                <th>Address</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {customers.map((customer) => (
-                                <tr key={customer.id}>
-                                    <td>
-                                        <div className="tenant-cell">
-                                            <strong>{customer.name}</strong>
+                            <div className="tenant-chart">
+                                {chart.map((day) => (
+                                    <div className="tenant-chart-bar" key={day.date}>
+                                        {day.total > 0 && (
+                                            <span className="tenant-chart-bar__value">{formatMoney(day.total)}</span>
+                                        )}
+                                        <div className="tenant-chart-bar__track">
+                                            <div
+                                                className="tenant-chart-bar__fill"
+                                                style={{ height: `${Math.max((day.total / maxChartValue) * 100, 4)}%` }}
+                                            />
                                         </div>
-                                    </td>
-                                    <td>{customer.nic}</td>
-                                    <td>{customer.phone || "—"}</td>
-                                    <td>{customer.address || "—"}</td>
-                                </tr>
-                            ))}
+                                        <span className="tenant-chart-bar__label">{day.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
 
-                            {customers.length === 0 && (
-                                <tr>
-                                    <td colSpan={4} className="tenant-table-empty">
-                                        No customers yet.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+                        <aside className="tenant-card tenant-dashboard-row__side">
+                            <div className="tenant-card__head">
+                                <h2>Pipeline</h2>
+                            </div>
+
+                            <div className="tenant-breakdown">
+                                {STATUS_ORDER.map((status) => {
+                                    const meta = SERVICE_STATUS_META[status];
+                                    const count = summary.status_counts[status] ?? 0;
+                                    const percent = totalServices ? Math.round((count / totalServices) * 100) : 0;
+
+                                    return (
+                                        <div className="tenant-breakdown__item" key={status}>
+                                            <div className="tenant-breakdown__item-head">
+                                                <span>
+                                                    <i style={{ background: meta.color }} />
+                                                    {meta.label}
+                                                </span>
+                                                <strong>{count}</strong>
+                                            </div>
+                                            <div className="tenant-breakdown__track">
+                                                <div
+                                                    className="tenant-breakdown__fill"
+                                                    style={{ width: `${percent}%`, background: meta.color }}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </aside>
+                    </div>
+
+                    <div className="tenant-dashboard-row">
+                        <section className="tenant-card tenant-dashboard-row__main">
+                            <div className="tenant-card__head">
+                                <h2>Top technicians</h2>
+                            </div>
+
+                            <div className="tenant-table-scroll">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Technician</th>
+                                            <th>Delivered</th>
+                                            <th>Revenue</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {summary.top_employees.map((employee) => (
+                                            <tr key={employee.id}>
+                                                <td>
+                                                    <strong>{employee.name}</strong>
+                                                </td>
+                                                <td>{employee.services_delivered}</td>
+                                                <td>{formatMoney(employee.revenue)}</td>
+                                            </tr>
+                                        ))}
+
+                                        {summary.top_employees.length === 0 && (
+                                            <tr>
+                                                <td colSpan={3} className="tenant-table-empty">
+                                                    No delivered services yet.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <aside className="tenant-card tenant-dashboard-row__side">
+                            <div className="tenant-card__head">
+                                <h2>Totals</h2>
+                            </div>
+
+                            <div className="tenant-totals">
+                                <div>
+                                    <span>Customers</span>
+                                    <strong>{summary.totals.customers}</strong>
+                                </div>
+                                <div>
+                                    <span>Employees</span>
+                                    <strong>{summary.totals.employees}</strong>
+                                </div>
+                                <div>
+                                    <span>Services</span>
+                                    <strong>{summary.totals.services}</strong>
+                                </div>
+                                <div>
+                                    <span>Total work cost (all jobs)</span>
+                                    <strong>{formatMoney(summary.total_work_cost)}</strong>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </>
+            )}
         </TenantShell>
     );
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api, { setAuthToken } from "../api";
 import TenantLogin from "../views/TenantLogin/TenantLogin";
 import TenantDashboard from "../views/TenantDashboard/TenantDashboard";
+import Customers from "../views/Customers/Customers";
 import Employees from "../views/Employees/Employees";
 import Services from "../views/Services/Services";
 import StartWork from "../views/StartWork/StartWork";
@@ -12,6 +13,18 @@ const DASHBOARD_ICON = (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
         <path
             d="M3 11.5 12 4l9 7.5M5.5 10v9h13v-9"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const CUSTOMERS_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 20c0-3.3 3.6-6 8-6s8 2.7 8 6"
             stroke="currentColor"
             strokeWidth="1.8"
             strokeLinecap="round"
@@ -117,6 +130,13 @@ function TenantApp() {
                 icon: DASHBOARD_ICON,
             },
             {
+                key: "customers",
+                title: "Customers",
+                active: page === "customers",
+                onClick: () => setPage("customers"),
+                icon: CUSTOMERS_ICON,
+            },
+            {
                 key: "employees",
                 title: "Employees",
                 active: page === "employees",
@@ -155,6 +175,10 @@ function TenantApp() {
         footerLabel: company?.company,
         onLogout: logout,
     };
+
+    if (page === "customers") {
+        return <Customers shellProps={shellProps} />;
+    }
 
     if (page === "employees") {
         return <Employees shellProps={shellProps} />;
