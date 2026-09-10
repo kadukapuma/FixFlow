@@ -215,11 +215,47 @@
     gap: 6px;
 }
 
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.detail-grid__label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #9b9a8f;
+    margin-bottom: 4px;
+}
+
+.detail-grid strong {
+    font-size: 14px;
+    color: #14151a;
+}
+
+.detail-grid span:not(.detail-grid__label) {
+    display: block;
+    font-size: 12px;
+    color: #9b9a8f;
+    margin-top: 2px;
+}
+
 .tenant-shell input[type="checkbox"] {
     width: 16px;
     height: 16px;
     accent-color: #14151a;
     cursor: pointer;
+}
+
+.clickable-row {
+    cursor: pointer;
+}
+
+.clickable-row:hover td {
+    background: #fbfaf6;
 }
 
 .tenant-table-empty {

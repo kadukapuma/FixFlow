@@ -10,6 +10,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\Tenant\AuthController as TenantAuthController;
+use App\Http\Controllers\WorkController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -64,5 +65,13 @@ Route::middleware('company')->group(function () {
 
         Route::get('/services', [ServiceController::class, 'index']);
         Route::post('/services', [ServiceController::class, 'store']);
+        Route::get('/services/{id}', [ServiceController::class, 'show']);
+        Route::post('/services/{id}/start', [ServiceController::class, 'start']);
+        Route::post('/services/{id}/complete', [ServiceController::class, 'complete']);
+        Route::post('/services/{id}/deliver', [ServiceController::class, 'deliver']);
+        Route::put('/services/{id}/price', [ServiceController::class, 'updatePrice']);
+
+        Route::get('/work', [WorkController::class, 'index']);
+        Route::post('/work', [WorkController::class, 'store']);
     });
 });

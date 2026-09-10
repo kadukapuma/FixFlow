@@ -1,0 +1,36 @@
+.start-work-search {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.start-work-search label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #14151a;
+    flex: 1;
+    max-width: 240px;
+}
+
+.start-work-search input {
+    font: inherit;
+    padding: 10px 13px;
+    border-radius: 10px;
+    border: 1px solid #e6e4da;
+    background: #fbfaf6;
+    font-size: 13px;
+}
+
+.start-work-search input:focus {
+    outline: none;
+    border-color: #ddfb5e;
+    box-shadow: 0 0 0 3px rgba(221, 251, 94, 0.35);
+}
+
+.start-work-search .tenant-btn {
+    height: 40px;
+}
+
