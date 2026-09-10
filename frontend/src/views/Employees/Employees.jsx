@@ -160,21 +160,21 @@ function Employees({ shellProps }) {
                         <tbody>
                             {employees.map((employee) => (
                                 <tr key={employee.id}>
-                                    <td>
+                                    <td data-label="Name">
                                         <div className="tenant-cell">
                                             <strong>{employee.name}</strong>
                                         </div>
                                     </td>
-                                    <td>{employee.nic}</td>
-                                    <td>
+                                    <td data-label="NIC">{employee.nic}</td>
+                                    <td data-label="Contact">
                                         <div className="tenant-cell">
                                             <strong>{employee.phone || "—"}</strong>
                                             <span>{employee.email || "—"}</span>
                                         </div>
                                     </td>
-                                    <td>{employee.address || "—"}</td>
-                                    <td>{employee.dob || "—"}</td>
-                                    <td>
+                                    <td data-label="Address">{employee.address || "—"}</td>
+                                    <td data-label="Date of birth">{employee.dob || "—"}</td>
+                                    <td data-label="Active">
                                         <input
                                             type="checkbox"
                                             checked={employee.is_active}
@@ -183,7 +183,7 @@ function Employees({ shellProps }) {
                                             title={employee.is_active ? "Active — click to deactivate" : "Inactive — click to activate"}
                                         />
                                     </td>
-                                    <td>
+                                    <td data-label="Actions">
                                         <div className="tenant-table-actions">
                                             <button
                                                 className="tenant-btn tenant-btn--ghost tenant-btn--sm"

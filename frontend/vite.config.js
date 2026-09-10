@@ -10,7 +10,12 @@ export default defineConfig({
   ],
   server: {
     host: true,
-    allowedHosts: ['.nip.io'],
+    // true disables Vite's Host-header allowlist entirely. This dev server
+    // is only ever reached over a trusted LAN/loopback, so the DNS-rebinding
+    // protection that allowedHosts exists for doesn't apply here — and a
+    // fixed allowlist (e.g. ['.nip.io']) silently blocks anyone opening the
+    // app by raw LAN IP (192.168.x.x), which has no way to be wildcarded.
+    allowedHosts: true,
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8000',

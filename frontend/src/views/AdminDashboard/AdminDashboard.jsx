@@ -471,26 +471,26 @@ function AdminDashboard({ onLoggedOut }) {
                                     <tbody>
                                         {visibleCompanies.map((company) => (
                                             <tr key={company.id}>
-                                                <td>
+                                                <td data-label="Company">
                                                     <div className="admin-company-cell">
                                                         <strong>{company.name}</strong>
                                                         <span>{company.subdomain}</span>
                                                     </div>
                                                 </td>
-                                                <td>
+                                                <td data-label="Owner">
                                                     <div className="admin-company-cell">
                                                         <strong>{company.owner_name}</strong>
                                                         <span>{company.owner_email}</span>
                                                     </div>
                                                 </td>
-                                                <td>
+                                                <td data-label="Status">
                                                     <StatusBadge status={effectiveStatus(company)} />
                                                     {company.status === "failed" && company.provisioning_error && (
                                                         <p className="admin-table-card__error">{company.provisioning_error}</p>
                                                     )}
                                                 </td>
-                                                <td>{company.created_at ? relativeTime(company.created_at) : "—"}</td>
-                                                <td>
+                                                <td data-label="Registered">{company.created_at ? relativeTime(company.created_at) : "—"}</td>
+                                                <td data-label="Actions">
                                                     {(ACTIONABLE_STATUSES.includes(company.status) ||
                                                         company.status === "approved") && (
                                                         <div className="admin-table-card__actions">

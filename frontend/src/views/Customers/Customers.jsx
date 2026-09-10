@@ -139,15 +139,15 @@ function Customers({ shellProps }) {
                         <tbody>
                             {customers.map((customer) => (
                                 <tr key={customer.id}>
-                                    <td>
+                                    <td data-label="Name">
                                         <div className="tenant-cell">
                                             <strong>{customer.name}</strong>
                                         </div>
                                     </td>
-                                    <td>{customer.nic}</td>
-                                    <td>{customer.phone || "—"}</td>
-                                    <td>{customer.address || "—"}</td>
-                                    <td>
+                                    <td data-label="NIC">{customer.nic}</td>
+                                    <td data-label="Phone">{customer.phone || "—"}</td>
+                                    <td data-label="Address">{customer.address || "—"}</td>
+                                    <td data-label="Suspended">
                                         <input
                                             type="checkbox"
                                             checked={customer.is_suspended}
@@ -160,7 +160,7 @@ function Customers({ shellProps }) {
                                             }
                                         />
                                     </td>
-                                    <td>
+                                    <td data-label="Actions">
                                         <div className="tenant-table-actions">
                                             <button
                                                 className="tenant-btn tenant-btn--ghost tenant-btn--sm"

@@ -125,8 +125,28 @@
 }
 
 @media (max-width: 640px) {
+    .sidebar,
     .sidebar.is-expanded {
         width: 100%;
+        height: auto;
+        flex-direction: row;
+        align-items: center;
+        position: static;
+        padding: 10px 12px;
+        gap: 10px;
+        overflow: visible;
+    }
+
+    .sidebar__nav {
+        flex-direction: row;
+        flex: 1;
+        min-width: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .sidebar__nav::-webkit-scrollbar {
+        display: none;
     }
 
     .sidebar.is-expanded .sidebar__icon {
@@ -139,5 +159,12 @@
     .sidebar.is-expanded .sidebar__brand-name,
     .sidebar.is-expanded .sidebar__profile-label {
         display: none;
+    }
+
+    .sidebar__bottom {
+        margin-top: 0;
+        margin-left: 0;
+        flex-direction: row-reverse;
+        flex-shrink: 0;
     }
 }

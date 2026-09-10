@@ -49,10 +49,15 @@
 }
 
 .admin-login__form {
+    display: flex;
+    flex-direction: column;
     gap: 16px;
 }
 
 .admin-login__form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
     font-size: 13px;
     font-weight: 600;
     color: #14151a;

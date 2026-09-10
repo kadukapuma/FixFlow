@@ -152,11 +152,11 @@ function TenantDashboard({ shellProps, company }) {
                                     <tbody>
                                         {summary.top_employees.map((employee) => (
                                             <tr key={employee.id}>
-                                                <td>
+                                                <td data-label="Technician">
                                                     <strong>{employee.name}</strong>
                                                 </td>
-                                                <td>{employee.services_delivered}</td>
-                                                <td>{formatMoney(employee.revenue)}</td>
+                                                <td data-label="Delivered">{employee.services_delivered}</td>
+                                                <td data-label="Revenue">{formatMoney(employee.revenue)}</td>
                                             </tr>
                                         ))}
 

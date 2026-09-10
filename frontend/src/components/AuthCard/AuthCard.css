@@ -151,7 +151,10 @@
 /* Shared form styling for every form rendered inside an AuthCard */
 
 .auth-shell form {
+    display: flex;
+    flex-direction: column;
     gap: 16px;
+    text-align: left;
 }
 
 .auth-shell .auth-row {
@@ -161,6 +164,8 @@
 }
 
 .auth-shell label {
+    display: flex;
+    flex-direction: column;
     font-size: 13px;
     font-weight: 600;
     color: #14151a;

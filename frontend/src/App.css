@@ -1,60 +1,7 @@
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  text-align: left;
-}
-
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 14px;
-  color: var(--text-h);
-}
-
-input {
-  font: inherit;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
-  color: var(--text-h);
-}
-
-button {
-  font: inherit;
-  padding: 8px 16px;
-  border: 1px solid var(--accent-border);
-  border-radius: 6px;
-  background: var(--accent-bg);
-  color: var(--text-h);
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-nav {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  margin-bottom: 16px;
-}
-
-table {
-  margin-top: 16px;
-}
-
-th,
-td {
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border);
-  vertical-align: top;
-}
-
-[role='alert'] {
-  color: #d33;
-}
+/* Every real page/component in this app uses its own scoped classes
+   (.tenant-btn, .admin-btn, .tenant-form, .auth-shell input, etc.). This
+   file used to carry the original Vite-scaffold's bare element selectors
+   (form/label/input/button/nav/table/th/td), which kept silently winning
+   individual CSS properties against scoped component styles — confirmed
+   causes of real bugs (Modal's close icon, StartWork's search bar layout,
+   and the mobile sidebar nav centering). Left intentionally empty. */

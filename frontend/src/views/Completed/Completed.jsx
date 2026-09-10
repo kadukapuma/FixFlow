@@ -65,22 +65,22 @@ function Completed({ shellProps }) {
                                     className="clickable-row"
                                     onClick={() => setSelectedId(service.id)}
                                 >
-                                    <td>
+                                    <td data-label="Service ID">
                                         <div className="tenant-cell">
                                             <strong>#{service.id}</strong>
                                             {service.ref_no && <span>{service.ref_no}</span>}
                                         </div>
                                     </td>
-                                    <td>
+                                    <td data-label="Customer">
                                         <div className="tenant-cell">
                                             <strong>{service.customer?.name}</strong>
                                             <span>{service.customer?.nic}</span>
                                         </div>
                                     </td>
-                                    <td>{service.item?.name}</td>
-                                    <td>{service.employee?.name}</td>
-                                    <td>{service.completed_date || "—"}</td>
-                                    <td>{service.price != null ? `Rs. ${service.price}` : "—"}</td>
+                                    <td data-label="Item">{service.item?.name}</td>
+                                    <td data-label="Technician">{service.employee?.name}</td>
+                                    <td data-label="Completed date">{service.completed_date || "—"}</td>
+                                    <td data-label="Price">{service.price != null ? `Rs. ${service.price}` : "—"}</td>
                                 </tr>
                             ))}
 

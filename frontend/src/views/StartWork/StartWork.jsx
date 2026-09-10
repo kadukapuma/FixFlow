@@ -215,9 +215,9 @@ function StartWork({ shellProps }) {
                             <tbody>
                                 {workEntries.map((entry) => (
                                     <tr key={entry.id}>
-                                        <td>{entry.description || "—"}</td>
-                                        <td>Rs. {entry.cost}</td>
-                                        <td>{new Date(entry.created_at).toLocaleString()}</td>
+                                        <td data-label="Description">{entry.description || "—"}</td>
+                                        <td data-label="Cost">Rs. {entry.cost}</td>
+                                        <td data-label="Logged">{new Date(entry.created_at).toLocaleString()}</td>
                                     </tr>
                                 ))}
 

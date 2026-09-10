@@ -81,19 +81,19 @@ function Services({ shellProps }) {
                         <tbody>
                             {visibleServices.map((service) => (
                                 <tr key={service.id}>
-                                    <td>
+                                    <td data-label="Service ID">
                                         <div className="tenant-cell">
                                             <strong>#{service.id}</strong>
                                             {service.ref_no && <span>{service.ref_no}</span>}
                                         </div>
                                     </td>
-                                    <td>
+                                    <td data-label="Customer">
                                         <div className="tenant-cell">
                                             <strong>{service.customer?.name}</strong>
                                             <span>{service.customer?.nic}</span>
                                         </div>
                                     </td>
-                                    <td>
+                                    <td data-label="Item">
                                         <div className="tenant-cell">
                                             <strong>{service.item?.name}</strong>
                                             <span>
@@ -102,13 +102,13 @@ function Services({ shellProps }) {
                                             </span>
                                         </div>
                                     </td>
-                                    <td>{service.fault || "—"}</td>
-                                    <td>{service.employee?.name}</td>
-                                    <td>{service.service_date || "—"}</td>
-                                    <td>
+                                    <td data-label="Fault">{service.fault || "—"}</td>
+                                    <td data-label="Technician">{service.employee?.name}</td>
+                                    <td data-label="Service date">{service.service_date || "—"}</td>
+                                    <td data-label="Status">
                                         <StatusBadge status={service.status} meta={SERVICE_STATUS_META} />
                                     </td>
-                                    <td>{service.price != null ? `Rs. ${service.price}` : "—"}</td>
+                                    <td data-label="Price">{service.price != null ? `Rs. ${service.price}` : "—"}</td>
                                 </tr>
                             ))}
 

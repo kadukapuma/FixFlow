@@ -181,8 +181,8 @@ function ServiceDetails({ serviceId, onUpdated }) {
                     <tbody>
                         {workEntries.map((entry) => (
                             <tr key={entry.id}>
-                                <td>{entry.description || "—"}</td>
-                                <td>Rs. {entry.cost}</td>
+                                <td data-label="Description">{entry.description || "—"}</td>
+                                <td data-label="Cost">Rs. {entry.cost}</td>
                             </tr>
                         ))}
 

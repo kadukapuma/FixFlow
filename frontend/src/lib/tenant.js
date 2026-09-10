@@ -4,13 +4,16 @@
  *
  * company01.localhost      -> "company01"
  * localhost / 127.0.0.1    -> null
+ * 192.168.1.8              -> null (raw IP, e.g. opening the dev server from a phone on the LAN)
  * acme.fixflow.com         -> "acme"
  * fixflow.com              -> null
  */
+const IPV4_PATTERN = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
+
 export function getSubdomain() {
     const host = window.location.hostname;
 
-    if (host === "localhost" || host === "127.0.0.1") {
+    if (host === "localhost" || host === "127.0.0.1" || IPV4_PATTERN.test(host)) {
         return null;
     }
 
