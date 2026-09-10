@@ -36,12 +36,21 @@ export function getSubdomain() {
 export function subdomainUrl(subdomain, path = "/") {
     const { protocol, hostname, port } = window.location;
 
-    // Strip any existing subdomain label from the current hostname so we
-    // always build "<subdomain>.<root>", not "<subdomain>.<subdomain>.<root>".
-    const currentSubdomain = getSubdomain();
-    const root = currentSubdomain
-        ? hostname.slice(currentSubdomain.length + 1)
-        : hostname;
+    let root;
+
+    if (IPV4_PATTERN.test(hostname)) {
+        // A raw IP can't take a subdomain label directly — DNS has no way to
+        // resolve "acme.192.168.1.8". Route through nip.io's wildcard DNS
+        // instead: "acme.192.168.1.8.nip.io" resolves straight back to
+        // 192.168.1.8, so this is how a phone on the LAN reaches a tenant
+        // after logging in from the IP-addressed central page.
+        root = `${hostname}.nip.io`;
+    } else {
+        // Strip any existing subdomain label from the current hostname so we
+        // always build "<subdomain>.<root>", not "<subdomain>.<subdomain>.<root>".
+        const currentSubdomain = getSubdomain();
+        root = currentSubdomain ? hostname.slice(currentSubdomain.length + 1) : hostname;
+    }
 
     const portPart = port ? `:${port}` : "";
 
