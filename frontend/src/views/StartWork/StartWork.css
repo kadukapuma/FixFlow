@@ -1,18 +1,29 @@
 .start-work-search {
     display: flex;
-    align-items: flex-end;
+    flex-direction: row;
+    align-items: center;
     gap: 12px;
+    flex-wrap: wrap;
 }
 
-.start-work-search label {
+.start-work-search__field {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
     font-size: 13px;
     font-weight: 600;
     color: #14151a;
     flex: 1;
-    max-width: 240px;
+    min-width: 280px;
+}
+
+.start-work-search__field span {
+    white-space: nowrap;
+}
+
+.start-work-search__field input {
+    flex: 1;
 }
 
 .start-work-search input {

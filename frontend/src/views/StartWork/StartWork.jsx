@@ -112,8 +112,8 @@ function StartWork({ shellProps }) {
         >
             <section className="tenant-card">
                 <form className="start-work-search" onSubmit={handleSearch}>
-                    <label>
-                        Service ID or Ref No
+                    <label className="start-work-search__field">
+                        <span>Service ID or Ref No</span>
                         <input
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}

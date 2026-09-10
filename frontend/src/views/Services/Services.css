@@ -1,9 +1,3 @@
-.tenant-stat-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-}
-
 .wizard-steps {
     display: flex;
     gap: 8px;

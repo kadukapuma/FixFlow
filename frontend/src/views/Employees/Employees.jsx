@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
-import StatCard from "../../components/StatCard/StatCard";
 import Modal from "../../components/Modal/Modal";
 import EmployeeForm from "../../components/EmployeeForm/EmployeeForm";
 import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
-import "./Employees.css";
 
 function Employees({ shellProps }) {
     const [employees, setEmployees] = useState([]);
@@ -135,29 +133,12 @@ function Employees({ shellProps }) {
 
     return (
         <TenantShell {...shellProps} title="Employees" subtitle="Manage your service center staff." error={error}>
-            <section className="tenant-stat-row">
-                <StatCard
-                    variant="dark"
-                    label="Total employees"
-                    value={employees.length}
-                    hint="On record"
-                    icon={
-                        <svg viewBox="0 0 24 24" fill="none">
-                            <path
-                                d="M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19M20 19v-1.5a3.5 3.5 0 0 0-2.5-3.36M14.5 3.6a3.5 3.5 0 0 1 0 6.8M10 10.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
-                                stroke="currentColor"
-                                strokeWidth="1.6"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            />
-                        </svg>
-                    }
-                />
-            </section>
-
             <section className="tenant-card">
                 <div className="tenant-card__head">
-                    <h2>Employees</h2>
+                    <div className="tenant-card__title-group">
+                        <h2>Employees</h2>
+                        <span className="tenant-card__stat">{employees.length} total</span>
+                    </div>
                     <button className="tenant-btn tenant-btn--primary" type="button" onClick={openAddModal}>
                         Add new employee
                     </button>

@@ -118,6 +118,30 @@
     margin: 0;
 }
 
+.tenant-card__title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.tenant-card__stat {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #f2f1ea;
+    color: #6b6b63;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.tenant-card__stat--accent {
+    background: #ddfb5e;
+    color: #14151a;
+}
+
 .tenant-card__head input[type="search"] {
     font: inherit;
     font-size: 13px;

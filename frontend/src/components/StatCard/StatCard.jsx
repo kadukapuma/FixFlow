@@ -1,8 +1,8 @@
 import "./StatCard.css";
 
-function StatCard({ icon, label, value, hint, variant = "dark", dots }) {
+function StatCard({ icon, label, value, hint, variant = "dark", size = "md", dots }) {
     return (
-        <div className={`stat-card stat-card--${variant}`}>
+        <div className={`stat-card stat-card--${variant} ${size === "sm" ? "stat-card--sm" : ""}`}>
             <div className="stat-card__top">
                 <span className="stat-card__icon">{icon}</span>
                 <span className="stat-card__label">{label}</span>

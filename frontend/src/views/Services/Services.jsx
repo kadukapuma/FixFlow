@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
-import StatCard from "../../components/StatCard/StatCard";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import { SERVICE_STATUS_META } from "../../components/StatusBadge/serviceStatusMeta";
 import { matchesServiceQuery } from "../../lib/serviceSearch";
@@ -39,24 +38,30 @@ function Services({ shellProps }) {
     const visibleServices = services.filter((service) => matchesServiceQuery(service, search));
 
     return (
-        <TenantShell {...shellProps} title="Services" subtitle="Intake and track customer repairs." error={error}>
-            <section className="tenant-stat-row">
-                <StatCard variant="dark" label="Total services" value={services.length} hint="On record" />
-                <StatCard variant="lime" label="Open" value={openCount} hint="Not yet delivered" />
-            </section>
-
+        <TenantShell
+            {...shellProps}
+            title="Services"
+            subtitle="Intake and track customer repairs."
+            error={error}
+            actions={
+                <button className="tenant-btn tenant-btn--primary" type="button" onClick={() => setWizardOpen(true)}>
+                    New service
+                </button>
+            }
+        >
             <section className="tenant-card">
                 <div className="tenant-card__head">
-                    <h2>Services</h2>
+                    <div className="tenant-card__title-group">
+                        <h2>Services</h2>
+                        <span className="tenant-card__stat">{services.length} total</span>
+                        <span className="tenant-card__stat tenant-card__stat--accent">{openCount} open</span>
+                    </div>
                     <input
                         type="search"
                         placeholder="Search ID, ref no, customer, item..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
-                    <button className="tenant-btn tenant-btn--primary" type="button" onClick={() => setWizardOpen(true)}>
-                        New service
-                    </button>
                 </div>
 
                 <div className="tenant-table-scroll">
