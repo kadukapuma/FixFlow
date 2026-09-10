@@ -1,0 +1,242 @@
+.tenant-shell {
+    display: flex;
+    gap: 20px;
+    min-height: 100svh;
+    background: #f2f1ea;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.tenant-shell__main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.tenant-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.tenant-header h1 {
+    font-size: 32px;
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+}
+
+.tenant-header p {
+    color: #6b6b63;
+    font-size: 14px;
+}
+
+.tenant-header__actions {
+    display: flex;
+    gap: 10px;
+}
+
+.tenant-btn {
+    font: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+}
+
+.tenant-btn--primary {
+    background: #14151a;
+    color: #f4f3ec;
+}
+
+.tenant-btn--primary:hover:not(:disabled) {
+    background: #24262e;
+}
+
+.tenant-btn--ghost {
+    background: #ffffff;
+    color: #14151a;
+    box-shadow: inset 0 0 0 1px #e6e4da;
+}
+
+.tenant-btn--ghost:hover:not(:disabled) {
+    background: #fbfaf6;
+}
+
+.tenant-btn--sm {
+    padding: 7px 12px;
+    font-size: 12px;
+}
+
+.tenant-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.tenant-alert {
+    background: #fadfe1;
+    color: #c22b3a;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin: 0;
+}
+
+.tenant-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 20px 22px;
+    box-shadow: inset 0 0 0 1px #e6e4da;
+}
+
+.tenant-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.tenant-card__head h2 {
+    font-size: 16px;
+    margin: 0;
+}
+
+.tenant-form {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    align-items: end;
+}
+
+.tenant-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #14151a;
+}
+
+.tenant-form input {
+    font: inherit;
+    padding: 10px 13px;
+    border-radius: 10px;
+    border: 1px solid #e6e4da;
+    background: #fbfaf6;
+    font-size: 13px;
+}
+
+.tenant-form input:focus {
+    outline: none;
+    border-color: #ddfb5e;
+    box-shadow: 0 0 0 3px rgba(221, 251, 94, 0.35);
+}
+
+.tenant-form .tenant-btn {
+    height: 40px;
+}
+
+.tenant-table-scroll {
+    overflow-x: auto;
+}
+
+.tenant-shell table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.tenant-shell th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #9b9a8f;
+    padding: 8px 10px;
+    border-bottom: 1px solid #eeece3;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.tenant-shell td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #f2f1ea;
+    vertical-align: top;
+    font-size: 13px;
+}
+
+.tenant-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tenant-cell strong {
+    color: #14151a;
+    font-size: 13px;
+}
+
+.tenant-cell span {
+    color: #9b9a8f;
+    font-size: 12px;
+}
+
+.tenant-table-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.tenant-shell input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #14151a;
+    cursor: pointer;
+}
+
+.tenant-table-empty {
+    text-align: center;
+    color: #9b9a8f;
+    padding: 28px 0;
+}
+
+@media (max-width: 900px) {
+    .tenant-form {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .tenant-shell {
+        flex-direction: column;
+        padding: 12px;
+    }
+
+    .tenant-form {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        position: static;
+        padding: 12px;
+    }
+
+    .sidebar__nav {
+        flex-direction: row;
+    }
+
+    .sidebar__bottom {
+        margin-top: 0;
+        margin-left: auto;
+        flex-direction: row-reverse;
+    }
+}

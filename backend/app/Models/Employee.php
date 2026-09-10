@@ -4,23 +4,26 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Customer extends Model
+class Employee extends Model
 {
     protected $connection = 'company';
 
-    protected $table = 'customers';
+    protected $table = 'employees';
 
     protected $fillable = [
         'name',
-        'nic',
-        'phone',
         'address',
+        'nic',
+        'email',
+        'phone',
+        'dob',
+        'is_active',
     ];
 
-    public function items()
-    {
-        return $this->hasMany(Item::class);
-    }
+    protected $casts = [
+        'dob' => 'date:Y-m-d',
+        'is_active' => 'boolean',
+    ];
 
     public function services()
     {

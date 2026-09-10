@@ -49,6 +49,10 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "migrate": [
+            "@php artisan migrate",
+            "@php artisan migrate:companies"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"

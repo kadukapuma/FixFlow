@@ -4,22 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Customer extends Model
+class Item extends Model
 {
     protected $connection = 'company';
 
-    protected $table = 'customers';
+    protected $table = 'items';
 
     protected $fillable = [
         'name',
-        'nic',
-        'phone',
-        'address',
+        'customer_id',
     ];
 
-    public function items()
+    public function customer()
     {
-        return $this->hasMany(Item::class);
+        return $this->belongsTo(Customer::class);
     }
 
     public function services()

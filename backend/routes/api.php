@@ -6,6 +6,7 @@ use App\Http\Controllers\Central\CompanyLoginLookupController;
 use App\Http\Controllers\Central\CompanyRegistrationController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\Tenant\AuthController as TenantAuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -48,5 +49,12 @@ Route::middleware('company')->group(function () {
 
         Route::get('/customers', [CustomerController::class, 'index']);
         Route::post('/customers', [CustomerController::class, 'store']);
+
+        Route::get('/employees', [EmployeeController::class, 'index']);
+        Route::post('/employees', [EmployeeController::class, 'store']);
+        Route::put('/employees/{id}', [EmployeeController::class, 'update']);
+        Route::delete('/employees/{id}', [EmployeeController::class, 'destroy']);
+        Route::post('/employees/{id}/activate', [EmployeeController::class, 'activate']);
+        Route::post('/employees/{id}/deactivate', [EmployeeController::class, 'deactivate']);
     });
 });

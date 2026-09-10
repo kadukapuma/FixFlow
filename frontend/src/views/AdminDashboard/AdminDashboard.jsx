@@ -188,6 +188,50 @@ function AdminDashboard({ onLoggedOut }) {
         onLoggedOut();
     }
 
+    const sidebarItems = [
+        {
+            key: "dashboard",
+            title: "Dashboard",
+            active: true,
+            icon: (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                    <path
+                        d="M3 11.5 12 4l9 7.5M5.5 10v9h13v-9"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                </svg>
+            ),
+        },
+        {
+            key: "refresh",
+            title: "Refresh companies",
+            onClick: loadCompanies,
+            icon: (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                    <path
+                        d="M20 11a8 8 0 1 0-2.34 5.66M20 5v6h-6"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                </svg>
+            ),
+        },
+        {
+            key: "registrations",
+            title: "Registrations",
+            icon: (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                    <path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+            ),
+        },
+    ];
+
     const adminEmail = useMemo(() => {
         try {
             const info = JSON.parse(localStorage.getItem("admin_info"));
@@ -232,7 +276,7 @@ function AdminDashboard({ onLoggedOut }) {
 
     return (
         <div className="admin-dashboard">
-            <Sidebar adminEmail={adminEmail} onRefresh={loadCompanies} onLogout={logout} />
+            <Sidebar items={sidebarItems} footerLabel={adminEmail} onLogout={logout} />
 
             <div className="admin-dashboard__main">
                 <header className="admin-header">

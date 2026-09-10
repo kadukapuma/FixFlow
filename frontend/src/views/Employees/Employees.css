@@ -1,0 +1,5 @@
+.tenant-stat-row {
+    display: grid;
+    grid-template-columns: minmax(0, 260px);
+    gap: 16px;
+}

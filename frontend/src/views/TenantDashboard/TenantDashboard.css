@@ -1,0 +1,19 @@
+.tenant-company-card {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+}
+
+.tenant-company-card__label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #9b9a8f;
+    margin-bottom: 4px;
+}
+
+.tenant-company-card strong {
+    font-size: 14px;
+    color: #14151a;
+}
