@@ -4,6 +4,8 @@ import TenantShell from "../../components/TenantShell/TenantShell";
 import StatCard from "../../components/StatCard/StatCard";
 import Modal from "../../components/Modal/Modal";
 import EmployeeForm from "../../components/EmployeeForm/EmployeeForm";
+import { showToast } from "../../lib/toast";
+import { confirmAction } from "../../lib/confirm";
 import "./Employees.css";
 
 function Employees({ shellProps }) {
@@ -46,14 +48,25 @@ function Employees({ shellProps }) {
     }
 
     async function handleSubmit(values) {
+        if (editingEmployee) {
+            const confirmed = await confirmAction({
+                title: "Save changes?",
+                message: `Save changes to ${editingEmployee.name}?`,
+                confirmLabel: "Save",
+            });
+            if (!confirmed) return;
+        }
+
         setSubmitting(true);
         setFormError("");
 
         try {
             if (editingEmployee) {
                 await api.put(`/employees/${editingEmployee.id}`, values);
+                showToast("Employee updated.");
             } else {
                 await api.post("/employees", values);
+                showToast("Employee added.");
             }
 
             closeModal();
@@ -66,33 +79,55 @@ function Employees({ shellProps }) {
     }
 
     async function toggleActive(employee) {
+        const confirmed = await confirmAction({
+            title: employee.is_active ? "Deactivate employee?" : "Activate employee?",
+            message: employee.is_active
+                ? `Deactivate ${employee.name}? They won't be assignable to new services.`
+                : `Activate ${employee.name}?`,
+            confirmLabel: employee.is_active ? "Deactivate" : "Activate",
+            danger: employee.is_active,
+        });
+
+        if (!confirmed) return;
+
         setBusyId(employee.id);
         setError("");
 
         try {
             const action = employee.is_active ? "deactivate" : "activate";
             await api.post(`/employees/${employee.id}/${action}`);
+            showToast(employee.is_active ? "Employee deactivated." : "Employee activated.");
             loadEmployees();
         } catch (err) {
-            setError(getErrorMessage(err, "Unable to update employee status."));
+            const message = getErrorMessage(err, "Unable to update employee status.");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setBusyId(null);
         }
     }
 
     async function handleDelete(employee) {
-        if (!window.confirm(`Delete ${employee.name}? This can't be undone.`)) {
-            return;
-        }
+        const confirmed = await confirmAction({
+            title: "Delete employee?",
+            message: `Delete ${employee.name}? This can't be undone.`,
+            confirmLabel: "Delete",
+            danger: true,
+        });
+
+        if (!confirmed) return;
 
         setBusyId(employee.id);
         setError("");
 
         try {
             await api.delete(`/employees/${employee.id}`);
+            showToast("Employee deleted.");
             loadEmployees();
         } catch (err) {
-            setError(getErrorMessage(err, "Unable to delete employee."));
+            const message = getErrorMessage(err, "Unable to delete employee.");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setBusyId(null);
         }

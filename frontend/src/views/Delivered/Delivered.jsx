@@ -3,11 +3,13 @@ import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
 import Modal from "../../components/Modal/Modal";
 import ServiceDetails from "../../components/ServiceDetails/ServiceDetails";
+import { matchesServiceQuery } from "../../lib/serviceSearch";
 
 function Delivered({ shellProps }) {
     const [services, setServices] = useState([]);
     const [error, setError] = useState("");
     const [selectedId, setSelectedId] = useState(null);
+    const [search, setSearch] = useState("");
 
     async function loadServices() {
         try {
@@ -29,11 +31,19 @@ function Delivered({ shellProps }) {
         loadServices();
     }
 
+    const visibleServices = services.filter((service) => matchesServiceQuery(service, search));
+
     return (
         <TenantShell {...shellProps} title="Delivered" subtitle="Repairs picked up by the customer." error={error}>
             <section className="tenant-card">
                 <div className="tenant-card__head">
                     <h2>Delivered services</h2>
+                    <input
+                        type="search"
+                        placeholder="Search ID, ref no, customer, item..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
                 </div>
 
                 <div className="tenant-table-scroll">
@@ -49,7 +59,7 @@ function Delivered({ shellProps }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {services.map((service) => (
+                            {visibleServices.map((service) => (
                                 <tr key={service.id} className="clickable-row" onClick={() => setSelectedId(service.id)}>
                                     <td>
                                         <div className="tenant-cell">
@@ -70,10 +80,10 @@ function Delivered({ shellProps }) {
                                 </tr>
                             ))}
 
-                            {services.length === 0 && (
+                            {visibleServices.length === 0 && (
                                 <tr>
                                     <td colSpan={6} className="tenant-table-empty">
-                                        No delivered services yet.
+                                        {services.length === 0 ? "No delivered services yet." : "No services match your search."}
                                     </td>
                                 </tr>
                             )}

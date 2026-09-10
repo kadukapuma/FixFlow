@@ -3,6 +3,8 @@ import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
 import Modal from "../../components/Modal/Modal";
 import CustomerForm from "../../components/CustomerForm/CustomerForm";
+import { showToast } from "../../lib/toast";
+import { confirmAction } from "../../lib/confirm";
 
 function Customers({ shellProps }) {
     const [customers, setCustomers] = useState([]);
@@ -38,11 +40,19 @@ function Customers({ shellProps }) {
     }
 
     async function handleSubmit(values) {
+        const confirmed = await confirmAction({
+            title: "Save changes?",
+            message: `Save changes to ${editingCustomer.name}?`,
+            confirmLabel: "Save",
+        });
+        if (!confirmed) return;
+
         setSubmitting(true);
         setFormError("");
 
         try {
             await api.put(`/customers/${editingCustomer.id}`, values);
+            showToast("Customer updated.");
             closeModal();
             loadCustomers();
         } catch (err) {
@@ -53,33 +63,55 @@ function Customers({ shellProps }) {
     }
 
     async function toggleSuspended(customer) {
+        const confirmed = await confirmAction({
+            title: customer.is_suspended ? "Reinstate customer?" : "Suspend customer?",
+            message: customer.is_suspended
+                ? `Reinstate ${customer.name}? They'll be able to book new services again.`
+                : `Suspend ${customer.name}? They won't be able to book new services.`,
+            confirmLabel: customer.is_suspended ? "Reinstate" : "Suspend",
+            danger: !customer.is_suspended,
+        });
+
+        if (!confirmed) return;
+
         setBusyId(customer.id);
         setError("");
 
         try {
             const action = customer.is_suspended ? "unsuspend" : "suspend";
             await api.post(`/customers/${customer.id}/${action}`);
+            showToast(customer.is_suspended ? "Customer reinstated." : "Customer suspended.");
             loadCustomers();
         } catch (err) {
-            setError(getErrorMessage(err, "Unable to update customer status."));
+            const message = getErrorMessage(err, "Unable to update customer status.");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setBusyId(null);
         }
     }
 
     async function handleDelete(customer) {
-        if (!window.confirm(`Delete ${customer.name}? This can't be undone.`)) {
-            return;
-        }
+        const confirmed = await confirmAction({
+            title: "Delete customer?",
+            message: `Delete ${customer.name}? This can't be undone.`,
+            confirmLabel: "Delete",
+            danger: true,
+        });
+
+        if (!confirmed) return;
 
         setBusyId(customer.id);
         setError("");
 
         try {
             await api.delete(`/customers/${customer.id}`);
+            showToast("Customer deleted.");
             loadCustomers();
         } catch (err) {
-            setError(getErrorMessage(err, "Unable to delete customer."));
+            const message = getErrorMessage(err, "Unable to delete customer.");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setBusyId(null);
         }

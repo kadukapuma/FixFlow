@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api, { setAuthToken } from "../api";
+import { confirmAction } from "../lib/confirm";
 import TenantLogin from "../views/TenantLogin/TenantLogin";
 import TenantDashboard from "../views/TenantDashboard/TenantDashboard";
 import Customers from "../views/Customers/Customers";
@@ -110,7 +111,16 @@ function TenantApp() {
             .catch(() => {});
     }, [token]);
 
-    function logout() {
+    async function logout() {
+        const confirmed = await confirmAction({
+            title: "Log out?",
+            message: "You'll need to log in again to access your workspace.",
+            confirmLabel: "Log out",
+            danger: true,
+        });
+
+        if (!confirmed) return;
+
         localStorage.removeItem("tenant_token");
         setAuthToken(null);
         setToken(null);

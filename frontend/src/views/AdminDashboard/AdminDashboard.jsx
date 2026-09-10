@@ -4,6 +4,8 @@ import Sidebar from "../../components/Sidebar/Sidebar";
 import StatCard from "../../components/StatCard/StatCard";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import { STATUS_META } from "../../components/StatusBadge/statusMeta";
+import { showToast } from "../../lib/toast";
+import { confirmAction } from "../../lib/confirm";
 import "./AdminDashboard.css";
 
 const ACTIONABLE_STATUSES = ["pending", "failed"];
@@ -125,9 +127,12 @@ function AdminDashboard({ onLoggedOut }) {
 
         try {
             await api.post(`/admin/companies/${company.id}/approve`);
+            showToast(`${company.name} approved.`);
             await loadCompanies();
         } catch (err) {
-            setError(getErrorMessage(err, "Approval failed."));
+            const message = getErrorMessage(err, "Approval failed.");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setBusyId(null);
         }
@@ -141,47 +146,78 @@ function AdminDashboard({ onLoggedOut }) {
 
         try {
             await api.post(`/admin/companies/${company.id}/reject`, { reason });
+            showToast(`${company.name} rejected.`);
             await loadCompanies();
         } catch (err) {
-            setError(getErrorMessage(err, "Rejection failed."));
+            const message = getErrorMessage(err, "Rejection failed.");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setBusyId(null);
         }
     }
 
     async function deactivate(company) {
-        if (!window.confirm(`Deactivate ${company.name}? Their team will lose access immediately.`)) {
-            return;
-        }
+        const confirmed = await confirmAction({
+            title: "Deactivate company?",
+            message: `Deactivate ${company.name}? Their team will lose access immediately.`,
+            confirmLabel: "Deactivate",
+            danger: true,
+        });
+
+        if (!confirmed) return;
 
         setBusyId(company.id);
         setError("");
 
         try {
             await api.post(`/admin/companies/${company.id}/deactivate`);
+            showToast(`${company.name} deactivated.`);
             await loadCompanies();
         } catch (err) {
-            setError(getErrorMessage(err, "Deactivation failed."));
+            const message = getErrorMessage(err, "Deactivation failed.");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setBusyId(null);
         }
     }
 
     async function activate(company) {
+        const confirmed = await confirmAction({
+            title: "Reactivate company?",
+            message: `Reactivate ${company.name}? Their team will be able to sign in again.`,
+            confirmLabel: "Reactivate",
+        });
+
+        if (!confirmed) return;
+
         setBusyId(company.id);
         setError("");
 
         try {
             await api.post(`/admin/companies/${company.id}/activate`);
+            showToast(`${company.name} reactivated.`);
             await loadCompanies();
         } catch (err) {
-            setError(getErrorMessage(err, "Reactivation failed."));
+            const message = getErrorMessage(err, "Reactivation failed.");
+            setError(message);
+            showToast(message, "error");
         } finally {
             setBusyId(null);
         }
     }
 
-    function logout() {
+    async function logout() {
+        const confirmed = await confirmAction({
+            title: "Log out?",
+            message: "You'll need to log in again to access the admin dashboard.",
+            confirmLabel: "Log out",
+            danger: true,
+        });
+
+        if (!confirmed) return;
+
         localStorage.removeItem("admin_token");
         localStorage.removeItem("admin_info");
         setAuthToken(null);

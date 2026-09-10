@@ -68,6 +68,15 @@
     background: #fbfaf6;
 }
 
+.tenant-btn--danger {
+    background: #c22b3a;
+    color: #ffffff;
+}
+
+.tenant-btn--danger:hover:not(:disabled) {
+    background: #a8212e;
+}
+
 .tenant-btn--sm {
     padding: 7px 12px;
     font-size: 12px;
@@ -107,6 +116,22 @@
 .tenant-card__head h2 {
     font-size: 16px;
     margin: 0;
+}
+
+.tenant-card__head input[type="search"] {
+    font: inherit;
+    font-size: 13px;
+    padding: 9px 14px;
+    border-radius: 10px;
+    border: 1px solid #e6e4da;
+    background: #fbfaf6;
+    min-width: 240px;
+}
+
+.tenant-card__head input[type="search"]:focus {
+    outline: none;
+    border-color: #ddfb5e;
+    box-shadow: 0 0 0 3px rgba(221, 251, 94, 0.35);
 }
 
 .tenant-form {

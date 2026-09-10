@@ -4,6 +4,8 @@ import StatusBadge from "../StatusBadge/StatusBadge";
 import { SERVICE_STATUS_META } from "../StatusBadge/serviceStatusMeta";
 import Modal from "../Modal/Modal";
 import DateActionForm from "../DateActionForm/DateActionForm";
+import { showToast } from "../../lib/toast";
+import { confirmAction } from "../../lib/confirm";
 
 function ServiceDetails({ serviceId, onUpdated }) {
     const [service, setService] = useState(null);
@@ -58,9 +60,12 @@ function ServiceDetails({ serviceId, onUpdated }) {
         const changed = Number(service.price) !== Number(price);
 
         if (hadPrice && changed) {
-            const confirmed = window.confirm(
-                `This service already has a price of Rs. ${service.price}. Overwrite it with Rs. ${price}?`
-            );
+            const confirmed = await confirmAction({
+                title: "Overwrite price?",
+                message: `This service already has a price of Rs. ${service.price}. Overwrite it with Rs. ${price}?`,
+                confirmLabel: "Overwrite",
+                danger: true,
+            });
             if (!confirmed) return;
         }
 
@@ -70,6 +75,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
         try {
             const response = await api.put(`/services/${serviceId}/price`, { price });
             setService(response.data.service);
+            showToast("Price saved.");
             onUpdated(response.data.service);
         } catch (err) {
             setError(getErrorMessage(err, "Unable to save price."));
@@ -85,6 +91,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
         try {
             const response = await api.post(`/services/${serviceId}/deliver`, { delivered_date: deliveredDate });
             setService(response.data.service);
+            showToast("Service marked as delivered.");
             setDeliverModalOpen(false);
             onUpdated(response.data.service);
         } catch (err) {

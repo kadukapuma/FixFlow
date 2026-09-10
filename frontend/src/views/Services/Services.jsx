@@ -4,6 +4,7 @@ import TenantShell from "../../components/TenantShell/TenantShell";
 import StatCard from "../../components/StatCard/StatCard";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import { SERVICE_STATUS_META } from "../../components/StatusBadge/serviceStatusMeta";
+import { matchesServiceQuery } from "../../lib/serviceSearch";
 import NewServiceWizard from "./NewServiceWizard";
 import "./Services.css";
 
@@ -11,6 +12,7 @@ function Services({ shellProps }) {
     const [services, setServices] = useState([]);
     const [error, setError] = useState("");
     const [wizardOpen, setWizardOpen] = useState(false);
+    const [search, setSearch] = useState("");
 
     async function loadServices() {
         try {
@@ -34,6 +36,7 @@ function Services({ shellProps }) {
     }
 
     const openCount = services.filter((service) => service.status !== "delivered").length;
+    const visibleServices = services.filter((service) => matchesServiceQuery(service, search));
 
     return (
         <TenantShell {...shellProps} title="Services" subtitle="Intake and track customer repairs." error={error}>
@@ -45,6 +48,12 @@ function Services({ shellProps }) {
             <section className="tenant-card">
                 <div className="tenant-card__head">
                     <h2>Services</h2>
+                    <input
+                        type="search"
+                        placeholder="Search ID, ref no, customer, item..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
                     <button className="tenant-btn tenant-btn--primary" type="button" onClick={() => setWizardOpen(true)}>
                         New service
                     </button>
@@ -65,7 +74,7 @@ function Services({ shellProps }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {services.map((service) => (
+                            {visibleServices.map((service) => (
                                 <tr key={service.id}>
                                     <td>
                                         <div className="tenant-cell">
@@ -98,10 +107,10 @@ function Services({ shellProps }) {
                                 </tr>
                             ))}
 
-                            {services.length === 0 && (
+                            {visibleServices.length === 0 && (
                                 <tr>
                                     <td colSpan={8} className="tenant-table-empty">
-                                        No services yet.
+                                        {services.length === 0 ? "No services yet." : "No services match your search."}
                                     </td>
                                 </tr>
                             )}

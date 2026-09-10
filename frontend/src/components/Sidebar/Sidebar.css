@@ -12,6 +12,28 @@
     top: 20px;
     height: calc(100svh - 40px);
     box-sizing: border-box;
+    transition: width 0.18s ease;
+    overflow: hidden;
+}
+
+.sidebar.is-expanded {
+    width: 220px;
+    align-items: stretch;
+    padding: 18px 14px 20px;
+}
+
+.sidebar__brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.sidebar__brand-name {
+    color: #f4f3ec;
+    font-weight: 700;
+    font-size: 15px;
+    white-space: nowrap;
 }
 
 .sidebar__nav {
@@ -23,6 +45,7 @@
 .sidebar__icon {
     width: 40px;
     height: 40px;
+    flex-shrink: 0;
     border-radius: 12px;
     border: none;
     background: transparent;
@@ -31,6 +54,21 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
+}
+
+.sidebar.is-expanded .sidebar__icon {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 0 10px;
+}
+
+.sidebar__label {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .sidebar__icon:hover {
@@ -51,9 +89,21 @@
     gap: 14px;
 }
 
+.sidebar.is-expanded .sidebar__bottom {
+    align-items: stretch;
+}
+
+.sidebar__profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 4px;
+}
+
 .sidebar__avatar {
     width: 36px;
     height: 36px;
+    flex-shrink: 0;
     border-radius: 50%;
     background: #2a2c34;
     color: #ddfb5e;
@@ -63,4 +113,31 @@
     font-size: 13px;
     font-weight: 700;
     box-shadow: 0 0 0 2px rgba(221, 251, 94, 0.35);
+}
+
+.sidebar__profile-label {
+    color: #d9d8d2;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+    .sidebar.is-expanded {
+        width: 100%;
+    }
+
+    .sidebar.is-expanded .sidebar__icon {
+        width: 40px;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .sidebar.is-expanded .sidebar__label,
+    .sidebar.is-expanded .sidebar__brand-name,
+    .sidebar.is-expanded .sidebar__profile-label {
+        display: none;
+    }
 }

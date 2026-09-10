@@ -6,6 +6,7 @@ import WorkForm from "../../components/WorkForm/WorkForm";
 import DateActionForm from "../../components/DateActionForm/DateActionForm";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import { SERVICE_STATUS_META } from "../../components/StatusBadge/serviceStatusMeta";
+import { showToast } from "../../lib/toast";
 import "./StartWork.css";
 
 function StartWork({ shellProps }) {
@@ -61,6 +62,7 @@ function StartWork({ shellProps }) {
         try {
             const response = await api.post(`/services/${service.id}/start`, { started_date: startedDate });
             setService(response.data.service);
+            showToast("Service started.");
             closeModal();
         } catch (err) {
             setFormError(getErrorMessage(err, "Unable to start service."));
@@ -76,6 +78,7 @@ function StartWork({ shellProps }) {
         try {
             const response = await api.post(`/services/${service.id}/complete`, { completed_date: completedDate });
             setService(response.data.service);
+            showToast("Service marked as completed.");
             closeModal();
         } catch (err) {
             setFormError(getErrorMessage(err, "Unable to complete service."));
@@ -90,6 +93,7 @@ function StartWork({ shellProps }) {
 
         try {
             await api.post("/work", { service_id: service.id, ...values });
+            showToast("Work entry saved.");
             closeModal();
             loadWork(service.id);
         } catch (err) {

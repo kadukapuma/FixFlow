@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import Modal from "../../components/Modal/Modal";
+import { showToast } from "../../lib/toast";
 import CustomerStep from "./CustomerStep";
 import ItemStep from "./ItemStep";
 import ServiceDetailsStep from "./ServiceDetailsStep";
@@ -87,6 +88,7 @@ function NewServiceWizard({ onClose, onCreated }) {
                 price: values.price === "" ? null : values.price,
                 service_date: values.service_date,
             });
+            showToast(`Service #${response.data.service.id} created.`);
             onCreated(response.data.service);
         } catch (err) {
             setError(getErrorMessage(err, "Unable to save service."));
