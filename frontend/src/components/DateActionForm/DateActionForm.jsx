@@ -1,28 +1,22 @@
 import { useState } from "react";
 
-function WorkForm({ submitting, error, onSubmit, onCancel }) {
-    const [description, setDescription] = useState("");
-    const [cost, setCost] = useState("0");
+function todayIsoDate() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+function DateActionForm({ label, submitting, error, onSubmit, onCancel, submitLabel = "Save" }) {
+    const [date, setDate] = useState(todayIsoDate());
 
     function handleSubmit(event) {
         event.preventDefault();
-        onSubmit({ description, cost });
+        onSubmit(date);
     }
 
     return (
         <form className="tenant-form tenant-form--1col" onSubmit={handleSubmit}>
             <label>
-                Description
-                <input
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="What work was done?"
-                />
-            </label>
-
-            <label>
-                Cost
-                <input type="number" min="0" step="0.01" value={cost} onChange={(e) => setCost(e.target.value)} />
+                {label}
+                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
             </label>
 
             {error && (
@@ -36,11 +30,11 @@ function WorkForm({ submitting, error, onSubmit, onCancel }) {
                     Cancel
                 </button>
                 <button type="submit" className="tenant-btn tenant-btn--primary" disabled={submitting}>
-                    {submitting ? "Saving..." : "Save"}
+                    {submitting ? "Saving..." : submitLabel}
                 </button>
             </div>
         </form>
     );
 }
 
-export default WorkForm;
+export default DateActionForm;

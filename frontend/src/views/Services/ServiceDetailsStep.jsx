@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import api from "../../api";
-import { SERVICE_STATUS_OPTIONS } from "../../components/StatusBadge/serviceStatusMeta";
 
-const EMPTY_FORM = { employee_id: "", fault: "", note: "", status: "pending", price: "" };
+function todayIsoDate() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+const EMPTY_FORM = { employee_id: "", fault: "", note: "", price: "", service_date: todayIsoDate(), ref_no: "" };
 
 function ServiceDetailsStep({ customer, item, submitting, error, onSubmit, onBack }) {
     const [form, setForm] = useState(EMPTY_FORM);
@@ -31,6 +34,15 @@ function ServiceDetailsStep({ customer, item, submitting, error, onSubmit, onBac
 
             <form className="tenant-form tenant-form--2col" onSubmit={handleSubmit}>
                 <label>
+                    Reference number
+                    <input
+                        value={form.ref_no}
+                        onChange={(e) => updateField("ref_no", e.target.value)}
+                        placeholder="Optional, e.g. job card no."
+                    />
+                </label>
+
+                <label>
                     Technician
                     <select value={form.employee_id} onChange={(e) => updateField("employee_id", e.target.value)} required>
                         <option value="" disabled>
@@ -45,14 +57,13 @@ function ServiceDetailsStep({ customer, item, submitting, error, onSubmit, onBac
                 </label>
 
                 <label>
-                    Status
-                    <select value={form.status} onChange={(e) => updateField("status", e.target.value)} required>
-                        {SERVICE_STATUS_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
+                    Service date
+                    <input
+                        type="date"
+                        value={form.service_date}
+                        onChange={(e) => updateField("service_date", e.target.value)}
+                        required
+                    />
                 </label>
 
                 <label className="wizard-full">

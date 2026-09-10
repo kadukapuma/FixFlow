@@ -44,6 +44,7 @@ function Completed({ shellProps }) {
                                 <th>Customer</th>
                                 <th>Item</th>
                                 <th>Technician</th>
+                                <th>Completed date</th>
                                 <th>Price</th>
                             </tr>
                         </thead>
@@ -55,7 +56,10 @@ function Completed({ shellProps }) {
                                     onClick={() => setSelectedId(service.id)}
                                 >
                                     <td>
-                                        <strong>#{service.id}</strong>
+                                        <div className="tenant-cell">
+                                            <strong>#{service.id}</strong>
+                                            {service.ref_no && <span>{service.ref_no}</span>}
+                                        </div>
                                     </td>
                                     <td>
                                         <div className="tenant-cell">
@@ -65,13 +69,14 @@ function Completed({ shellProps }) {
                                     </td>
                                     <td>{service.item?.name}</td>
                                     <td>{service.employee?.name}</td>
+                                    <td>{service.completed_date || "—"}</td>
                                     <td>{service.price != null ? `Rs. ${service.price}` : "—"}</td>
                                 </tr>
                             ))}
 
                             {services.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="tenant-table-empty">
+                                    <td colSpan={6} className="tenant-table-empty">
                                         No completed services yet.
                                     </td>
                                 </tr>

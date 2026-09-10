@@ -148,6 +148,12 @@
     grid-template-columns: repeat(2, 1fr);
 }
 
+.tenant-form--1col {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
 .tenant-form__error {
     grid-column: 1 / -1;
 }

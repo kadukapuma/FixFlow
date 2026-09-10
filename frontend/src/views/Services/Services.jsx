@@ -59,6 +59,7 @@ function Services({ shellProps }) {
                                 <th>Item</th>
                                 <th>Fault</th>
                                 <th>Technician</th>
+                                <th>Service date</th>
                                 <th>Status</th>
                                 <th>Price</th>
                             </tr>
@@ -67,7 +68,10 @@ function Services({ shellProps }) {
                             {services.map((service) => (
                                 <tr key={service.id}>
                                     <td>
-                                        <strong>#{service.id}</strong>
+                                        <div className="tenant-cell">
+                                            <strong>#{service.id}</strong>
+                                            {service.ref_no && <span>{service.ref_no}</span>}
+                                        </div>
                                     </td>
                                     <td>
                                         <div className="tenant-cell">
@@ -86,6 +90,7 @@ function Services({ shellProps }) {
                                     </td>
                                     <td>{service.fault || "—"}</td>
                                     <td>{service.employee?.name}</td>
+                                    <td>{service.service_date || "—"}</td>
                                     <td>
                                         <StatusBadge status={service.status} meta={SERVICE_STATUS_META} />
                                     </td>
@@ -95,7 +100,7 @@ function Services({ shellProps }) {
 
                             {services.length === 0 && (
                                 <tr>
-                                    <td colSpan={7} className="tenant-table-empty">
+                                    <td colSpan={8} className="tenant-table-empty">
                                         No services yet.
                                     </td>
                                 </tr>

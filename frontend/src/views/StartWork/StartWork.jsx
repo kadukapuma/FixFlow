@@ -3,6 +3,7 @@ import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
 import Modal from "../../components/Modal/Modal";
 import WorkForm from "../../components/WorkForm/WorkForm";
+import DateActionForm from "../../components/DateActionForm/DateActionForm";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import { SERVICE_STATUS_META } from "../../components/StatusBadge/serviceStatusMeta";
 import "./StartWork.css";
@@ -13,11 +14,9 @@ function StartWork({ shellProps }) {
     const [workEntries, setWorkEntries] = useState([]);
     const [error, setError] = useState("");
     const [searching, setSearching] = useState(false);
-    const [starting, setStarting] = useState(false);
-    const [modalOpen, setModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState(null);
     const [formError, setFormError] = useState("");
     const [submitting, setSubmitting] = useState(false);
-    const [completing, setCompleting] = useState(false);
 
     async function loadWork(serviceId) {
         try {
@@ -31,8 +30,8 @@ function StartWork({ shellProps }) {
     async function handleSearch(event) {
         event.preventDefault();
 
-        const id = query.trim();
-        if (!id) return;
+        const q = query.trim();
+        if (!q) return;
 
         setSearching(true);
         setError("");
@@ -40,7 +39,7 @@ function StartWork({ shellProps }) {
         setWorkEntries([]);
 
         try {
-            const response = await api.get(`/services/${id}`);
+            const response = await api.get("/services/search", { params: { q } });
             setService(response.data);
             loadWork(response.data.id);
         } catch (err) {
@@ -50,31 +49,38 @@ function StartWork({ shellProps }) {
         }
     }
 
-    async function handleStart() {
-        setStarting(true);
-        setError("");
+    function closeModal() {
+        setModalMode(null);
+        setFormError("");
+    }
+
+    async function handleStart(startedDate) {
+        setSubmitting(true);
+        setFormError("");
 
         try {
-            const response = await api.post(`/services/${service.id}/start`);
+            const response = await api.post(`/services/${service.id}/start`, { started_date: startedDate });
             setService(response.data.service);
+            closeModal();
         } catch (err) {
-            setError(getErrorMessage(err, "Unable to start service."));
+            setFormError(getErrorMessage(err, "Unable to start service."));
         } finally {
-            setStarting(false);
+            setSubmitting(false);
         }
     }
 
-    async function handleComplete() {
-        setCompleting(true);
-        setError("");
+    async function handleComplete(completedDate) {
+        setSubmitting(true);
+        setFormError("");
 
         try {
-            const response = await api.post(`/services/${service.id}/complete`);
+            const response = await api.post(`/services/${service.id}/complete`, { completed_date: completedDate });
             setService(response.data.service);
+            closeModal();
         } catch (err) {
-            setError(getErrorMessage(err, "Unable to complete service."));
+            setFormError(getErrorMessage(err, "Unable to complete service."));
         } finally {
-            setCompleting(false);
+            setSubmitting(false);
         }
     }
 
@@ -84,7 +90,7 @@ function StartWork({ shellProps }) {
 
         try {
             await api.post("/work", { service_id: service.id, ...values });
-            setModalOpen(false);
+            closeModal();
             loadWork(service.id);
         } catch (err) {
             setFormError(getErrorMessage(err, "Unable to save work entry."));
@@ -94,16 +100,20 @@ function StartWork({ shellProps }) {
     }
 
     return (
-        <TenantShell {...shellProps} title="Start Work" subtitle="Find a service by ID to start and log work." error={error}>
+        <TenantShell
+            {...shellProps}
+            title="Start Work"
+            subtitle="Find a service by ID or reference number to start and log work."
+            error={error}
+        >
             <section className="tenant-card">
                 <form className="start-work-search" onSubmit={handleSearch}>
                     <label>
-                        Service ID
+                        Service ID or Ref No
                         <input
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder="e.g. 12"
-                            inputMode="numeric"
+                            placeholder="e.g. 12 or JOB-2026-001"
                             required
                         />
                     </label>
@@ -116,7 +126,10 @@ function StartWork({ shellProps }) {
             {service && (
                 <section className="tenant-card">
                     <div className="tenant-card__head">
-                        <h2>Service #{service.id}</h2>
+                        <h2>
+                            Service #{service.id}
+                            {service.ref_no ? ` · ${service.ref_no}` : ""}
+                        </h2>
                         <StatusBadge status={service.status} meta={SERVICE_STATUS_META} />
                     </div>
 
@@ -137,6 +150,14 @@ function StartWork({ shellProps }) {
                             <span className="detail-grid__label">Fault</span>
                             <strong>{service.fault || "—"}</strong>
                         </div>
+                        <div>
+                            <span className="detail-grid__label">Service date</span>
+                            <strong>{service.service_date || "—"}</strong>
+                        </div>
+                        <div>
+                            <span className="detail-grid__label">Started</span>
+                            <strong>{service.started_date || "—"}</strong>
+                        </div>
                     </div>
 
                     <div className="tenant-form__actions">
@@ -144,25 +165,27 @@ function StartWork({ shellProps }) {
                             <button
                                 className="tenant-btn tenant-btn--primary"
                                 type="button"
-                                disabled={starting}
-                                onClick={handleStart}
+                                onClick={() => setModalMode("start")}
                             >
-                                {starting ? "Starting..." : "Start"}
+                                Start
                             </button>
                         )}
 
                         {service.status === "in_progress" && (
                             <>
-                                <button className="tenant-btn tenant-btn--ghost" type="button" onClick={() => setModalOpen(true)}>
+                                <button
+                                    className="tenant-btn tenant-btn--ghost"
+                                    type="button"
+                                    onClick={() => setModalMode("work")}
+                                >
                                     Update
                                 </button>
                                 <button
                                     className="tenant-btn tenant-btn--primary"
                                     type="button"
-                                    disabled={completing}
-                                    onClick={handleComplete}
+                                    onClick={() => setModalMode("complete")}
                                 >
-                                    {completing ? "Completing..." : "Complete"}
+                                    Complete
                                 </button>
                             </>
                         )}
@@ -207,13 +230,39 @@ function StartWork({ shellProps }) {
                 </section>
             )}
 
-            {modalOpen && (
-                <Modal title="Log work" onClose={() => setModalOpen(false)}>
+            {modalMode === "work" && (
+                <Modal title="Log work" onClose={closeModal}>
                     <WorkForm
                         submitting={submitting}
                         error={formError}
                         onSubmit={handleWorkSubmit}
-                        onCancel={() => setModalOpen(false)}
+                        onCancel={closeModal}
+                    />
+                </Modal>
+            )}
+
+            {modalMode === "start" && (
+                <Modal title="Start service" onClose={closeModal}>
+                    <DateActionForm
+                        label="Start date"
+                        submitLabel="Start"
+                        submitting={submitting}
+                        error={formError}
+                        onSubmit={handleStart}
+                        onCancel={closeModal}
+                    />
+                </Modal>
+            )}
+
+            {modalMode === "complete" && (
+                <Modal title="Complete service" onClose={closeModal}>
+                    <DateActionForm
+                        label="Completed date"
+                        submitLabel="Complete"
+                        submitting={submitting}
+                        error={formError}
+                        onSubmit={handleComplete}
+                        onCancel={closeModal}
                     />
                 </Modal>
             )}

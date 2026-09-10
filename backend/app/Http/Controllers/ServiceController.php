@@ -29,9 +29,41 @@ class ServiceController extends Controller
         return response()->json($service);
     }
 
+    public function search(Request $request)
+    {
+        $query = trim((string) $request->query('q', ''));
+
+        if ($query === '') {
+            return response()->json(['message' => 'A service ID or reference number is required.'], 422);
+        }
+
+        $serviceQuery = Service::with(['customer', 'item', 'employee']);
+
+        if (ctype_digit($query)) {
+            $serviceQuery->where(function ($q) use ($query) {
+                $q->where('id', $query)->orWhere('ref_no', $query);
+            });
+        } else {
+            $serviceQuery->where('ref_no', $query);
+        }
+
+        $service = $serviceQuery->first();
+
+        if (!$service) {
+            return response()->json(['message' => 'Service not found.'], 404);
+        }
+
+        return response()->json($service);
+    }
+
     public function store(Request $request)
     {
+        if ($request->input('ref_no') === '') {
+            $request->merge(['ref_no' => null]);
+        }
+
         $validated = $request->validate([
+            'ref_no' => ['nullable', 'string', 'max:255', Rule::unique(Service::class, 'ref_no')],
             'item_id' => ['required', 'integer', Rule::exists(Item::class, 'id')],
             'employee_id' => ['required', 'integer', Rule::exists(Employee::class, 'id')],
             'customer_id' => ['required', 'integer', Rule::exists(Customer::class, 'id')],
@@ -39,6 +71,7 @@ class ServiceController extends Controller
             'note' => ['nullable', 'string'],
             'status' => ['required', 'string', Rule::in(['pending', 'in_progress', 'completed', 'delivered'])],
             'price' => ['nullable', 'numeric', 'min:0'],
+            'service_date' => ['nullable', 'date'],
         ]);
 
         $customer = Customer::find($validated['customer_id']);
@@ -49,6 +82,8 @@ class ServiceController extends Controller
             ], 422);
         }
 
+        $validated['service_date'] ??= now()->toDateString();
+
         $service = Service::create($validated);
 
         return response()->json([
@@ -57,7 +92,7 @@ class ServiceController extends Controller
         ], 201);
     }
 
-    public function start(int $id)
+    public function start(Request $request, int $id)
     {
         $service = Service::findOrFail($id);
 
@@ -67,7 +102,19 @@ class ServiceController extends Controller
             ], 422);
         }
 
-        $service->update(['status' => 'in_progress']);
+        $validated = $request->validate([
+            'started_date' => ['nullable', 'date'],
+        ]);
+
+        $startedDate = $validated['started_date'] ?? now()->toDateString();
+
+        if ($service->service_date && $startedDate < $service->service_date->toDateString()) {
+            return response()->json([
+                'message' => 'Start date cannot be before the service date.',
+            ], 422);
+        }
+
+        $service->update(['status' => 'in_progress', 'started_date' => $startedDate]);
 
         return response()->json([
             'message' => 'Service started.',
@@ -75,7 +122,7 @@ class ServiceController extends Controller
         ]);
     }
 
-    public function complete(int $id)
+    public function complete(Request $request, int $id)
     {
         $service = Service::findOrFail($id);
 
@@ -85,7 +132,19 @@ class ServiceController extends Controller
             ], 422);
         }
 
-        $service->update(['status' => 'completed']);
+        $validated = $request->validate([
+            'completed_date' => ['nullable', 'date'],
+        ]);
+
+        $completedDate = $validated['completed_date'] ?? now()->toDateString();
+
+        if ($service->started_date && $completedDate < $service->started_date->toDateString()) {
+            return response()->json([
+                'message' => 'Completed date cannot be before the start date.',
+            ], 422);
+        }
+
+        $service->update(['status' => 'completed', 'completed_date' => $completedDate]);
 
         return response()->json([
             'message' => 'Service marked as completed.',
@@ -93,7 +152,7 @@ class ServiceController extends Controller
         ]);
     }
 
-    public function deliver(int $id)
+    public function deliver(Request $request, int $id)
     {
         $service = Service::findOrFail($id);
 
@@ -103,7 +162,19 @@ class ServiceController extends Controller
             ], 422);
         }
 
-        $service->update(['status' => 'delivered']);
+        $validated = $request->validate([
+            'delivered_date' => ['nullable', 'date'],
+        ]);
+
+        $deliveredDate = $validated['delivered_date'] ?? now()->toDateString();
+
+        if ($service->completed_date && $deliveredDate < $service->completed_date->toDateString()) {
+            return response()->json([
+                'message' => 'Delivered date cannot be before the completed date.',
+            ], 422);
+        }
+
+        $service->update(['status' => 'delivered', 'delivered_date' => $deliveredDate]);
 
         return response()->json([
             'message' => 'Service marked as delivered.',

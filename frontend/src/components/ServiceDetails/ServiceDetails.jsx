@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import StatusBadge from "../StatusBadge/StatusBadge";
 import { SERVICE_STATUS_META } from "../StatusBadge/serviceStatusMeta";
+import Modal from "../Modal/Modal";
+import DateActionForm from "../DateActionForm/DateActionForm";
 
 function ServiceDetails({ serviceId, onUpdated }) {
     const [service, setService] = useState(null);
@@ -11,6 +13,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
     const [error, setError] = useState("");
     const [saving, setSaving] = useState(false);
     const [delivering, setDelivering] = useState(false);
+    const [deliverModalOpen, setDeliverModalOpen] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -75,17 +78,14 @@ function ServiceDetails({ serviceId, onUpdated }) {
         }
     }
 
-    async function handleDeliver() {
-        if (!window.confirm("Mark this service as delivered? The customer has picked up the item.")) {
-            return;
-        }
-
+    async function handleDeliver(deliveredDate) {
         setDelivering(true);
         setError("");
 
         try {
-            const response = await api.post(`/services/${serviceId}/deliver`);
+            const response = await api.post(`/services/${serviceId}/deliver`, { delivered_date: deliveredDate });
             setService(response.data.service);
+            setDeliverModalOpen(false);
             onUpdated(response.data.service);
         } catch (err) {
             setError(getErrorMessage(err, "Unable to mark as delivered."));
@@ -109,7 +109,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
     return (
         <div>
             <div className="tenant-card__head">
-                <h2>Details</h2>
+                <h2>Details{service.ref_no ? ` · ${service.ref_no}` : ""}</h2>
                 <StatusBadge status={service.status} meta={SERVICE_STATUS_META} />
             </div>
 
@@ -139,6 +139,24 @@ function ServiceDetails({ serviceId, onUpdated }) {
                     <span className="detail-grid__label">Note</span>
                     <strong>{service.note || "—"}</strong>
                 </div>
+                <div>
+                    <span className="detail-grid__label">Service date</span>
+                    <strong>{service.service_date || "—"}</strong>
+                </div>
+                <div>
+                    <span className="detail-grid__label">Started</span>
+                    <strong>{service.started_date || "—"}</strong>
+                </div>
+                <div>
+                    <span className="detail-grid__label">Completed</span>
+                    <strong>{service.completed_date || "—"}</strong>
+                </div>
+                {service.delivered_date && (
+                    <div>
+                        <span className="detail-grid__label">Delivered</span>
+                        <strong>{service.delivered_date}</strong>
+                    </div>
+                )}
             </div>
 
             <div className="tenant-card__head">
@@ -183,7 +201,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
             </div>
 
             {service.status === "completed" && (
-                <form className="tenant-form work-form" onSubmit={handleSavePrice}>
+                <form className="tenant-form tenant-form--1col" onSubmit={handleSavePrice}>
                     <label>
                         Final price
                         <input
@@ -207,15 +225,28 @@ function ServiceDetails({ serviceId, onUpdated }) {
                             type="button"
                             className="tenant-btn tenant-btn--ghost"
                             disabled={delivering}
-                            onClick={handleDeliver}
+                            onClick={() => setDeliverModalOpen(true)}
                         >
-                            {delivering ? "Marking..." : "Mark as delivered"}
+                            Mark as delivered
                         </button>
                         <button type="submit" className="tenant-btn tenant-btn--primary" disabled={saving}>
                             {saving ? "Saving..." : "Save price"}
                         </button>
                     </div>
                 </form>
+            )}
+
+            {deliverModalOpen && (
+                <Modal title="Mark as delivered" onClose={() => setDeliverModalOpen(false)}>
+                    <DateActionForm
+                        label="Delivered date"
+                        submitLabel="Mark as delivered"
+                        submitting={delivering}
+                        error={error}
+                        onSubmit={handleDeliver}
+                        onCancel={() => setDeliverModalOpen(false)}
+                    />
+                </Modal>
             )}
 
             {service.status === "delivered" && (

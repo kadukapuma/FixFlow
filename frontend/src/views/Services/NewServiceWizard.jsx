@@ -77,13 +77,15 @@ function NewServiceWizard({ onClose, onCreated }) {
 
         try {
             const response = await api.post("/services", {
+                ref_no: values.ref_no,
                 item_id: item.id,
                 customer_id: customer.id,
                 employee_id: values.employee_id,
                 fault: values.fault,
                 note: values.note,
-                status: values.status,
+                status: "pending",
                 price: values.price === "" ? null : values.price,
+                service_date: values.service_date,
             });
             onCreated(response.data.service);
         } catch (err) {
