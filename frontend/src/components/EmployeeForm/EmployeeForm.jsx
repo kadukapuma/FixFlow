@@ -1,5 +1,4 @@
 import { useState } from "react";
-import "./EmployeeForm.css";
 
 const EMPTY_FORM = { name: "", address: "", nic: "", email: "", phone: "", dob: "" };
 
@@ -16,7 +15,7 @@ function EmployeeForm({ initialValues, submitting, error, onSubmit, onCancel, su
     }
 
     return (
-        <form className="tenant-form employee-form" onSubmit={handleSubmit}>
+        <form className="tenant-form tenant-form--2col" onSubmit={handleSubmit}>
             <label>
                 Name
                 <input
@@ -71,12 +70,12 @@ function EmployeeForm({ initialValues, submitting, error, onSubmit, onCancel, su
             </label>
 
             {error && (
-                <p className="tenant-alert employee-form__error" role="alert">
+                <p className="tenant-alert tenant-form__error" role="alert">
                     {error}
                 </p>
             )}
 
-            <div className="employee-form__actions">
+            <div className="tenant-form__actions">
                 <button type="button" className="tenant-btn tenant-btn--ghost" onClick={onCancel}>
                     Cancel
                 </button>

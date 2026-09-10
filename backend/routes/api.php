@@ -7,6 +7,8 @@ use App\Http\Controllers\Central\CompanyRegistrationController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\ItemController;
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\Tenant\AuthController as TenantAuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -48,6 +50,7 @@ Route::middleware('company')->group(function () {
         Route::get('/company', [CompanyController::class, 'test']);
 
         Route::get('/customers', [CustomerController::class, 'index']);
+        Route::get('/customers/search', [CustomerController::class, 'search']);
         Route::post('/customers', [CustomerController::class, 'store']);
 
         Route::get('/employees', [EmployeeController::class, 'index']);
@@ -56,5 +59,10 @@ Route::middleware('company')->group(function () {
         Route::delete('/employees/{id}', [EmployeeController::class, 'destroy']);
         Route::post('/employees/{id}/activate', [EmployeeController::class, 'activate']);
         Route::post('/employees/{id}/deactivate', [EmployeeController::class, 'deactivate']);
+
+        Route::post('/items', [ItemController::class, 'store']);
+
+        Route::get('/services', [ServiceController::class, 'index']);
+        Route::post('/services', [ServiceController::class, 'store']);
     });
 });

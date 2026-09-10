@@ -15,6 +15,23 @@ class CustomerController extends Controller
         );
     }
 
+    public function search(Request $request)
+    {
+        $query = trim((string) $request->query('q', ''));
+
+        if ($query === '') {
+            return response()->json([]);
+        }
+
+        $customers = Customer::where('nic', 'like', "%{$query}%")
+            ->orWhere('phone', 'like', "%{$query}%")
+            ->orWhere('name', 'like', "%{$query}%")
+            ->limit(10)
+            ->get();
+
+        return response()->json($customers);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

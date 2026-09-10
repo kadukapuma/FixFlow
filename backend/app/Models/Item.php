@@ -12,6 +12,8 @@ class Item extends Model
 
     protected $fillable = [
         'name',
+        'model',
+        'serial_number',
         'customer_id',
     ];
 

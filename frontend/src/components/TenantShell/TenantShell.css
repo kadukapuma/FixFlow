@@ -144,6 +144,28 @@
     height: 40px;
 }
 
+.tenant-form--2col {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.tenant-form__error {
+    grid-column: 1 / -1;
+}
+
+.tenant-form__actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+@media (max-width: 480px) {
+    .tenant-form--2col {
+        grid-template-columns: 1fr;
+    }
+}
+
 .tenant-table-scroll {
     overflow-x: auto;
 }
