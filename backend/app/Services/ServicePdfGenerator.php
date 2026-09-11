@@ -21,19 +21,6 @@ class ServicePdfGenerator
      */
     public static function render(Service $service, Company $company, ?string $logoDataOverride = null): string
     {
-        $logoData = $logoDataOverride;
-
-        if ($logoData === null) {
-            /** @var FilesystemAdapter $publicDisk */
-            $publicDisk = Storage::disk('public');
-
-            if ($company->logo_path && $publicDisk->exists($company->logo_path)) {
-                $contents = $publicDisk->get($company->logo_path);
-                $mime = $publicDisk->mimeType($company->logo_path) ?: 'image/png';
-                $logoData = 'data:'.$mime.';base64,'.base64_encode($contents);
-            }
-        }
-
         $termsLines = collect(preg_split('/\r\n|\r|\n/', (string) $company->terms_and_conditions))
             ->map(fn ($line) => trim(preg_replace('/^\d+[.)]\s*/', '', trim($line))))
             ->filter(fn ($line) => $line !== '')
@@ -42,9 +29,49 @@ class ServicePdfGenerator
         return Pdf::loadView('pdf.service', [
             'service' => $service,
             'company' => $company,
-            'logoData' => $logoData,
+            'logoData' => self::resolveLogoData($company, $logoDataOverride),
             'termsLines' => $termsLines,
         ])->output();
+    }
+
+    /**
+     * Render a service invoice (work performed + final price) and return the
+     * raw PDF bytes. $service must have its `work` relation loaded.
+     */
+    public static function renderInvoice(Service $service, Company $company, ?string $logoDataOverride = null): string
+    {
+        $workTotal = (float) $service->work->sum('cost');
+
+        return Pdf::loadView('pdf.invoice', [
+            'service' => $service,
+            'company' => $company,
+            'logoData' => self::resolveLogoData($company, $logoDataOverride),
+            'workTotal' => $workTotal,
+        ])->output();
+    }
+
+    /**
+     * Resolve the base64 data URI for a company's logo, or null if it has
+     * none. $override, when given, is used instead of looking up the saved
+     * logo — used for previewing an unsaved logo upload.
+     */
+    private static function resolveLogoData(Company $company, ?string $override): ?string
+    {
+        if ($override !== null) {
+            return $override;
+        }
+
+        /** @var FilesystemAdapter $publicDisk */
+        $publicDisk = Storage::disk('public');
+
+        if (!$company->logo_path || !$publicDisk->exists($company->logo_path)) {
+            return null;
+        }
+
+        $contents = $publicDisk->get($company->logo_path);
+        $mime = $publicDisk->mimeType($company->logo_path) ?: 'image/png';
+
+        return 'data:'.$mime.';base64,'.base64_encode($contents);
     }
 
     /**

@@ -82,6 +82,7 @@ Route::middleware('company')->group(function () {
         Route::get('/services/search', [ServiceController::class, 'search']);
         Route::get('/services/{id}', [ServiceController::class, 'show']);
         Route::get('/services/{id}/pdf', [ServiceController::class, 'pdf']);
+        Route::get('/services/{id}/invoice', [ServiceController::class, 'invoice']);
         Route::post('/services/{id}/start', [ServiceController::class, 'start']);
         Route::post('/services/{id}/complete', [ServiceController::class, 'complete']);
         Route::post('/services/{id}/deliver', [ServiceController::class, 'deliver']);

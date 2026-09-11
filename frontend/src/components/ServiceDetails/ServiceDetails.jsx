@@ -4,6 +4,7 @@ import StatusBadge from "../StatusBadge/StatusBadge";
 import { SERVICE_STATUS_META } from "../StatusBadge/serviceStatusMeta";
 import Modal from "../Modal/Modal";
 import DateActionForm from "../DateActionForm/DateActionForm";
+import PdfViewerModal from "../PdfViewerModal/PdfViewerModal";
 import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
 
@@ -16,6 +17,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
     const [saving, setSaving] = useState(false);
     const [delivering, setDelivering] = useState(false);
     const [deliverModalOpen, setDeliverModalOpen] = useState(false);
+    const [invoiceOpen, setInvoiceOpen] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -257,12 +259,32 @@ function ServiceDetails({ serviceId, onUpdated }) {
             )}
 
             {service.status === "delivered" && (
-                <div className="detail-grid">
-                    <div>
-                        <span className="detail-grid__label">Final price</span>
-                        <strong>{service.price != null ? `Rs. ${service.price}` : "—"}</strong>
+                <>
+                    <div className="detail-grid">
+                        <div>
+                            <span className="detail-grid__label">Final price</span>
+                            <strong>{service.price != null ? `Rs. ${service.price}` : "—"}</strong>
+                        </div>
                     </div>
-                </div>
+
+                    <div className="tenant-form__actions">
+                        <button
+                            type="button"
+                            className="tenant-btn tenant-btn--primary"
+                            onClick={() => setInvoiceOpen(true)}
+                        >
+                            View Invoice
+                        </button>
+                    </div>
+                </>
+            )}
+
+            {invoiceOpen && (
+                <PdfViewerModal
+                    title={`Invoice — Service #${serviceId}`}
+                    pdfUrl={`/services/${serviceId}/invoice`}
+                    onClose={() => setInvoiceOpen(false)}
+                />
             )}
         </div>
     );

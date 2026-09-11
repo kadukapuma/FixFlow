@@ -108,6 +108,26 @@ class ServiceController extends Controller
         ]);
     }
 
+    public function invoice(int $id)
+    {
+        $service = Service::with(['customer', 'item', 'employee', 'work'])->findOrFail($id);
+
+        if ($service->price === null) {
+            return response()->json([
+                'message' => 'Set a final price before generating an invoice.',
+            ], 422);
+        }
+
+        $pdf = ServicePdfGenerator::renderInvoice($service, app('currentCompany'));
+
+        $filename = 'invoice-'.($service->ref_no ?: $service->id).'.pdf';
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+        ]);
+    }
+
     public function start(Request $request, int $id)
     {
         $service = Service::findOrFail($id);
