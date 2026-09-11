@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { setAuthToken } from "../api";
 import AdminLogin from "../views/AdminLogin/AdminLogin";
 import AdminDashboard from "../views/AdminDashboard/AdminDashboard";
@@ -6,7 +6,7 @@ import AdminDashboard from "../views/AdminDashboard/AdminDashboard";
 function AdminApp() {
     const [token, setToken] = useState(() => localStorage.getItem("admin_token"));
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         setAuthToken(token);
     }, [token]);
 

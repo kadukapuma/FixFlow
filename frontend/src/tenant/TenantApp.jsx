@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import api, { setAuthToken } from "../api";
 import { confirmAction } from "../lib/confirm";
 import TenantLogin from "../views/TenantLogin/TenantLogin";
@@ -99,7 +99,7 @@ function TenantApp() {
     const [page, setPage] = useState("dashboard");
     const [company, setCompany] = useState(null);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         setAuthToken(token);
     }, [token]);
 
