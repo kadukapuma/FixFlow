@@ -185,22 +185,28 @@ function Sidebar({ items = [], footerLabel, onLogout, mobilePrimaryKeys }) {
                     {expanded && <span className="sidebar__label">Collapse</span>}
                 </button>
 
-                <button className="sidebar__icon" title={expanded ? undefined : "Log out"} type="button" onClick={onLogout}>
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-                        <path
-                            d="M15 17l5-5-5-5M20 12H9M12 4H5v16h7"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        />
-                    </svg>
-                    {expanded && <span className="sidebar__label">Log out</span>}
-                </button>
+                <div className="sidebar__bottom-row">
+                    <div className="sidebar__profile" title={expanded ? undefined : footerLabel}>
+                        <div className="sidebar__avatar">{initial}</div>
+                        {expanded && <span className="sidebar__profile-label">{footerLabel}</span>}
+                    </div>
 
-                <div className="sidebar__profile" title={expanded ? undefined : footerLabel}>
-                    <div className="sidebar__avatar">{initial}</div>
-                    {expanded && <span className="sidebar__profile-label">{footerLabel}</span>}
+                    <button
+                        className="sidebar__icon sidebar__logout-btn"
+                        title="Log out"
+                        type="button"
+                        onClick={onLogout}
+                    >
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                            <path
+                                d="M15 17l5-5-5-5M20 12H9M12 4H5v16h7"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+                        </svg>
+                    </button>
                 </div>
             </div>
         </aside>

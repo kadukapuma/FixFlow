@@ -174,7 +174,8 @@
     color: #14151a;
 }
 
-.tenant-form input {
+.tenant-form input,
+.tenant-form select {
     font: inherit;
     padding: 10px 13px;
     border-radius: 10px;
@@ -183,7 +184,16 @@
     font-size: 13px;
 }
 
-.tenant-form input:focus {
+.tenant-form select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%239b9a8f' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 13px center;
+    padding-right: 32px;
+}
+
+.tenant-form input:focus,
+.tenant-form select:focus {
     outline: none;
     border-color: #ddfb5e;
     box-shadow: 0 0 0 3px rgba(221, 251, 94, 0.35);

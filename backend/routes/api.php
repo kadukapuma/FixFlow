@@ -68,6 +68,7 @@ Route::middleware('company')->group(function () {
         Route::post('/employees/{id}/activate', [EmployeeController::class, 'activate']);
         Route::post('/employees/{id}/deactivate', [EmployeeController::class, 'deactivate']);
 
+        Route::get('/customers/{id}/items', [ItemController::class, 'forCustomer']);
         Route::post('/items', [ItemController::class, 'store']);
 
         Route::get('/services', [ServiceController::class, 'index']);

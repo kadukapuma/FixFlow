@@ -60,9 +60,15 @@ function NewServiceWizard({ onClose, onCreated }) {
             return;
         }
 
+        if (payload.mode === "existing") {
+            setItem(payload.item);
+            setStep(3);
+            return;
+        }
+
         setSubmitting(true);
         try {
-            const response = await api.post("/items", { ...payload, customer_id: customer.id });
+            const response = await api.post("/items", { ...payload.values, customer_id: customer.id });
             setItem(response.data.item);
             setStep(3);
         } catch (err) {

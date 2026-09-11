@@ -13,7 +13,16 @@
     height: calc(100svh - 40px);
     box-sizing: border-box;
     transition: width 0.18s ease;
-    overflow: hidden;
+    overflow-x: hidden;
+    /* Falls back to a scroll rather than silently clipping the log-out/
+       profile row off the bottom when the window is too short to fit every
+       nav item at once. */
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.sidebar::-webkit-scrollbar {
+    display: none;
 }
 
 .sidebar.is-expanded {
@@ -91,6 +100,48 @@
 
 .sidebar.is-expanded .sidebar__bottom {
     align-items: stretch;
+}
+
+/* Collapsed rail: stack the avatar above the log-out icon, same 40px icon
+   button language (size, hover) as the nav icons above — two 40px circles
+   side by side don't fit the 76px rail cleanly, and looked thrown-together. */
+.sidebar__bottom-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+/* Expanded rail: room to put them in one row instead, avatar+name on the
+   left and log out on the right — matches the expand/collapse icon's own
+   inset above (padding: 0 10px) so both edges line up with it. */
+.sidebar.is-expanded .sidebar__bottom-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+}
+
+.sidebar__bottom-row .sidebar__profile {
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+.sidebar.is-expanded .sidebar__bottom-row .sidebar__profile {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+}
+
+.sidebar__logout-btn {
+    flex-shrink: 0;
+}
+
+.sidebar.is-expanded .sidebar__bottom-row .sidebar__logout-btn {
+    width: 40px;
+    justify-content: center;
+    padding: 0;
+    gap: 0;
 }
 
 .sidebar__profile {

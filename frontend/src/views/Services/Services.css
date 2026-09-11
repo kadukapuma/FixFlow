@@ -136,6 +136,12 @@
     color: #9b9a8f;
 }
 
+.wizard-result .status-badge,
+.wizard-confirmed__card .status-badge {
+    align-self: flex-start;
+    margin-top: 2px;
+}
+
 .wizard-suspended-tag {
     display: inline-block;
     margin-left: 8px;
