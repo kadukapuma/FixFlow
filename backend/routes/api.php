@@ -5,6 +5,7 @@ use App\Http\Controllers\Central\Admin\CompanyApprovalController;
 use App\Http\Controllers\Central\CompanyLoginLookupController;
 use App\Http\Controllers\Central\CompanyRegistrationController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\CompanySettingsController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
@@ -51,6 +52,11 @@ Route::middleware('company')->group(function () {
 
         Route::get('/company', [CompanyController::class, 'test']);
 
+        Route::get('/company/settings', [CompanySettingsController::class, 'show']);
+        Route::post('/company/settings', [CompanySettingsController::class, 'update']);
+        Route::post('/company/settings/preview', [CompanySettingsController::class, 'preview']);
+        Route::get('/company/logo', [CompanySettingsController::class, 'logo']);
+
         Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
 
         Route::get('/customers', [CustomerController::class, 'index']);
@@ -75,6 +81,7 @@ Route::middleware('company')->group(function () {
         Route::post('/services', [ServiceController::class, 'store']);
         Route::get('/services/search', [ServiceController::class, 'search']);
         Route::get('/services/{id}', [ServiceController::class, 'show']);
+        Route::get('/services/{id}/pdf', [ServiceController::class, 'pdf']);
         Route::post('/services/{id}/start', [ServiceController::class, 'start']);
         Route::post('/services/{id}/complete', [ServiceController::class, 'complete']);
         Route::post('/services/{id}/deliver', [ServiceController::class, 'deliver']);

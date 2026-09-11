@@ -175,7 +175,8 @@
 }
 
 .tenant-form input,
-.tenant-form select {
+.tenant-form select,
+.tenant-form textarea {
     font: inherit;
     padding: 10px 13px;
     border-radius: 10px;
@@ -193,10 +194,16 @@
 }
 
 .tenant-form input:focus,
-.tenant-form select:focus {
+.tenant-form select:focus,
+.tenant-form textarea:focus {
     outline: none;
     border-color: #ddfb5e;
     box-shadow: 0 0 0 3px rgba(221, 251, 94, 0.35);
+}
+
+.tenant-form textarea {
+    resize: vertical;
+    font-family: inherit;
 }
 
 .tenant-form .tenant-btn {

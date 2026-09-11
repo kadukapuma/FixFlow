@@ -21,6 +21,10 @@ class Company extends Model
         'is_active',
         'rejection_reason',
         'provisioning_error',
+        'logo_path',
+        'address',
+        'phone',
+        'terms_and_conditions',
     ];
 
     protected $hidden = [

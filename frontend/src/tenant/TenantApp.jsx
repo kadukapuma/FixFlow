@@ -9,6 +9,7 @@ import Services from "../views/Services/Services";
 import StartWork from "../views/StartWork/StartWork";
 import Completed from "../views/Completed/Completed";
 import Delivered from "../views/Delivered/Delivered";
+import CompanySettings from "../views/CompanySettings/CompanySettings";
 
 const DASHBOARD_ICON = (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
@@ -74,6 +75,25 @@ const COMPLETED_ICON = (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
         <path
             d="M20 6 9 17l-5-5"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const SETTINGS_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+        <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.05a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.05a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.05a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
             stroke="currentColor"
             strokeWidth="1.8"
             strokeLinecap="round"
@@ -181,6 +201,13 @@ function TenantApp() {
                 onClick: () => setPage("delivered"),
                 icon: DELIVERED_ICON,
             },
+            {
+                key: "settings",
+                title: "Settings",
+                active: page === "settings",
+                onClick: () => setPage("settings"),
+                icon: SETTINGS_ICON,
+            },
         ],
         footerLabel: company?.company,
         onLogout: logout,
@@ -209,6 +236,10 @@ function TenantApp() {
 
     if (page === "delivered") {
         return <Delivered shellProps={shellProps} />;
+    }
+
+    if (page === "settings") {
+        return <CompanySettings shellProps={shellProps} />;
     }
 
     return <TenantDashboard shellProps={shellProps} company={company} />;

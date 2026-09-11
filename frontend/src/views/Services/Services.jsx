@@ -3,6 +3,7 @@ import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import { SERVICE_STATUS_META } from "../../components/StatusBadge/serviceStatusMeta";
+import PdfViewerModal from "../../components/PdfViewerModal/PdfViewerModal";
 import { matchesServiceQuery } from "../../lib/serviceSearch";
 import { usePressedRow } from "../../lib/usePressedRow";
 import NewServiceWizard from "./NewServiceWizard";
@@ -14,6 +15,7 @@ function Services({ shellProps }) {
     const [wizardOpen, setWizardOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [expandedIds, setExpandedIds] = useState(new Set());
+    const [pdfService, setPdfService] = useState(null);
     const { pressedId, pressHandlers } = usePressedRow();
 
     function toggleExpanded(id) {
@@ -91,6 +93,7 @@ function Services({ shellProps }) {
                                 <th>Service date</th>
                                 <th>Status</th>
                                 <th>Price</th>
+                                <th>Document</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -137,12 +140,25 @@ function Services({ shellProps }) {
                                     <td data-label="Price">
                                         {service.price != null ? `Rs. ${service.price}` : "—"}
                                     </td>
+                                    <td data-label="Document" className="mobile-summary">
+                                        <button
+                                            type="button"
+                                            className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setPdfService(service);
+                                            }}
+                                            onPointerDown={(e) => e.stopPropagation()}
+                                        >
+                                            View PDF
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
 
                             {visibleServices.length === 0 && (
                                 <tr>
-                                    <td colSpan={8} className="tenant-table-empty">
+                                    <td colSpan={9} className="tenant-table-empty">
                                         {services.length === 0 ? "No services yet." : "No services match your search."}
                                     </td>
                                 </tr>
@@ -153,6 +169,14 @@ function Services({ shellProps }) {
             </section>
 
             {wizardOpen && <NewServiceWizard onClose={() => setWizardOpen(false)} onCreated={handleCreated} />}
+
+            {pdfService && (
+                <PdfViewerModal
+                    title={`Service #${pdfService.id}`}
+                    pdfUrl={`/services/${pdfService.id}/pdf`}
+                    onClose={() => setPdfService(null)}
+                />
+            )}
         </TenantShell>
     );
 }

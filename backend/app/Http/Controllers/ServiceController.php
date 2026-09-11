@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Employee;
 use App\Models\Item;
 use App\Models\Service;
+use App\Services\ServicePdfGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -85,11 +86,26 @@ class ServiceController extends Controller
         $validated['service_date'] ??= now()->toDateString();
 
         $service = Service::create($validated);
+        $service->load(['customer', 'item', 'employee']);
 
         return response()->json([
             'message' => 'Service created successfully.',
-            'service' => $service->load(['customer', 'item', 'employee']),
+            'service' => $service,
+            'pdf_url' => "/services/{$service->id}/pdf",
         ], 201);
+    }
+
+    public function pdf(int $id)
+    {
+        $service = Service::with(['customer', 'item', 'employee'])->findOrFail($id);
+        $pdf = ServicePdfGenerator::render($service, app('currentCompany'));
+
+        $filename = 'service-'.($service->ref_no ?: $service->id).'.pdf';
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+        ]);
     }
 
     public function start(Request $request, int $id)

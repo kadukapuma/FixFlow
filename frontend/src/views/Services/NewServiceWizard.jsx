@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import Modal from "../../components/Modal/Modal";
+import PdfViewerModal from "../../components/PdfViewerModal/PdfViewerModal";
 import { showToast } from "../../lib/toast";
 import CustomerStep from "./CustomerStep";
 import ItemStep from "./ItemStep";
@@ -18,6 +19,8 @@ function NewServiceWizard({ onClose, onCreated }) {
     const [item, setItem] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
+    const [createdService, setCreatedService] = useState(null);
+    const [pdfOpen, setPdfOpen] = useState(false);
 
     function resolveCustomer(newCustomer) {
         if (customer && customer.id !== newCustomer.id) {
@@ -95,12 +98,51 @@ function NewServiceWizard({ onClose, onCreated }) {
                 service_date: values.service_date,
             });
             showToast(`Service #${response.data.service.id} created.`);
-            onCreated(response.data.service);
+            setCreatedService({ ...response.data.service, pdf_url: response.data.pdf_url });
         } catch (err) {
             setError(getErrorMessage(err, "Unable to save service."));
         } finally {
             setSubmitting(false);
         }
+    }
+
+    function handleDone() {
+        onCreated(createdService);
+    }
+
+    if (createdService) {
+        return (
+            <>
+                <Modal title="Service created" onClose={handleDone} maxWidth={480}>
+                    <div className="wizard-step">
+                        <p>
+                            Service <strong>#{createdService.id}</strong> was created successfully. You can view and
+                            print the customer's service document now, or later from the services list.
+                        </p>
+                        <div className="tenant-form__actions">
+                            <button type="button" className="tenant-btn tenant-btn--ghost" onClick={handleDone}>
+                                Done
+                            </button>
+                            <button
+                                type="button"
+                                className="tenant-btn tenant-btn--primary"
+                                onClick={() => setPdfOpen(true)}
+                            >
+                                View / Print PDF
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+
+                {pdfOpen && (
+                    <PdfViewerModal
+                        title={`Service #${createdService.id}`}
+                        pdfUrl={createdService.pdf_url}
+                        onClose={() => setPdfOpen(false)}
+                    />
+                )}
+            </>
+        );
     }
 
     return (
