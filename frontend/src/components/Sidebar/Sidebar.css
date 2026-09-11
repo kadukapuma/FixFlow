@@ -167,4 +167,156 @@
         flex-direction: row-reverse;
         flex-shrink: 0;
     }
+
+    /* Compact bottom tab bar (tenant nav only — see mobilePrimaryKeys).
+       Pinned to the bottom of the viewport instead of sitting in normal
+       flow at the top, matching a native app's tab bar. */
+    .sidebar.sidebar--bottom-nav {
+        position: fixed;
+        left: 50%;
+        right: auto;
+        bottom: 12px;
+        top: auto;
+        transform: translateX(-50%);
+        width: calc(100% - 32px);
+        max-width: 460px;
+        border-radius: 999px;
+        padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+        z-index: 50;
+        gap: 6px;
+    }
+
+    .sidebar--bottom-nav .sidebar__nav {
+        justify-content: space-around;
+        align-items: stretch;
+        gap: 2px;
+        overflow: visible;
+    }
+
+    .sidebar__tab {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        border: none;
+        background: transparent;
+        color: #8f9099;
+        border-radius: 12px;
+        padding: 6px 2px;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .sidebar__tab.is-active {
+        color: #ddfb5e;
+    }
+
+    .sidebar__tab-label {
+        font-size: 10px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+
+    .sidebar__more-toggle svg {
+        transition: transform 0.15s ease;
+    }
+
+    .sidebar__more-toggle.is-open svg {
+        transform: rotate(180deg);
+    }
+
+    .sidebar__more-backdrop {
+        position: fixed;
+        inset: 0;
+        border: none;
+        background: transparent;
+        padding: 0;
+        z-index: 45;
+    }
+
+    .sidebar__more-sheet {
+        position: absolute;
+        left: 50%;
+        bottom: calc(100% + 10px);
+        transform: translateX(-50%);
+        width: 100%;
+        min-width: 200px;
+        background: #16171c;
+        border-radius: 16px;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+        z-index: 55;
+    }
+
+    .sidebar__more-profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        border: none;
+        background: transparent;
+        padding: 10px 12px 12px;
+        margin-bottom: 4px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        color: #d9d8d2;
+        font: inherit;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .sidebar__more-profile-label {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 13px;
+        font-weight: 700;
+        text-align: left;
+    }
+
+    .sidebar__more-profile-logout {
+        flex-shrink: 0;
+        font-size: 11px;
+        font-weight: 600;
+        color: #8f9099;
+    }
+
+    .sidebar__more-profile:hover .sidebar__more-profile-logout {
+        color: #d9d8d2;
+    }
+
+    .sidebar__more-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border: none;
+        background: transparent;
+        color: #d9d8d2;
+        padding: 11px 12px;
+        border-radius: 10px;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .sidebar__more-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    .sidebar__more-item.is-active {
+        background: #ddfb5e;
+        color: #14151a;
+    }
 }

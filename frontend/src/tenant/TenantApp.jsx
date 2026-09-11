@@ -184,6 +184,7 @@ function TenantApp() {
         ],
         footerLabel: company?.company,
         onLogout: logout,
+        mobilePrimaryKeys: ["dashboard", "services", "start-work", "completed"],
     };
 
     if (page === "customers") {

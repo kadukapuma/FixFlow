@@ -337,6 +337,13 @@
         padding: 12px;
     }
 
+    /* The sidebar becomes a fixed bottom tab bar on mobile (see Sidebar.css),
+       so it no longer reserves space in normal flow — leave room for it here
+       instead, or the last card in every page would sit underneath it. */
+    .tenant-shell__main {
+        padding-bottom: 88px;
+    }
+
     .tenant-form {
         grid-template-columns: 1fr;
     }

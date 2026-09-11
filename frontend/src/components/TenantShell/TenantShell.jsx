@@ -1,10 +1,25 @@
 import Sidebar from "../Sidebar/Sidebar";
 import "./TenantShell.css";
 
-function TenantShell({ sidebarItems, footerLabel, onLogout, title, subtitle, actions, error, children }) {
+function TenantShell({
+    sidebarItems,
+    footerLabel,
+    onLogout,
+    mobilePrimaryKeys,
+    title,
+    subtitle,
+    actions,
+    error,
+    children,
+}) {
     return (
         <div className="tenant-shell">
-            <Sidebar items={sidebarItems} footerLabel={footerLabel} onLogout={onLogout} />
+            <Sidebar
+                items={sidebarItems}
+                footerLabel={footerLabel}
+                onLogout={onLogout}
+                mobilePrimaryKeys={mobilePrimaryKeys}
+            />
 
             <div className="tenant-shell__main">
                 <header className="tenant-header">
