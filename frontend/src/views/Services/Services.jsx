@@ -4,8 +4,11 @@ import TenantShell from "../../components/TenantShell/TenantShell";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import { SERVICE_STATUS_META } from "../../components/StatusBadge/serviceStatusMeta";
 import PdfViewerModal from "../../components/PdfViewerModal/PdfViewerModal";
+import Modal from "../../components/Modal/Modal";
+import DateActionForm from "../../components/DateActionForm/DateActionForm";
 import { matchesServiceQuery } from "../../lib/serviceSearch";
 import { usePressedRow } from "../../lib/usePressedRow";
+import { showToast } from "../../lib/toast";
 import NewServiceWizard from "./NewServiceWizard";
 import "./Services.css";
 
@@ -16,6 +19,9 @@ function Services({ shellProps }) {
     const [search, setSearch] = useState("");
     const [expandedIds, setExpandedIds] = useState(new Set());
     const [pdfService, setPdfService] = useState(null);
+    const [startingService, setStartingService] = useState(null);
+    const [startError, setStartError] = useState("");
+    const [starting, setStarting] = useState(false);
     const { pressedId, pressHandlers } = usePressedRow();
 
     function toggleExpanded(id) {
@@ -49,6 +55,29 @@ function Services({ shellProps }) {
     function handleCreated() {
         setWizardOpen(false);
         loadServices();
+    }
+
+    function closeStartModal() {
+        setStartingService(null);
+        setStartError("");
+    }
+
+    async function handleStart(startedDate) {
+        setStarting(true);
+        setStartError("");
+
+        try {
+            const response = await api.post(`/services/${startingService.id}/start`, { started_date: startedDate });
+            setServices((prev) =>
+                prev.map((service) => (service.id === response.data.service.id ? response.data.service : service))
+            );
+            showToast("Service started.");
+            closeStartModal();
+        } catch (err) {
+            setStartError(getErrorMessage(err, "Unable to start service."));
+        } finally {
+            setStarting(false);
+        }
     }
 
     const openCount = services.filter((service) => service.status !== "delivered").length;
@@ -140,18 +169,33 @@ function Services({ shellProps }) {
                                     <td data-label="Price">
                                         {service.price != null ? `Rs. ${service.price}` : "—"}
                                     </td>
-                                    <td data-label="Document" className="mobile-summary">
-                                        <button
-                                            type="button"
-                                            className="tenant-btn tenant-btn--ghost tenant-btn--sm"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setPdfService(service);
-                                            }}
-                                            onPointerDown={(e) => e.stopPropagation()}
-                                        >
-                                            View PDF
-                                        </button>
+                                    <td data-label="Document">
+                                        <div className="tenant-table-actions">
+                                            {service.status === "pending" && (
+                                                <button
+                                                    type="button"
+                                                    className="tenant-btn tenant-btn--primary tenant-btn--sm"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setStartingService(service);
+                                                    }}
+                                                    onPointerDown={(e) => e.stopPropagation()}
+                                                >
+                                                    Start Service
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setPdfService(service);
+                                                }}
+                                                onPointerDown={(e) => e.stopPropagation()}
+                                            >
+                                                View PDF
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -176,6 +220,19 @@ function Services({ shellProps }) {
                     pdfUrl={`/services/${pdfService.id}/pdf`}
                     onClose={() => setPdfService(null)}
                 />
+            )}
+
+            {startingService && (
+                <Modal title={`Start service #${startingService.id}`} onClose={closeStartModal}>
+                    <DateActionForm
+                        label="Start date"
+                        submitLabel="Start"
+                        submitting={starting}
+                        error={startError}
+                        onSubmit={handleStart}
+                        onCancel={closeStartModal}
+                    />
+                </Modal>
             )}
         </TenantShell>
     );

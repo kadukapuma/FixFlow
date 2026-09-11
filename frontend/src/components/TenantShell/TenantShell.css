@@ -217,6 +217,7 @@
 .tenant-form--1col {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: 14px;
 }
 
