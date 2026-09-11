@@ -307,10 +307,16 @@
 
 .clickable-row {
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .clickable-row:hover td {
     background: #fbfaf6;
+}
+
+.clickable-row:active td,
+.clickable-row.tenant-row--pressed td {
+    background: #f2f1ea;
 }
 
 .tenant-table-empty {
@@ -365,6 +371,45 @@
         margin-bottom: 0;
     }
 
+    /* Tap feedback for cards you can touch — the expand toggle and the
+       click-to-open-detail rows. `.tenant-row--pressed` is applied via
+       Pointer Events (see usePressedRow) rather than relying only on CSS
+       :active — mobile Safari only honors :active on elements with a
+       listener bound directly to them, and React's delegated onClick
+       doesn't qualify, so the highlight silently failed to appear on real
+       phones. The :active rules stay too, as a bonus for mouse/desktop. */
+    .tenant-shell tbody tr[data-toggle],
+    .tenant-shell tbody tr.clickable-row {
+        -webkit-tap-highlight-color: transparent;
+        transition: background 0.1s ease;
+    }
+
+    .tenant-shell tbody tr[data-toggle]:active,
+    .tenant-shell tbody tr.clickable-row:active,
+    .tenant-shell tbody tr[data-toggle].tenant-row--pressed,
+    .tenant-shell tbody tr.clickable-row.tenant-row--pressed {
+        background: #f2f1ea;
+    }
+
+    /* The press feedback above only lasts as long as the finger is down —
+       too brief to register as "highlighted" once the tap completes. Keep a
+       lighter, persistent tint on whichever card is currently open (expanded
+       in place, or its detail modal is up) until it's closed again. */
+    .tenant-shell tbody tr[data-toggle].tenant-row--expanded {
+        background: #f7f6f0;
+    }
+
+    .tenant-shell tbody tr.clickable-row.tenant-row--selected td {
+        background: #f7f6f0;
+    }
+
+    /* Tapping an already-open card (to collapse it) should still show the
+       darker in-progress press tint over the lighter "stays open" one. */
+    .tenant-shell tbody tr[data-toggle].tenant-row--expanded:active,
+    .tenant-shell tbody tr[data-toggle].tenant-row--expanded.tenant-row--pressed {
+        background: #f2f1ea;
+    }
+
     .tenant-shell td {
         display: flex;
         justify-content: space-between;
@@ -406,5 +451,41 @@
     .tenant-shell td .tenant-table-actions {
         justify-content: flex-end;
         flex-wrap: wrap;
+    }
+
+    /* Opt-in per-table: collapse each card to a few summary fields, revealing
+       the rest only once the card is tapped open. Tables that don't add this
+       class (Dashboard, StartWork's work log) keep showing every field, since
+       they're already short. */
+    .tenant-shell table.tenant-table--collapsible tbody tr:not(.tenant-row--expanded) td:not(.mobile-summary):not([colspan]) {
+        display: none;
+    }
+
+    .tenant-shell table.tenant-table--collapsible tbody tr[data-toggle] {
+        cursor: pointer;
+    }
+
+    /* Chevron affordance on the first visible summary cell, hinting the card
+       expands (rotates open) or opens a detail view on tap. */
+    .tenant-shell table.tenant-table--collapsible td.mobile-summary:first-child {
+        position: relative;
+        padding-right: 20px;
+    }
+
+    .tenant-shell table.tenant-table--collapsible td.mobile-summary:first-child::after {
+        content: "";
+        position: absolute;
+        top: 16px;
+        right: 2px;
+        width: 7px;
+        height: 7px;
+        border-right: 2px solid #b6b4a8;
+        border-bottom: 2px solid #b6b4a8;
+        transform: rotate(-45deg);
+        transition: transform 0.15s ease;
+    }
+
+    .tenant-shell table.tenant-table--collapsible tr.tenant-row--expanded td.mobile-summary:first-child::after {
+        transform: rotate(45deg);
     }
 }

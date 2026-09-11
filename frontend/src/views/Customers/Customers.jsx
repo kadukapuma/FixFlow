@@ -5,6 +5,7 @@ import Modal from "../../components/Modal/Modal";
 import CustomerForm from "../../components/CustomerForm/CustomerForm";
 import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
+import { usePressedRow } from "../../lib/usePressedRow";
 
 function Customers({ shellProps }) {
     const [customers, setCustomers] = useState([]);
@@ -14,10 +15,24 @@ function Customers({ shellProps }) {
     const [formError, setFormError] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [busyId, setBusyId] = useState(null);
+    const [expandedIds, setExpandedIds] = useState(new Set());
+    const { pressedId, pressHandlers } = usePressedRow();
 
     useEffect(() => {
         loadCustomers();
     }, []);
+
+    function toggleExpanded(id) {
+        setExpandedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    }
 
     async function loadCustomers() {
         try {
@@ -125,7 +140,7 @@ function Customers({ shellProps }) {
                 </div>
 
                 <div className="tenant-table-scroll">
-                    <table>
+                    <table className="tenant-table--collapsible">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -138,8 +153,19 @@ function Customers({ shellProps }) {
                         </thead>
                         <tbody>
                             {customers.map((customer) => (
-                                <tr key={customer.id}>
-                                    <td data-label="Name">
+                                <tr
+                                    key={customer.id}
+                                    data-toggle
+                                    className={[
+                                        expandedIds.has(customer.id) ? "tenant-row--expanded" : "",
+                                        pressedId === customer.id ? "tenant-row--pressed" : "",
+                                    ]
+                                        .filter(Boolean)
+                                        .join(" ")}
+                                    onClick={() => toggleExpanded(customer.id)}
+                                    {...pressHandlers(customer.id)}
+                                >
+                                    <td data-label="Name" className="mobile-summary">
                                         <div className="tenant-cell">
                                             <strong>{customer.name}</strong>
                                         </div>
@@ -153,6 +179,8 @@ function Customers({ shellProps }) {
                                             checked={customer.is_suspended}
                                             disabled={busyId === customer.id}
                                             onChange={() => toggleSuspended(customer)}
+                                            onClick={(e) => e.stopPropagation()}
+                                            onPointerDown={(e) => e.stopPropagation()}
                                             title={
                                                 customer.is_suspended
                                                     ? "Suspended — click to reinstate"
@@ -160,8 +188,12 @@ function Customers({ shellProps }) {
                                             }
                                         />
                                     </td>
-                                    <td data-label="Actions">
-                                        <div className="tenant-table-actions">
+                                    <td data-label="Actions" className="mobile-summary">
+                                        <div
+                                            className="tenant-table-actions"
+                                            onClick={(e) => e.stopPropagation()}
+                                            onPointerDown={(e) => e.stopPropagation()}
+                                        >
                                             <button
                                                 className="tenant-btn tenant-btn--ghost tenant-btn--sm"
                                                 type="button"

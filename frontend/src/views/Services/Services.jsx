@@ -4,6 +4,7 @@ import TenantShell from "../../components/TenantShell/TenantShell";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import { SERVICE_STATUS_META } from "../../components/StatusBadge/serviceStatusMeta";
 import { matchesServiceQuery } from "../../lib/serviceSearch";
+import { usePressedRow } from "../../lib/usePressedRow";
 import NewServiceWizard from "./NewServiceWizard";
 import "./Services.css";
 
@@ -12,6 +13,20 @@ function Services({ shellProps }) {
     const [error, setError] = useState("");
     const [wizardOpen, setWizardOpen] = useState(false);
     const [search, setSearch] = useState("");
+    const [expandedIds, setExpandedIds] = useState(new Set());
+    const { pressedId, pressHandlers } = usePressedRow();
+
+    function toggleExpanded(id) {
+        setExpandedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    }
 
     async function loadServices() {
         try {
@@ -65,7 +80,7 @@ function Services({ shellProps }) {
                 </div>
 
                 <div className="tenant-table-scroll">
-                    <table>
+                    <table className="tenant-table--collapsible">
                         <thead>
                             <tr>
                                 <th>Service ID</th>
@@ -80,14 +95,25 @@ function Services({ shellProps }) {
                         </thead>
                         <tbody>
                             {visibleServices.map((service) => (
-                                <tr key={service.id}>
-                                    <td data-label="Service ID">
+                                <tr
+                                    key={service.id}
+                                    data-toggle
+                                    className={[
+                                        expandedIds.has(service.id) ? "tenant-row--expanded" : "",
+                                        pressedId === service.id ? "tenant-row--pressed" : "",
+                                    ]
+                                        .filter(Boolean)
+                                        .join(" ")}
+                                    onClick={() => toggleExpanded(service.id)}
+                                    {...pressHandlers(service.id)}
+                                >
+                                    <td data-label="Service ID" className="mobile-summary">
                                         <div className="tenant-cell">
                                             <strong>#{service.id}</strong>
                                             {service.ref_no && <span>{service.ref_no}</span>}
                                         </div>
                                     </td>
-                                    <td data-label="Customer">
+                                    <td data-label="Customer" className="mobile-summary">
                                         <div className="tenant-cell">
                                             <strong>{service.customer?.name}</strong>
                                             <span>{service.customer?.nic}</span>
@@ -105,10 +131,12 @@ function Services({ shellProps }) {
                                     <td data-label="Fault">{service.fault || "—"}</td>
                                     <td data-label="Technician">{service.employee?.name}</td>
                                     <td data-label="Service date">{service.service_date || "—"}</td>
-                                    <td data-label="Status">
+                                    <td data-label="Status" className="mobile-summary">
                                         <StatusBadge status={service.status} meta={SERVICE_STATUS_META} />
                                     </td>
-                                    <td data-label="Price">{service.price != null ? `Rs. ${service.price}` : "—"}</td>
+                                    <td data-label="Price">
+                                        {service.price != null ? `Rs. ${service.price}` : "—"}
+                                    </td>
                                 </tr>
                             ))}
 

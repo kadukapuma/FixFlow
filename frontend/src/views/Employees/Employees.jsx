@@ -5,6 +5,7 @@ import Modal from "../../components/Modal/Modal";
 import EmployeeForm from "../../components/EmployeeForm/EmployeeForm";
 import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
+import { usePressedRow } from "../../lib/usePressedRow";
 
 function Employees({ shellProps }) {
     const [employees, setEmployees] = useState([]);
@@ -14,10 +15,24 @@ function Employees({ shellProps }) {
     const [formError, setFormError] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [busyId, setBusyId] = useState(null);
+    const [expandedIds, setExpandedIds] = useState(new Set());
+    const { pressedId, pressHandlers } = usePressedRow();
 
     useEffect(() => {
         loadEmployees();
     }, []);
+
+    function toggleExpanded(id) {
+        setExpandedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    }
 
     async function loadEmployees() {
         try {
@@ -145,7 +160,7 @@ function Employees({ shellProps }) {
                 </div>
 
                 <div className="tenant-table-scroll">
-                    <table>
+                    <table className="tenant-table--collapsible">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -159,8 +174,19 @@ function Employees({ shellProps }) {
                         </thead>
                         <tbody>
                             {employees.map((employee) => (
-                                <tr key={employee.id}>
-                                    <td data-label="Name">
+                                <tr
+                                    key={employee.id}
+                                    data-toggle
+                                    className={[
+                                        expandedIds.has(employee.id) ? "tenant-row--expanded" : "",
+                                        pressedId === employee.id ? "tenant-row--pressed" : "",
+                                    ]
+                                        .filter(Boolean)
+                                        .join(" ")}
+                                    onClick={() => toggleExpanded(employee.id)}
+                                    {...pressHandlers(employee.id)}
+                                >
+                                    <td data-label="Name" className="mobile-summary">
                                         <div className="tenant-cell">
                                             <strong>{employee.name}</strong>
                                         </div>
@@ -180,11 +206,17 @@ function Employees({ shellProps }) {
                                             checked={employee.is_active}
                                             disabled={busyId === employee.id}
                                             onChange={() => toggleActive(employee)}
+                                            onClick={(e) => e.stopPropagation()}
+                                            onPointerDown={(e) => e.stopPropagation()}
                                             title={employee.is_active ? "Active — click to deactivate" : "Inactive — click to activate"}
                                         />
                                     </td>
-                                    <td data-label="Actions">
-                                        <div className="tenant-table-actions">
+                                    <td data-label="Actions" className="mobile-summary">
+                                        <div
+                                            className="tenant-table-actions"
+                                            onClick={(e) => e.stopPropagation()}
+                                            onPointerDown={(e) => e.stopPropagation()}
+                                        >
                                             <button
                                                 className="tenant-btn tenant-btn--ghost tenant-btn--sm"
                                                 type="button"

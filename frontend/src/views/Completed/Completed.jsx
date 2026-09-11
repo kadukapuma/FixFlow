@@ -4,12 +4,14 @@ import TenantShell from "../../components/TenantShell/TenantShell";
 import Modal from "../../components/Modal/Modal";
 import ServiceDetails from "../../components/ServiceDetails/ServiceDetails";
 import { matchesServiceQuery } from "../../lib/serviceSearch";
+import { usePressedRow } from "../../lib/usePressedRow";
 
 function Completed({ shellProps }) {
     const [services, setServices] = useState([]);
     const [error, setError] = useState("");
     const [selectedId, setSelectedId] = useState(null);
     const [search, setSearch] = useState("");
+    const { pressedId, pressHandlers } = usePressedRow();
 
     async function loadServices() {
         try {
@@ -47,7 +49,7 @@ function Completed({ shellProps }) {
                 </div>
 
                 <div className="tenant-table-scroll">
-                    <table>
+                    <table className="tenant-table--collapsible">
                         <thead>
                             <tr>
                                 <th>Service ID</th>
@@ -62,16 +64,23 @@ function Completed({ shellProps }) {
                             {visibleServices.map((service) => (
                                 <tr
                                     key={service.id}
-                                    className="clickable-row"
+                                    className={[
+                                        "clickable-row",
+                                        pressedId === service.id ? "tenant-row--pressed" : "",
+                                        selectedId === service.id ? "tenant-row--selected" : "",
+                                    ]
+                                        .filter(Boolean)
+                                        .join(" ")}
                                     onClick={() => setSelectedId(service.id)}
+                                    {...pressHandlers(service.id)}
                                 >
-                                    <td data-label="Service ID">
+                                    <td data-label="Service ID" className="mobile-summary">
                                         <div className="tenant-cell">
                                             <strong>#{service.id}</strong>
                                             {service.ref_no && <span>{service.ref_no}</span>}
                                         </div>
                                     </td>
-                                    <td data-label="Customer">
+                                    <td data-label="Customer" className="mobile-summary">
                                         <div className="tenant-cell">
                                             <strong>{service.customer?.name}</strong>
                                             <span>{service.customer?.nic}</span>
@@ -79,8 +88,10 @@ function Completed({ shellProps }) {
                                     </td>
                                     <td data-label="Item">{service.item?.name}</td>
                                     <td data-label="Technician">{service.employee?.name}</td>
-                                    <td data-label="Completed date">{service.completed_date || "—"}</td>
-                                    <td data-label="Price">{service.price != null ? `Rs. ${service.price}` : "—"}</td>
+                                    <td data-label="Completed date" className="mobile-summary">{service.completed_date || "—"}</td>
+                                    <td data-label="Price">
+                                        {service.price != null ? `Rs. ${service.price}` : "—"}
+                                    </td>
                                 </tr>
                             ))}
 
