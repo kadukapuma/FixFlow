@@ -5,6 +5,15 @@ multi-tenant with a database per company) from your dev machine to a real
 server. Follow it top to bottom on a fresh box; skip to the relevant section
 for routine updates.
 
+**Deploying under Webuzo, sharing a VPS with an existing site on the root
+domain?** This doc assumes a hand-rolled nginx+VPS setup with no control
+panel, and uses `fixflow.com` as the domain. For a Webuzo-managed VPS where
+the root domain is already used by another site (e.g. `kreethya.com` for a
+company website), see the actual production runbook instead — it covers
+Webuzo's DNS/SSL/Git-deploy/vhost specifics and uses `fixflow.kreethya.com`
+as the real domain. The Laravel-specific steps below (composer, `.env`,
+migrations, seeding, cache commands) still apply as written either way.
+
 ## 1. What's actually being deployed
 
 - **Backend** (`backend/`) — Laravel API. Needs PHP-FPM + MySQL.

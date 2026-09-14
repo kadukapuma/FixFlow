@@ -65,9 +65,12 @@ class MigrateCompanies extends Command
 
                 $this->info('✓ Database connection successful.');
 
-                // Migration options.
+                // Migration options. Only shared + tenant-specific migrations
+                // are run against company databases (central-only migrations,
+                // e.g. the companies table, live in database/migrations/central).
                 $migrationOptions = [
                     '--database' => 'company',
+                    '--path' => ['database/migrations', 'database/migrations/tenant'],
                     '--force' => true,
                 ];
 

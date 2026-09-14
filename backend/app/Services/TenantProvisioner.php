@@ -67,6 +67,7 @@ class TenantProvisioner
 
         Artisan::call('migrate', [
             '--database' => 'company',
+            '--path' => ['database/migrations', 'database/migrations/tenant'],
             '--force' => true,
         ]);
     }
