@@ -30,7 +30,7 @@ export function getSubdomain() {
     }
 
     if (ROOT_DOMAIN) {
-        if (host === ROOT_DOMAIN) {
+        if (host === ROOT_DOMAIN || host === "www." + ROOT_DOMAIN) {
             return null;
         }
 
