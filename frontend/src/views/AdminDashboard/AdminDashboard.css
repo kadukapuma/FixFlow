@@ -349,6 +349,35 @@
 .admin-table-card__actions {
     display: flex;
     gap: 6px;
+    align-items: center;
+}
+
+.subscription-image-modal {
+    display: flex;
+    justify-content: center;
+}
+
+.subscription-image-modal img {
+    max-width: 100%;
+    max-height: 70vh;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+.admin-receipts__no-file {
+    font-size: 12px;
+    color: #9b9a8f;
+    font-style: italic;
+}
+
+.admin-price-input {
+    font: inherit;
+    font-size: 13px;
+    width: 90px;
+    padding: 6px 9px;
+    border-radius: 8px;
+    border: 1px solid #e6e4da;
+    background: #fbfaf6;
 }
 
 .admin-table-card__empty {

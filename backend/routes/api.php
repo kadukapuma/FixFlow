@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Central\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Central\Admin\CompanyApprovalController;
+use App\Http\Controllers\Central\Admin\SubscriptionReceiptController as AdminSubscriptionReceiptController;
 use App\Http\Controllers\Central\CompanyLoginLookupController;
 use App\Http\Controllers\Central\CompanyRegistrationController;
 use App\Http\Controllers\CompanyController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\Tenant\AuthController as TenantAuthController;
 use App\Http\Controllers\WorkController;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +36,13 @@ Route::middleware(['auth:sanctum', 'super_admin'])->prefix('admin')->group(funct
     Route::post('/companies/{company}/reject', [CompanyApprovalController::class, 'reject']);
     Route::post('/companies/{company}/deactivate', [CompanyApprovalController::class, 'deactivate']);
     Route::post('/companies/{company}/activate', [CompanyApprovalController::class, 'activate']);
+    Route::put('/companies/{company}/subscription-price', [CompanyApprovalController::class, 'updatePrice']);
+
+    Route::get('/receipts', [AdminSubscriptionReceiptController::class, 'index']);
+    Route::get('/receipts/{receipt}/file', [AdminSubscriptionReceiptController::class, 'file']);
+    Route::delete('/receipts/{receipt}/file', [AdminSubscriptionReceiptController::class, 'destroyFile']);
+    Route::post('/receipts/{receipt}/approve', [AdminSubscriptionReceiptController::class, 'approve']);
+    Route::post('/receipts/{receipt}/reject', [AdminSubscriptionReceiptController::class, 'reject']);
 });
 
 /*
@@ -56,6 +65,10 @@ Route::middleware('company')->group(function () {
         Route::post('/company/settings', [CompanySettingsController::class, 'update']);
         Route::post('/company/settings/preview', [CompanySettingsController::class, 'preview']);
         Route::get('/company/logo', [CompanySettingsController::class, 'logo']);
+
+        Route::get('/company/subscription', [SubscriptionController::class, 'show']);
+        Route::post('/company/subscription/receipts', [SubscriptionController::class, 'storeReceipt']);
+        Route::get('/company/subscription/receipts/{receipt}', [SubscriptionController::class, 'receiptFile']);
 
         Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
 

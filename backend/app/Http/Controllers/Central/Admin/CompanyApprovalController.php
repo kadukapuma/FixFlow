@@ -16,7 +16,7 @@ class CompanyApprovalController extends Controller
         );
     }
 
-    public function approve(Company $company)
+    public function approve(Request $request, Company $company)
     {
         if (!in_array($company->status, [Company::STATUS_PENDING, Company::STATUS_FAILED], true)) {
             return response()->json([
@@ -24,16 +24,49 @@ class CompanyApprovalController extends Controller
             ], 422);
         }
 
+        $validated = $request->validate([
+            'subscription_price' => [
+                $company->subscription_price === null ? 'required' : 'nullable',
+                'numeric',
+                'min:0',
+            ],
+        ]);
+
         $company->update([
             'status' => Company::STATUS_PROVISIONING,
             'rejection_reason' => null,
             'provisioning_error' => null,
+            ...(isset($validated['subscription_price']) ? ['subscription_price' => $validated['subscription_price']] : []),
         ]);
 
         ProvisionTenantCompany::dispatch($company);
 
         return response()->json([
             'message' => 'Approval queued. The tenant database is being provisioned.',
+            'company' => $company->fresh(),
+        ]);
+    }
+
+    public function updatePrice(Request $request, Company $company)
+    {
+        $validated = $request->validate([
+            'subscription_price' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        // Companies approved before subscription tracking existed have no
+        // active_until/grace_ends_at at all, so they'd never enter a billing
+        // cycle. Starting the clock here, the first time a price is set on
+        // an already-approved company, brings them onto the same schedule
+        // new approvals get automatically.
+        if ($company->status === Company::STATUS_APPROVED && !$company->active_until) {
+            $validated['active_until'] = now()->addDays(30);
+            $validated['grace_ends_at'] = now()->addDays(35);
+        }
+
+        $company->update($validated);
+
+        return response()->json([
+            'message' => 'Subscription price updated.',
             'company' => $company->fresh(),
         ]);
     }

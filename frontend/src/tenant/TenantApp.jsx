@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useState } from "react";
 import api, { setAuthToken } from "../api";
 import { confirmAction } from "../lib/confirm";
+import { usePageParam } from "../lib/usePageParam";
 import TenantLogin from "../views/TenantLogin/TenantLogin";
 import TenantDashboard from "../views/TenantDashboard/TenantDashboard";
 import Customers from "../views/Customers/Customers";
@@ -10,6 +11,7 @@ import StartWork from "../views/StartWork/StartWork";
 import Completed from "../views/Completed/Completed";
 import Delivered from "../views/Delivered/Delivered";
 import CompanySettings from "../views/CompanySettings/CompanySettings";
+import Subscription from "../views/Subscription/Subscription";
 
 const DASHBOARD_ICON = (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
@@ -102,6 +104,18 @@ const SETTINGS_ICON = (
     </svg>
 );
 
+const SUBSCRIPTION_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M3 6.5h18M3 6.5v11a1.5 1.5 0 0 0 1.5 1.5h15a1.5 1.5 0 0 0 1.5-1.5v-11M3 6.5l1.5-3h15l1.5 3M7 15h4"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
 const DELIVERED_ICON = (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
         <path
@@ -116,7 +130,7 @@ const DELIVERED_ICON = (
 
 function TenantApp() {
     const [token, setToken] = useState(() => localStorage.getItem("tenant_token"));
-    const [page, setPage] = useState("dashboard");
+    const [page, setPage] = usePageParam("dashboard");
     const [company, setCompany] = useState(null);
 
     useLayoutEffect(() => {
@@ -208,6 +222,13 @@ function TenantApp() {
                 onClick: () => setPage("settings"),
                 icon: SETTINGS_ICON,
             },
+            {
+                key: "subscription",
+                title: "Subscription",
+                active: page === "subscription",
+                onClick: () => setPage("subscription"),
+                icon: SUBSCRIPTION_ICON,
+            },
         ],
         footerLabel: company?.company,
         onLogout: logout,
@@ -240,6 +261,10 @@ function TenantApp() {
 
     if (page === "settings") {
         return <CompanySettings shellProps={shellProps} />;
+    }
+
+    if (page === "subscription") {
+        return <Subscription shellProps={shellProps} />;
     }
 
     return <TenantDashboard shellProps={shellProps} company={company} />;

@@ -1,0 +1,44 @@
+.subscription__loading {
+    padding: 24px;
+    color: #6b7280;
+}
+
+.subscription__full {
+    grid-column: 1 / -1;
+}
+
+.subscription-banner {
+    margin: 0;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.subscription-banner--warning {
+    background: #fbf0d9;
+    color: #8a5a0d;
+}
+
+.subscription-banner--danger {
+    background: #fadfe1;
+    color: #c22b3a;
+}
+
+.subscription-receipt-error {
+    margin: 4px 0 0;
+    font-size: 11px;
+    color: #c22b3a;
+}
+
+.subscription-image-modal {
+    display: flex;
+    justify-content: center;
+}
+
+.subscription-image-modal img {
+    max-width: 100%;
+    max-height: 70vh;
+    border-radius: 8px;
+    object-fit: contain;
+}

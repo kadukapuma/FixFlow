@@ -42,4 +42,28 @@ export function getErrorMessage(error, fallback = "Something went wrong.") {
     return error.response?.data?.message || fallback;
 }
 
+// A token can go bad mid-session (e.g. a company is auto-deactivated for a
+// lapsed subscription, which revokes every session token). Without this, the
+// UI would just keep failing requests silently instead of returning to login.
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            const isAdmin = window.location.pathname.startsWith("/admin");
+
+            if (isAdmin) {
+                localStorage.removeItem("admin_token");
+                localStorage.removeItem("admin_info");
+            } else {
+                localStorage.removeItem("tenant_token");
+            }
+
+            setAuthToken(null);
+            window.location.reload();
+        }
+
+        return Promise.reject(error);
+    }
+);
+
 export default api;

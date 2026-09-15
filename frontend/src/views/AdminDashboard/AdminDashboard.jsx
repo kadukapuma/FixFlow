@@ -91,12 +91,13 @@ function exportCsv(companies) {
     URL.revokeObjectURL(url);
 }
 
-function AdminDashboard({ onLoggedOut }) {
+function AdminDashboard({ page, onNavigate, onLoggedOut }) {
     const [companies, setCompanies] = useState([]);
     const [error, setError] = useState("");
     const [busyId, setBusyId] = useState(null);
     const [filter, setFilter] = useState("all");
     const [search, setSearch] = useState("");
+    const [priceDrafts, setPriceDrafts] = useState({});
     const pollRef = useRef(null);
 
     useEffect(() => {
@@ -122,15 +123,46 @@ function AdminDashboard({ onLoggedOut }) {
     }
 
     async function approve(company) {
+        const draftPrice = priceDrafts[company.id];
+
+        if (!company.subscription_price && !draftPrice) {
+            const message = "Set a monthly subscription price before approving.";
+            setError(message);
+            showToast(message, "error");
+            return;
+        }
+
         setBusyId(company.id);
         setError("");
 
         try {
-            await api.post(`/admin/companies/${company.id}/approve`);
+            await api.post(`/admin/companies/${company.id}/approve`, {
+                subscription_price: company.subscription_price ? undefined : draftPrice,
+            });
             showToast(`${company.name} approved.`);
             await loadCompanies();
         } catch (err) {
             const message = getErrorMessage(err, "Approval failed.");
+            setError(message);
+            showToast(message, "error");
+        } finally {
+            setBusyId(null);
+        }
+    }
+
+    async function savePrice(company) {
+        const value = priceDrafts[company.id];
+        if (!value) return;
+
+        setBusyId(company.id);
+        setError("");
+
+        try {
+            await api.put(`/admin/companies/${company.id}/subscription-price`, { subscription_price: value });
+            showToast(`Subscription price updated for ${company.name}.`);
+            await loadCompanies();
+        } catch (err) {
+            const message = getErrorMessage(err, "Unable to update price.");
             setError(message);
             showToast(message, "error");
         } finally {
@@ -228,7 +260,8 @@ function AdminDashboard({ onLoggedOut }) {
         {
             key: "dashboard",
             title: "Dashboard",
-            active: true,
+            active: page === "dashboard",
+            onClick: () => onNavigate?.("dashboard"),
             icon: (
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
                     <path
@@ -263,6 +296,22 @@ function AdminDashboard({ onLoggedOut }) {
             icon: (
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
                     <path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+            ),
+        },
+        {
+            key: "receipts",
+            title: "Receipts",
+            onClick: () => onNavigate?.("receipts"),
+            icon: (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                    <path
+                        d="M6 3h12v18l-3-2-3 2-3-2-3 2V3ZM8 8h8M8 12h8M8 16h5"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
                 </svg>
             ),
         },
@@ -463,6 +512,7 @@ function AdminDashboard({ onLoggedOut }) {
                                         <tr>
                                             <th align="left">Company</th>
                                             <th align="left">Owner</th>
+                                            <th align="left">Monthly price</th>
                                             <th align="left">Status</th>
                                             <th align="left">Registered</th>
                                             <th align="left">Actions</th>
@@ -481,6 +531,32 @@ function AdminDashboard({ onLoggedOut }) {
                                                     <div className="admin-company-cell">
                                                         <strong>{company.owner_name}</strong>
                                                         <span>{company.owner_email}</span>
+                                                    </div>
+                                                </td>
+                                                <td data-label="Monthly price">
+                                                    <div className="admin-table-card__actions">
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            step="0.01"
+                                                            className="admin-price-input"
+                                                            placeholder="Not set"
+                                                            value={priceDrafts[company.id] ?? company.subscription_price ?? ""}
+                                                            onChange={(e) =>
+                                                                setPriceDrafts((prev) => ({ ...prev, [company.id]: e.target.value }))
+                                                            }
+                                                        />
+                                                        {priceDrafts[company.id] !== undefined &&
+                                                            priceDrafts[company.id] !== (company.subscription_price ?? "") && (
+                                                                <button
+                                                                    className="admin-btn admin-btn--ghost admin-btn--sm"
+                                                                    disabled={busyId === company.id}
+                                                                    onClick={() => savePrice(company)}
+                                                                    type="button"
+                                                                >
+                                                                    Save
+                                                                </button>
+                                                            )}
                                                     </div>
                                                 </td>
                                                 <td data-label="Status">
@@ -544,7 +620,7 @@ function AdminDashboard({ onLoggedOut }) {
 
                                         {visibleCompanies.length === 0 && (
                                             <tr>
-                                                <td colSpan={5} className="admin-table-card__empty">
+                                                <td colSpan={6} className="admin-table-card__empty">
                                                     No registrations match this view.
                                                 </td>
                                             </tr>

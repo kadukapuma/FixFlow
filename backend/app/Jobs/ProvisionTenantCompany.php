@@ -32,6 +32,8 @@ class ProvisionTenantCompany implements ShouldQueue
             'status' => Company::STATUS_APPROVED,
             'is_active' => true,
             'provisioning_error' => null,
+            'active_until' => now()->addDays(30),
+            'grace_ends_at' => now()->addDays(35),
         ]);
     }
 
