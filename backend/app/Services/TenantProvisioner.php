@@ -59,6 +59,28 @@ class TenantProvisioner
     }
 
     /**
+     * Permanently drop the physical tenant database. Irreversible.
+     */
+    public function dropDatabase(Company $company): void
+    {
+        $database = $company->database_name;
+
+        if (!$database) {
+            return;
+        }
+
+        // Same constraint as createDatabase(): DROP DATABASE cannot be
+        // parameter-bound, so only a strict, system-generated identifier
+        // format is allowed through to the raw statement.
+        if (!preg_match('/^[a-z0-9_]+$/', $database)) {
+            throw new \InvalidArgumentException("Invalid tenant database name: {$database}");
+        }
+
+        DB::statement("DROP DATABASE IF EXISTS `{$database}`");
+        DB::purge('company');
+    }
+
+    /**
      * Run the application migrations against the tenant database.
      */
     public function migrate(Company $company): void

@@ -4,6 +4,7 @@ import { usePageParam } from "../lib/usePageParam";
 import AdminLogin from "../views/AdminLogin/AdminLogin";
 import AdminDashboard from "../views/AdminDashboard/AdminDashboard";
 import AdminReceipts from "../views/AdminReceipts/AdminReceipts";
+import AdminDangerZone from "../views/AdminDangerZone/AdminDangerZone";
 
 function AdminApp() {
     const [token, setToken] = useState(() => localStorage.getItem("admin_token"));
@@ -19,6 +20,10 @@ function AdminApp() {
 
     if (page === "receipts") {
         return <AdminReceipts page={page} onNavigate={setPage} onLoggedOut={() => setToken(null)} />;
+    }
+
+    if (page === "danger-zone") {
+        return <AdminDangerZone page={page} onNavigate={setPage} onLoggedOut={() => setToken(null)} />;
     }
 
     return <AdminDashboard page={page} onNavigate={setPage} onLoggedOut={() => setToken(null)} />;

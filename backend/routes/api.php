@@ -37,6 +37,7 @@ Route::middleware(['auth:sanctum', 'super_admin'])->prefix('admin')->group(funct
     Route::post('/companies/{company}/deactivate', [CompanyApprovalController::class, 'deactivate']);
     Route::post('/companies/{company}/activate', [CompanyApprovalController::class, 'activate']);
     Route::put('/companies/{company}/subscription-price', [CompanyApprovalController::class, 'updatePrice']);
+    Route::delete('/companies/{company}', [CompanyApprovalController::class, 'destroy']);
 
     Route::get('/receipts', [AdminSubscriptionReceiptController::class, 'index']);
     Route::get('/receipts/{receipt}/file', [AdminSubscriptionReceiptController::class, 'file']);

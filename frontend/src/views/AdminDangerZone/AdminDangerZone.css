@@ -1,0 +1,7 @@
+.admin-danger-zone {
+    box-shadow: inset 0 0 0 1px #f0c9c6;
+}
+
+.admin-danger-zone .admin-table-card__head h2 {
+    color: #b3261e;
+}

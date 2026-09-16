@@ -188,6 +188,23 @@ function AdminReceipts({ page, onNavigate, onLoggedOut }) {
                 </svg>
             ),
         },
+        {
+            key: "danger-zone",
+            title: "Danger Zone",
+            active: page === "danger-zone",
+            onClick: () => onNavigate?.("danger-zone"),
+            icon: (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                    <path
+                        d="M12 3 2 20h20L12 3ZM12 9v5M12 17.5h.01"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                </svg>
+            ),
+        },
     ];
 
     const adminEmail = useMemo(() => {

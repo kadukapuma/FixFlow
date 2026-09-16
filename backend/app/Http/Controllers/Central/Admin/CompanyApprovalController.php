@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Central\Admin;
 use App\Http\Controllers\Controller;
 use App\Jobs\ProvisionTenantCompany;
 use App\Models\Company;
+use App\Services\TenantProvisioner;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class CompanyApprovalController extends Controller
 {
@@ -124,6 +127,28 @@ class CompanyApprovalController extends Controller
         return response()->json([
             'message' => 'Company reactivated.',
             'company' => $company->fresh(),
+        ]);
+    }
+
+    /**
+     * Permanently delete a company: its central record, any subscription
+     * receipt files, and its physical tenant database. Irreversible.
+     */
+    public function destroy(Company $company, TenantProvisioner $provisioner)
+    {
+        foreach ($company->subscriptionReceipts as $receipt) {
+            if ($receipt->file_path) {
+                Storage::disk('public')->delete($receipt->file_path);
+            }
+        }
+
+        DB::transaction(function () use ($company, $provisioner) {
+            $provisioner->dropDatabase($company);
+            $company->delete();
+        });
+
+        return response()->json([
+            'message' => 'Company and its database were permanently deleted.',
         ]);
     }
 }

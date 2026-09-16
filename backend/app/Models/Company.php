@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Company extends Model
 {
@@ -76,5 +77,10 @@ class Company extends Model
         }
 
         return self::SUBSCRIPTION_EXPIRED;
+    }
+
+    public function subscriptionReceipts(): HasMany
+    {
+        return $this->hasMany(SubscriptionReceipt::class);
     }
 }

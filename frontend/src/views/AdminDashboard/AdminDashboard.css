@@ -68,6 +68,16 @@
     background: #fbfaf6;
 }
 
+.admin-btn--danger {
+    background: #ffffff;
+    color: #b3261e;
+    box-shadow: inset 0 0 0 1px #f0c9c6;
+}
+
+.admin-btn--danger:hover:not(:disabled) {
+    background: #fdf1f0;
+}
+
 .admin-btn--sm {
     padding: 7px 12px;
     font-size: 12px;
