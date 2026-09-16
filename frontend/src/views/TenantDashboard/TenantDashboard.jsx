@@ -75,6 +75,12 @@ function TenantDashboard({ shellProps, company }) {
                             value={formatMoney(summary.profit)}
                             hint="Revenue minus cost"
                         />
+                        <StatCard
+                            variant="light"
+                            label="Pending Services"
+                            value={summary.status_counts.pending}
+                            hint="Awaiting work to begin"
+                        />
                     </section>
 
                     <div className="tenant-dashboard-row">
