@@ -6,17 +6,20 @@ import { showToast } from "../../lib/toast";
 import CustomerStep from "./CustomerStep";
 import ItemStep from "./ItemStep";
 import ServiceDetailsStep from "./ServiceDetailsStep";
+import ReceivedItemsStep from "./ReceivedItemsStep";
 
 const STEPS = [
     { key: 1, label: "Customer" },
     { key: 2, label: "Item" },
     { key: 3, label: "Details" },
+    { key: 4, label: "Items" },
 ];
 
 function NewServiceWizard({ onClose, onCreated }) {
     const [step, setStep] = useState(1);
     const [customer, setCustomer] = useState(null);
     const [item, setItem] = useState(null);
+    const [serviceDetails, setServiceDetails] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
     const [createdService, setCreatedService] = useState(null);
@@ -81,21 +84,28 @@ function NewServiceWizard({ onClose, onCreated }) {
         }
     }
 
-    async function handleServiceSubmit(values) {
+    function handleDetailsNext(values) {
+        setError("");
+        setServiceDetails(values);
+        setStep(4);
+    }
+
+    async function handleFinalSubmit(itemIds) {
         setError("");
         setSubmitting(true);
 
         try {
             const response = await api.post("/services", {
-                ref_no: values.ref_no,
+                ref_no: serviceDetails.ref_no,
                 item_id: item.id,
                 customer_id: customer.id,
-                employee_id: values.employee_id,
-                fault: values.fault,
-                note: values.note,
+                employee_id: serviceDetails.employee_id,
+                fault: serviceDetails.fault,
+                note: serviceDetails.note,
                 status: "pending",
-                price: values.price === "" ? null : values.price,
-                service_date: values.service_date,
+                price: serviceDetails.price === "" ? null : serviceDetails.price,
+                service_date: serviceDetails.service_date,
+                item_ids: itemIds,
             });
             showToast(`Service #${response.data.service.id} created.`);
             setCreatedService({ ...response.data.service, pdf_url: response.data.pdf_url });
@@ -188,8 +198,19 @@ function NewServiceWizard({ onClose, onCreated }) {
                     item={item}
                     submitting={submitting}
                     error={error}
-                    onSubmit={handleServiceSubmit}
+                    onSubmit={handleDetailsNext}
                     onBack={() => setStep(2)}
+                />
+            )}
+
+            {step === 4 && customer && item && serviceDetails && (
+                <ReceivedItemsStep
+                    customer={customer}
+                    item={item}
+                    submitting={submitting}
+                    error={error}
+                    onSubmit={handleFinalSubmit}
+                    onBack={() => setStep(3)}
                 />
             )}
         </Modal>

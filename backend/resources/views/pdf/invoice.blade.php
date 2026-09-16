@@ -276,6 +276,8 @@
 
     <p class="fault-line"><strong>Fault reported:</strong> {{ $service->fault ?: '—' }}</p>
 
+    <p class="fault-line"><strong>Items received:</strong> {{ $service->receivedItems->isNotEmpty() ? $service->receivedItems->pluck('item_name')->join(', ') : '—' }}</p>
+
     <table class="works">
         <thead>
             <tr>

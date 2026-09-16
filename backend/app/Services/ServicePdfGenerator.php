@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Employee;
+use App\Models\GettingItemsFromCustomer;
 use App\Models\Item;
 use App\Models\Service;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -94,6 +95,10 @@ class ServicePdfGenerator
         $service->setRelation('customer', new Customer(['name' => 'Sample Customer', 'phone' => '077 123 4567']));
         $service->setRelation('item', new Item(['name' => 'Sample Item', 'model' => 'Model X', 'serial_number' => 'SN-000000']));
         $service->setRelation('employee', new Employee(['name' => 'Sample Technician']));
+        $service->setRelation('receivedItems', collect([
+            new GettingItemsFromCustomer(['item_name' => 'Charger']),
+            new GettingItemsFromCustomer(['item_name' => 'Box']),
+        ]));
 
         return self::render($service, $company, $logoDataOverride);
     }

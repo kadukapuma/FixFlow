@@ -33,6 +33,19 @@ const MORE_ICON = (
     </svg>
 );
 
+const CHEVRON_ICON = (
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
+        <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+);
+
+// A group item (has `children`) is a nav folder, not a page of its own —
+// the compact bottom-nav has no room for a nested submenu, so it's flattened
+// down to its children there, same as every other leaf item.
+function flattenItems(items) {
+    return items.flatMap((item) => (item.children ? item.children : [item]));
+}
+
 /**
  * `mobilePrimaryKeys`, when given, switches the sidebar to a compact bottom
  * tab bar on phones: only those keys' items get a permanent slot, the rest
@@ -44,9 +57,20 @@ const MORE_ICON = (
 function Sidebar({ items = [], footerLabel, onLogout, mobilePrimaryKeys }) {
     const [expanded, setExpanded] = useState(readStoredExpanded);
     const [moreOpen, setMoreOpen] = useState(false);
+    const [openGroups, setOpenGroups] = useState({});
     const isMobile = useIsMobile(MOBILE_BREAKPOINT);
     const initial = (footerLabel || "?").trim().charAt(0).toUpperCase();
     const compact = isMobile && Array.isArray(mobilePrimaryKeys) && mobilePrimaryKeys.length > 0;
+
+    function isGroupOpen(item) {
+        if (item.key in openGroups) return openGroups[item.key];
+        return Boolean(item.active);
+    }
+
+    function toggleGroup(item) {
+        if (!expanded) toggleExpanded();
+        setOpenGroups((prev) => ({ ...prev, [item.key]: !isGroupOpen(item) }));
+    }
 
     function toggleExpanded() {
         setExpanded((prev) => {
@@ -61,10 +85,11 @@ function Sidebar({ items = [], footerLabel, onLogout, mobilePrimaryKeys }) {
     }
 
     if (compact) {
+        const flatItems = flattenItems(items);
         const primaryItems = mobilePrimaryKeys
-            .map((key) => items.find((item) => item.key === key))
+            .map((key) => flatItems.find((item) => item.key === key))
             .filter(Boolean);
-        const secondaryItems = items.filter((item) => !mobilePrimaryKeys.includes(item.key));
+        const secondaryItems = flatItems.filter((item) => !mobilePrimaryKeys.includes(item.key));
 
         function selectItem(item) {
             setMoreOpen(false);
@@ -146,18 +171,53 @@ function Sidebar({ items = [], footerLabel, onLogout, mobilePrimaryKeys }) {
             </div>
 
             <nav className="sidebar__nav">
-                {items.map((item) => (
-                    <button
-                        key={item.key}
-                        className={`sidebar__icon ${item.active ? "is-active" : ""}`}
-                        title={expanded ? undefined : item.title}
-                        type="button"
-                        onClick={item.onClick}
-                    >
-                        {item.icon}
-                        {expanded && <span className="sidebar__label">{item.title}</span>}
-                    </button>
-                ))}
+                {items.map((item) =>
+                    item.children ? (
+                        <div key={item.key} className="sidebar__group">
+                            <button
+                                className={`sidebar__icon ${item.active ? "is-active" : ""}`}
+                                title={expanded ? undefined : item.title}
+                                type="button"
+                                onClick={() => toggleGroup(item)}
+                            >
+                                {item.icon}
+                                {expanded && <span className="sidebar__label">{item.title}</span>}
+                                {expanded && (
+                                    <span className={`sidebar__group-chevron ${isGroupOpen(item) ? "is-open" : ""}`}>
+                                        {CHEVRON_ICON}
+                                    </span>
+                                )}
+                            </button>
+
+                            {expanded && isGroupOpen(item) && (
+                                <div className="sidebar__group-children">
+                                    {item.children.map((child) => (
+                                        <button
+                                            key={child.key}
+                                            className={`sidebar__icon sidebar__icon--child ${child.active ? "is-active" : ""}`}
+                                            type="button"
+                                            onClick={child.onClick}
+                                        >
+                                            {child.icon}
+                                            <span className="sidebar__label">{child.title}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <button
+                            key={item.key}
+                            className={`sidebar__icon ${item.active ? "is-active" : ""}`}
+                            title={expanded ? undefined : item.title}
+                            type="button"
+                            onClick={item.onClick}
+                        >
+                            {item.icon}
+                            {expanded && <span className="sidebar__label">{item.title}</span>}
+                        </button>
+                    )
+                )}
             </nav>
 
             <div className="sidebar__bottom">

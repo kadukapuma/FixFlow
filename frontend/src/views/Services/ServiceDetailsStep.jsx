@@ -103,7 +103,7 @@ function ServiceDetailsStep({ customer, item, submitting, error, onSubmit, onBac
                         Back
                     </button>
                     <button type="submit" className="tenant-btn tenant-btn--primary" disabled={submitting}>
-                        {submitting ? "Saving..." : "Save service"}
+                        Next
                     </button>
                 </div>
             </form>

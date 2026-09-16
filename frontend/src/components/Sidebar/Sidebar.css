@@ -90,6 +90,34 @@
     color: #14151a;
 }
 
+.sidebar__group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sidebar__group-chevron {
+    margin-left: auto;
+    display: flex;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+}
+
+.sidebar__group-chevron.is-open {
+    transform: rotate(180deg);
+}
+
+.sidebar__group-children {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-left: 14px;
+}
+
+.sidebar__icon--child {
+    height: 36px;
+}
+
 .sidebar__bottom {
     margin-top: auto;
     display: flex;

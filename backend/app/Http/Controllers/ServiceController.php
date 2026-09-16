@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Employee;
+use App\Models\GettingItemsFromCustomer;
 use App\Models\Item;
 use App\Models\Service;
 use App\Services\ServicePdfGenerator;
@@ -102,6 +103,8 @@ class ServiceController extends Controller
             'status' => ['required', 'string', Rule::in(['pending', 'in_progress', 'completed', 'delivered'])],
             'price' => ['nullable', 'numeric', 'min:0'],
             'service_date' => ['nullable', 'date'],
+            'item_ids' => ['nullable', 'array'],
+            'item_ids.*' => ['integer', Rule::exists(GettingItemsFromCustomer::class, 'id')],
         ]);
 
         $customer = Customer::find($validated['customer_id']);
@@ -114,8 +117,16 @@ class ServiceController extends Controller
 
         $validated['service_date'] ??= now()->toDateString();
 
+        $itemIds = $validated['item_ids'] ?? [];
+        unset($validated['item_ids']);
+
         $service = Service::create($validated);
-        $service->load(['customer', 'item', 'employee']);
+
+        if ($itemIds) {
+            $service->receivedItems()->attach($itemIds);
+        }
+
+        $service->load(['customer', 'item', 'employee', 'receivedItems']);
 
         return response()->json([
             'message' => 'Service created successfully.',
@@ -126,7 +137,7 @@ class ServiceController extends Controller
 
     public function pdf(int $id)
     {
-        $service = Service::with(['customer', 'item', 'employee'])->findOrFail($id);
+        $service = Service::with(['customer', 'item', 'employee', 'receivedItems'])->findOrFail($id);
         $pdf = ServicePdfGenerator::render($service, app('currentCompany'));
 
         $filename = 'service-'.($service->ref_no ?: $service->id).'.pdf';
@@ -139,7 +150,7 @@ class ServiceController extends Controller
 
     public function invoice(int $id)
     {
-        $service = Service::with(['customer', 'item', 'employee', 'work'])->findOrFail($id);
+        $service = Service::with(['customer', 'item', 'employee', 'work', 'receivedItems'])->findOrFail($id);
 
         // No manually-set final price yet — default it to the sum of the
         // logged work costs rather than blocking invoice generation.

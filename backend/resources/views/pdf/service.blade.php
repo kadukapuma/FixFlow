@@ -234,6 +234,7 @@
         <div class="fields">
             <p><strong>Fault:</strong> {{ $service->fault ?: '—' }}</p>
             <p><strong>Technician:</strong> {{ $service->employee->name ?? '—' }}</p>
+            <p><strong>Items received:</strong> {{ $service->receivedItems->isNotEmpty() ? $service->receivedItems->pluck('item_name')->join(', ') : '—' }}</p>
             @if($service->note)
                 <p><strong>Note:</strong> {{ $service->note }}</p>
             @endif

@@ -10,6 +10,7 @@ use App\Http\Controllers\CompanySettingsController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\GettingItemsFromCustomerController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SubscriptionController;
@@ -88,6 +89,11 @@ Route::middleware('company')->group(function () {
         Route::delete('/employees/{id}', [EmployeeController::class, 'destroy']);
         Route::post('/employees/{id}/activate', [EmployeeController::class, 'activate']);
         Route::post('/employees/{id}/deactivate', [EmployeeController::class, 'deactivate']);
+
+        Route::get('/received-items', [GettingItemsFromCustomerController::class, 'index']);
+        Route::post('/received-items', [GettingItemsFromCustomerController::class, 'store']);
+        Route::put('/received-items/{id}', [GettingItemsFromCustomerController::class, 'update']);
+        Route::delete('/received-items/{id}', [GettingItemsFromCustomerController::class, 'destroy']);
 
         Route::get('/customers/{id}/items', [ItemController::class, 'forCustomer']);
         Route::post('/items', [ItemController::class, 'store']);

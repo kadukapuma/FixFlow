@@ -6,6 +6,7 @@ import TenantLogin from "../views/TenantLogin/TenantLogin";
 import TenantDashboard from "../views/TenantDashboard/TenantDashboard";
 import Customers from "../views/Customers/Customers";
 import Employees from "../views/Employees/Employees";
+import ReceivedItems from "../views/ReceivedItems/ReceivedItems";
 import Services from "../views/Services/Services";
 import StartWork from "../views/StartWork/StartWork";
 import Completed from "../views/Completed/Completed";
@@ -41,6 +42,30 @@ const EMPLOYEES_ICON = (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
         <path
             d="M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19M20 19v-1.5a3.5 3.5 0 0 0-2.5-3.36M14.5 3.6a3.5 3.5 0 0 1 0 6.8M10 10.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const MASTER_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const RECEIVED_ITEMS_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M4 8.5 12 4l8 4.5-8 4.5-8-4.5ZM4 8.5v7L12 20l8-4.5v-7M12 13v7"
             stroke="currentColor"
             strokeWidth="1.8"
             strokeLinecap="round"
@@ -174,18 +199,33 @@ function TenantApp() {
                 icon: DASHBOARD_ICON,
             },
             {
-                key: "customers",
-                title: "Customers",
-                active: page === "customers",
-                onClick: () => setPage("customers"),
-                icon: CUSTOMERS_ICON,
-            },
-            {
-                key: "employees",
-                title: "Employees",
-                active: page === "employees",
-                onClick: () => setPage("employees"),
-                icon: EMPLOYEES_ICON,
+                key: "master",
+                title: "Master",
+                active: ["customers", "employees", "received-items"].includes(page),
+                icon: MASTER_ICON,
+                children: [
+                    {
+                        key: "customers",
+                        title: "Customers",
+                        active: page === "customers",
+                        onClick: () => setPage("customers"),
+                        icon: CUSTOMERS_ICON,
+                    },
+                    {
+                        key: "employees",
+                        title: "Employees",
+                        active: page === "employees",
+                        onClick: () => setPage("employees"),
+                        icon: EMPLOYEES_ICON,
+                    },
+                    {
+                        key: "received-items",
+                        title: "Received Items",
+                        active: page === "received-items",
+                        onClick: () => setPage("received-items"),
+                        icon: RECEIVED_ITEMS_ICON,
+                    },
+                ],
             },
             {
                 key: "services",
@@ -241,6 +281,10 @@ function TenantApp() {
 
     if (page === "employees") {
         return <Employees shellProps={shellProps} />;
+    }
+
+    if (page === "received-items") {
+        return <ReceivedItems shellProps={shellProps} />;
     }
 
     if (page === "services") {

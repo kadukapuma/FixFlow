@@ -52,4 +52,9 @@ class Service extends Model
     {
         return $this->hasMany(Work::class);
     }
+
+    public function receivedItems()
+    {
+        return $this->belongsToMany(GettingItemsFromCustomer::class, 'get_items', 'service_id', 'getting_items_from_cus_id');
+    }
 }

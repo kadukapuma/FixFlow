@@ -69,6 +69,21 @@
     margin-bottom: 16px;
 }
 
+.tenant-checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tenant-checkbox-list__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #14151a;
+}
+
 .wizard-results {
     list-style: none;
     margin: 0;
