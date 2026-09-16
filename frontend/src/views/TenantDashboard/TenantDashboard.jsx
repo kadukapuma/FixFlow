@@ -25,7 +25,7 @@ function formatRangeDate(dateStr) {
 }
 
 function formatRangeLabel(range) {
-    if (!range) return "This week";
+    if (!range) return "This month";
     return `${formatRangeDate(range.from)} – ${formatRangeDate(range.to)}`;
 }
 

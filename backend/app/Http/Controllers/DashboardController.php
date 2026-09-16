@@ -27,7 +27,7 @@ class DashboardController extends Controller
 
     public function summary(Request $request)
     {
-        [$from, $to, $isDefaultRange] = $this->resolveRange($request);
+        [$from, $to] = $this->resolveRange($request);
 
         $deliveredServiceIds = Service::where('status', 'delivered')
             ->whereBetween('delivered_date', [$from, $to])
@@ -78,7 +78,7 @@ class DashboardController extends Controller
                 'completed' => (int) ($statusCounts['completed'] ?? 0),
                 'delivered' => (int) ($statusCounts['delivered'] ?? 0),
             ],
-            'revenue_by_range' => $this->revenueByRange($from, $to, $isDefaultRange),
+            'revenue_by_range' => $this->revenueByRange($from, $to),
             'top_employees' => $topEmployees->map(fn ($employee) => [
                 'id' => $employee->id,
                 'name' => $employee->name,
@@ -89,11 +89,8 @@ class DashboardController extends Controller
     }
 
     /**
-     * Defaults to the current week (Monday through today) so the dashboard
-     * opens on a quick, day-by-day snapshot rather than a whole month
-     * bucketed into a handful of bars. The tenant can widen it via
-     * ?from=&to=, at which point revenueByRange() switches to the coarser
-     * week/month/year view appropriate for that wider span.
+     * Defaults to month-to-date so the dashboard shows "monthly details"
+     * out of the box, but the tenant can widen or narrow it via ?from=&to=.
      */
     private function resolveRange(Request $request): array
     {
@@ -102,33 +99,30 @@ class DashboardController extends Controller
             'to' => ['nullable', 'date', 'after_or_equal:from', 'before_or_equal:today'],
         ]);
 
-        $isDefaultRange = !$request->filled('from') && !$request->filled('to');
-
-        $from = Carbon::parse($validated['from'] ?? now()->startOfWeek()->toDateString())->startOfDay();
+        $from = Carbon::parse($validated['from'] ?? now()->startOfMonth()->toDateString())->startOfDay();
         $to = Carbon::parse($validated['to'] ?? now()->toDateString())->startOfDay();
 
         if ($from->diffInDays($to) > self::MAX_RANGE_DAYS) {
             $from = $to->copy()->subDays(self::MAX_RANGE_DAYS);
         }
 
-        return [$from->toDateString(), $to->toDateString(), $isDefaultRange];
+        return [$from->toDateString(), $to->toDateString()];
     }
 
     /**
-     * The default current-week view stays day-by-day — the whole point is a
-     * quick, granular look at "this week". Once the tenant explicitly picks
-     * a wider custom range, a daily bar per day turns into unreadable
-     * noise, so it switches to week-by-week for up to a month, month-by-month
-     * out to ~2 years, and year-by-year beyond that.
+     * A daily bar per day looks fine for a week but turns into unreadable
+     * noise past that, so the chart's granularity adapts to how wide the
+     * selected range is: week-by-week for up to a month (covers the
+     * month-to-date default), month-by-month out to ~2 years, year-by-year
+     * beyond that.
      */
-    private function revenueByRange(string $from, string $to, bool $isDefaultRange): array
+    private function revenueByRange(string $from, string $to): array
     {
         $start = Carbon::parse($from);
         $end = Carbon::parse($to);
         $totalDays = $start->diffInDays($end) + 1;
 
         $granularity = match (true) {
-            $isDefaultRange => 'day',
             $totalDays <= self::WEEKLY_MAX_DAYS => 'week',
             $totalDays <= self::MONTHLY_MAX_DAYS => 'month',
             default => 'year',
@@ -167,11 +161,6 @@ class DashboardController extends Controller
     private function bucketBounds(Carbon $date, string $granularity): array
     {
         return match ($granularity) {
-            'day' => [
-                $date->toDateString(),
-                $date->copy(),
-                $date->copy(),
-            ],
             'week' => [
                 $date->copy()->startOfWeek(Carbon::MONDAY)->toDateString(),
                 $date->copy()->startOfWeek(Carbon::MONDAY),
@@ -198,7 +187,6 @@ class DashboardController extends Controller
         $labelEnd = $bucket['end']->gt($rangeEnd) ? $rangeEnd : $bucket['end'];
 
         return match ($granularity) {
-            'day' => $bucket['start']->format('d M'),
             'week' => $labelStart->format('d M') . '–' . $labelEnd->format('d M'),
             'month' => $bucket['start']->format('M Y'),
             default => $bucket['start']->format('Y'),
