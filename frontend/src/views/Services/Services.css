@@ -1,33 +1,23 @@
 .wizard-steps {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     margin-bottom: 20px;
 }
 
-.wizard-steps__item {
+.wizard-steps__line {
     flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    border-radius: 10px;
-    background: #f2f1ea;
-    color: #9b9a8f;
-    font-size: 12px;
-    font-weight: 600;
+    height: 4px;
+    border-radius: 999px;
+    background: #e6e4da;
+    transition: background 0.15s ease;
 }
 
-.wizard-steps__item span {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #e6e4da;
-    color: #6b6b63;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    flex-shrink: 0;
+.wizard-steps__line.is-active {
+    background: #1c8a53;
+}
+
+.wizard-steps__line.is-done {
+    background: #1c8a53;
 }
 
 .wizard-steps__item.is-active {
@@ -174,4 +164,13 @@
 .wizard-suspended-warning {
     margin: 6px 0 0;
     font-size: 12px;
+}
+
+@media (max-width: 480px) {
+    /* Card + action button no longer fit on one row without squeezing the
+       button text — stack them instead. */
+    .wizard-confirmed {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }

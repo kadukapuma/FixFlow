@@ -155,19 +155,18 @@ function NewServiceWizard({ onClose, onCreated }) {
         );
     }
 
+    const currentStepLabel = STEPS.find((s) => s.key === step)?.label;
+
     return (
-        <Modal title="New service" onClose={onClose} maxWidth={640}>
+        <Modal title={`New service — ${currentStepLabel}`} onClose={onClose} maxWidth={640}>
             <div className="wizard-steps">
                 {STEPS.map((s) => (
-                    <div
+                    <span
                         key={s.key}
-                        className={`wizard-steps__item ${
+                        className={`wizard-steps__line ${
                             step === s.key ? "is-active" : step > s.key ? "is-done" : ""
                         }`}
-                    >
-                        <span>{s.key}</span>
-                        {s.label}
-                    </div>
+                    />
                 ))}
             </div>
 
