@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
 import PdfViewerModal from "../../components/PdfViewerModal/PdfViewerModal";
+import FileUploadField from "../../components/FileUploadField/FileUploadField";
 import { showToast } from "../../lib/toast";
 import "./CompanySettings.css";
 
@@ -71,8 +72,7 @@ function CompanySettings({ shellProps }) {
         setForm((prev) => ({ ...prev, [field]: value }));
     }
 
-    function handleLogoChange(event) {
-        const file = event.target.files?.[0] || null;
+    function handleLogoChange(file) {
         setLogoFile(file);
         setLogoPreview(file ? URL.createObjectURL(file) : null);
     }
@@ -137,10 +137,17 @@ function CompanySettings({ shellProps }) {
                                     <span>No logo</span>
                                 )}
                             </div>
-                            <label className="company-settings__logo-field">
-                                Company logo
-                                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoChange} />
-                            </label>
+                            <div className="company-settings__logo-field">
+                                <span className="company-settings__logo-label">Company logo</span>
+                                <FileUploadField
+                                    id="company-logo-upload"
+                                    ref={fileInputRef}
+                                    accept="image/*"
+                                    onChange={handleLogoChange}
+                                    fileName={logoFile?.name}
+                                    hint="Click to upload or drag an image"
+                                />
+                            </div>
                         </div>
 
                         <label className="company-settings__full">

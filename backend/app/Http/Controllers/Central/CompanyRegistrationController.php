@@ -29,6 +29,7 @@ class CompanyRegistrationController extends Controller
             ],
             'owner_name' => ['required', 'string', 'max:255'],
             'owner_email' => ['required', 'email', 'max:255'],
+            'owner_mobile' => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{7,20}$/'],
             'owner_password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
@@ -43,6 +44,7 @@ class CompanyRegistrationController extends Controller
             'owner_name' => $validated['owner_name'],
             'owner_email' => $validated['owner_email'],
             'owner_password' => Hash::make($validated['owner_password']),
+            'phone' => $validated['owner_mobile'],
 
             // Tenant databases live on the same MySQL server as the
             // central database; only the database name differs per tenant.

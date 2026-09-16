@@ -39,6 +39,14 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.company-settings__logo-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #14151a;
 }
 
 .company-settings__full {

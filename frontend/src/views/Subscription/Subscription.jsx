@@ -5,6 +5,7 @@ import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import { RECEIPT_STATUS_META } from "../../components/StatusBadge/statusMeta";
 import PdfViewerModal from "../../components/PdfViewerModal/PdfViewerModal";
 import Modal from "../../components/Modal/Modal";
+import FileUploadField from "../../components/FileUploadField/FileUploadField";
 import { showToast } from "../../lib/toast";
 import "./Subscription.css";
 
@@ -151,16 +152,18 @@ function Subscription({ shellProps }) {
                         </div>
 
                         <form className="tenant-form tenant-form--2col" onSubmit={handleSubmit}>
-                            <label>
-                                Receipt file (image or PDF)
-                                <input
+                            <div className="subscription__file-field">
+                                <span className="subscription__file-label">Receipt file (image or PDF)</span>
+                                <FileUploadField
+                                    id="subscription-receipt-upload"
                                     ref={fileInputRef}
-                                    type="file"
                                     accept="image/*,application/pdf"
-                                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                                    onChange={setFile}
+                                    fileName={file?.name}
+                                    hint="Click to upload or drag an image/PDF"
                                     required
                                 />
-                            </label>
+                            </div>
 
                             <label>
                                 Amount paid (optional)

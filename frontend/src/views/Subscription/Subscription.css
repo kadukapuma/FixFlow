@@ -7,6 +7,19 @@
     grid-column: 1 / -1;
 }
 
+.subscription__file-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #14151a;
+}
+
+.subscription__file-label {
+    color: #14151a;
+}
+
 .subscription-banner {
     margin: 0;
     padding: 12px 16px;

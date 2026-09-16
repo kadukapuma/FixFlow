@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api, { getErrorMessage, setAuthToken } from "../../api";
 import BrandMark from "../../components/BrandMark/BrandMark";
+import PasswordInput from "../../components/PasswordInput/PasswordInput";
 import "./AdminLogin.css";
 
 function AdminLogin({ onLoggedIn }) {
@@ -55,8 +56,7 @@ function AdminLogin({ onLoggedIn }) {
 
                     <label>
                         Password
-                        <input
-                            type="password"
+                        <PasswordInput
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="••••••••"

@@ -163,6 +163,10 @@
     gap: 16px;
 }
 
+.auth-shell .auth-row--single {
+    grid-template-columns: 1fr;
+}
+
 .auth-shell label {
     display: flex;
     flex-direction: column;
@@ -184,6 +188,24 @@
     outline: none;
     border-color: #ddfb5e;
     box-shadow: 0 0 0 3px rgba(221, 251, 94, 0.35);
+}
+
+.auth-shell input.field-valid {
+    border-color: #1c8a53;
+    box-shadow: 0 0 0 3px rgba(28, 138, 83, 0.15);
+}
+
+.auth-shell input.field-invalid {
+    border-color: #c22b3a;
+    box-shadow: 0 0 0 3px rgba(194, 43, 58, 0.15);
+}
+
+.auth-shell input.field-valid:focus {
+    box-shadow: 0 0 0 3px rgba(28, 138, 83, 0.3);
+}
+
+.auth-shell input.field-invalid:focus {
+    box-shadow: 0 0 0 3px rgba(194, 43, 58, 0.3);
 }
 
 .auth-shell .field-error {

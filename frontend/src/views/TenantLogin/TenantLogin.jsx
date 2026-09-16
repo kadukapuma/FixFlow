@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api, { getErrorMessage, setAuthToken } from "../../api";
 import AuthCard from "../../components/AuthCard/AuthCard";
+import PasswordInput from "../../components/PasswordInput/PasswordInput";
 
 function TenantLogin({ onLoggedIn }) {
     const [email, setEmail] = useState("");
@@ -44,8 +45,7 @@ function TenantLogin({ onLoggedIn }) {
 
                 <label>
                     Password
-                    <input
-                        type="password"
+                    <PasswordInput
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         autoComplete="current-password"

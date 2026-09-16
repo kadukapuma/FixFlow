@@ -1,0 +1,74 @@
+.file-upload {
+    /* The root element is a <label>, and pages render this inside a
+       `.tenant-form`/`.auth-shell` form — both have a generic `label` rule
+       (flex-direction: column) that outranks a single-class selector like
+       this one, silently stacking the icon above the text instead of
+       beside it. !important keeps this component's own row layout intact
+       regardless of which form it's dropped into. */
+    position: relative;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1.5px dashed #d8d6ca;
+    border-radius: 12px;
+    background: #fbfaf6;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.file-upload:hover {
+    border-color: #ddfb5e;
+    background: #fdfce8;
+}
+
+.file-upload.is-drag {
+    border-color: #ddfb5e;
+    background: #fdfce8;
+}
+
+.file-upload:focus-within {
+    outline: none;
+    border-color: #ddfb5e;
+    box-shadow: 0 0 0 3px rgba(221, 251, 94, 0.35);
+}
+
+.file-upload__input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+.file-upload__icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #eceade;
+    color: #14151a;
+}
+
+.file-upload__text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #6b6b63;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.file-upload__text strong {
+    color: #14151a;
+    font-weight: 700;
+}
