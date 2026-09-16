@@ -3,13 +3,16 @@ import api, { getErrorMessage, setAuthToken } from "../../api";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import StatCard from "../../components/StatCard/StatCard";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
+import Pagination from "../../components/Pagination/Pagination";
 import { STATUS_META } from "../../components/StatusBadge/statusMeta";
 import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
+import { usePaginatedResource } from "../../lib/usePaginatedResource";
 import "./AdminDashboard.css";
 
 const ACTIONABLE_STATUSES = ["pending", "failed"];
 const FILTERS = ["all", "pending", "provisioning", "approved", "deactivated", "rejected", "failed"];
+const EMPTY_COUNTS = { all: 0, pending: 0, provisioning: 0, approved: 0, deactivated: 0, rejected: 0, failed: 0 };
 
 // A company keeps status "approved" while deactivated — is_active is what
 // actually blocks their sign-in — so the UI treats it as its own status.
@@ -17,12 +20,8 @@ function effectiveStatus(company) {
     return company.status === "approved" && !company.is_active ? "deactivated" : company.status;
 }
 
-function parseDate(value) {
-    return new Date(value.replace(" ", "T"));
-}
-
 function relativeTime(value) {
-    const diffMs = Date.now() - parseDate(value).getTime();
+    const diffMs = Date.now() - new Date(value.replace(" ", "T")).getTime();
     const minutes = Math.round(diffMs / 60000);
 
     if (minutes < 1) return "just now";
@@ -35,39 +34,14 @@ function relativeTime(value) {
     return `${days}d ago`;
 }
 
-function buildWeekChart(companies) {
-    const days = [];
-
-    for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setHours(0, 0, 0, 0);
-        date.setDate(date.getDate() - i);
-        days.push({ date, count: 0 });
-    }
-
-    companies.forEach((company) => {
-        if (!company.created_at) return;
-        const created = parseDate(company.created_at);
-
-        days.forEach((day) => {
-            const sameDay =
-                created.getFullYear() === day.date.getFullYear() &&
-                created.getMonth() === day.date.getMonth() &&
-                created.getDate() === day.date.getDate();
-            if (sameDay) day.count += 1;
-        });
-    });
-
-    const max = Math.max(1, ...days.map((d) => d.count));
-
-    return days.map((day) => ({
-        label: day.date.toLocaleDateString(undefined, { day: "2-digit", month: "short" }),
-        count: day.count,
-        percent: Math.round((day.count / max) * 100),
-    }));
+// The chart endpoint returns raw counts per day; the percent bar heights are
+// relative to whichever day in the window had the most sign-ups.
+function withChartPercents(chart) {
+    const max = Math.max(1, ...chart.map((d) => d.count));
+    return chart.map((day) => ({ ...day, percent: Math.round((day.count / max) * 100) }));
 }
 
-function exportCsv(companies) {
+function downloadCsv(companies) {
     const header = ["Name", "Subdomain", "Owner", "Email", "Status", "Registered"];
     const rows = companies.map((c) => [
         c.name,
@@ -92,33 +66,67 @@ function exportCsv(companies) {
 }
 
 function AdminDashboard({ page, onNavigate, onLoggedOut }) {
-    const [companies, setCompanies] = useState([]);
+    const [filter, setFilter] = useState("all");
+    const {
+        items: companies,
+        meta,
+        error: loadError,
+        search,
+        setSearch,
+        setPage,
+        reload,
+    } = usePaginatedResource("/admin/companies", filter === "all" ? {} : { status: filter });
+    const [stats, setStats] = useState(null);
     const [error, setError] = useState("");
     const [busyId, setBusyId] = useState(null);
-    const [filter, setFilter] = useState("all");
-    const [search, setSearch] = useState("");
     const [priceDrafts, setPriceDrafts] = useState({});
     const pollRef = useRef(null);
 
-    useEffect(() => {
-        loadCompanies();
-        return () => clearTimeout(pollRef.current);
-    }, []);
-
-    async function loadCompanies() {
+    async function loadStats() {
         try {
-            const response = await api.get("/admin/companies");
-            setCompanies(response.data);
+            const response = await api.get("/admin/companies/stats");
+            setStats(response.data);
 
             clearTimeout(pollRef.current);
 
             // Provisioning happens in a background job, so keep refreshing
-            // until every in-flight approval has settled into a final state.
-            if (response.data.some((company) => company.status === "provisioning")) {
-                pollRef.current = setTimeout(loadCompanies, 2000);
+            // the counts/table until every in-flight approval has settled.
+            if (response.data.counts.provisioning > 0) {
+                pollRef.current = setTimeout(() => {
+                    loadStats();
+                    reload();
+                }, 2000);
             }
         } catch (err) {
-            setError(getErrorMessage(err, "Unable to load companies."));
+            setError(getErrorMessage(err, "Unable to load company stats."));
+        }
+    }
+
+    useEffect(() => {
+        // Same fetch-on-mount pattern used across the admin views.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        loadStats();
+        return () => clearTimeout(pollRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    function refreshAll() {
+        reload();
+        loadStats();
+    }
+
+    async function handleExportCsv() {
+        try {
+            const response = await api.get("/admin/companies", {
+                params: {
+                    export: 1,
+                    ...(filter !== "all" ? { status: filter } : {}),
+                    ...(search.trim() ? { search: search.trim() } : {}),
+                },
+            });
+            downloadCsv(response.data);
+        } catch (err) {
+            showToast(getErrorMessage(err, "Unable to export companies."), "error");
         }
     }
 
@@ -140,7 +148,7 @@ function AdminDashboard({ page, onNavigate, onLoggedOut }) {
                 subscription_price: company.subscription_price ? undefined : draftPrice,
             });
             showToast(`${company.name} approved.`);
-            await loadCompanies();
+            refreshAll();
         } catch (err) {
             const message = getErrorMessage(err, "Approval failed.");
             setError(message);
@@ -160,7 +168,7 @@ function AdminDashboard({ page, onNavigate, onLoggedOut }) {
         try {
             await api.put(`/admin/companies/${company.id}/subscription-price`, { subscription_price: value });
             showToast(`Subscription price updated for ${company.name}.`);
-            await loadCompanies();
+            reload();
         } catch (err) {
             const message = getErrorMessage(err, "Unable to update price.");
             setError(message);
@@ -179,7 +187,7 @@ function AdminDashboard({ page, onNavigate, onLoggedOut }) {
         try {
             await api.post(`/admin/companies/${company.id}/reject`, { reason });
             showToast(`${company.name} rejected.`);
-            await loadCompanies();
+            refreshAll();
         } catch (err) {
             const message = getErrorMessage(err, "Rejection failed.");
             setError(message);
@@ -205,7 +213,7 @@ function AdminDashboard({ page, onNavigate, onLoggedOut }) {
         try {
             await api.post(`/admin/companies/${company.id}/deactivate`);
             showToast(`${company.name} deactivated.`);
-            await loadCompanies();
+            refreshAll();
         } catch (err) {
             const message = getErrorMessage(err, "Deactivation failed.");
             setError(message);
@@ -230,7 +238,7 @@ function AdminDashboard({ page, onNavigate, onLoggedOut }) {
         try {
             await api.post(`/admin/companies/${company.id}/activate`);
             showToast(`${company.name} reactivated.`);
-            await loadCompanies();
+            refreshAll();
         } catch (err) {
             const message = getErrorMessage(err, "Reactivation failed.");
             setError(message);
@@ -277,7 +285,7 @@ function AdminDashboard({ page, onNavigate, onLoggedOut }) {
         {
             key: "refresh",
             title: "Refresh companies",
-            onClick: loadCompanies,
+            onClick: refreshAll,
             icon: (
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
                     <path
@@ -342,37 +350,8 @@ function AdminDashboard({ page, onNavigate, onLoggedOut }) {
         }
     }, []);
 
-    const counts = useMemo(() => {
-        const base = {
-            all: companies.length,
-            pending: 0,
-            provisioning: 0,
-            approved: 0,
-            deactivated: 0,
-            rejected: 0,
-            failed: 0,
-        };
-        companies.forEach((c) => {
-            const key = effectiveStatus(c);
-            base[key] = (base[key] ?? 0) + 1;
-        });
-        return base;
-    }, [companies]);
-
-    const visibleCompanies = useMemo(() => {
-        return companies.filter((c) => {
-            if (filter !== "all" && effectiveStatus(c) !== filter) return false;
-            if (!search.trim()) return true;
-            const q = search.trim().toLowerCase();
-            return (
-                c.name.toLowerCase().includes(q) ||
-                c.subdomain.toLowerCase().includes(q) ||
-                c.owner_email.toLowerCase().includes(q)
-            );
-        });
-    }, [companies, filter, search]);
-
-    const chart = useMemo(() => buildWeekChart(companies), [companies]);
+    const counts = stats?.counts ?? EMPTY_COUNTS;
+    const chart = useMemo(() => withChartPercents(stats?.chart ?? []), [stats]);
     const needsAttention = counts.rejected + counts.failed;
 
     return (
@@ -387,18 +366,18 @@ function AdminDashboard({ page, onNavigate, onLoggedOut }) {
                     </div>
 
                     <div className="admin-header__actions">
-                        <button className="admin-btn admin-btn--ghost" type="button" onClick={() => exportCsv(visibleCompanies)}>
+                        <button className="admin-btn admin-btn--ghost" type="button" onClick={handleExportCsv}>
                             Export CSV
                         </button>
-                        <button className="admin-btn admin-btn--primary" type="button" onClick={loadCompanies}>
+                        <button className="admin-btn admin-btn--primary" type="button" onClick={refreshAll}>
                             Refresh
                         </button>
                     </div>
                 </header>
 
-                {error && (
+                {(error || loadError) && (
                     <p className="admin-alert" role="alert">
-                        {error}
+                        {error || loadError}
                     </p>
                 )}
 
@@ -535,7 +514,7 @@ function AdminDashboard({ page, onNavigate, onLoggedOut }) {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {visibleCompanies.map((company) => (
+                                        {companies.map((company) => (
                                             <tr key={company.id}>
                                                 <td data-label="Company">
                                                     <div className="admin-company-cell">
@@ -634,7 +613,7 @@ function AdminDashboard({ page, onNavigate, onLoggedOut }) {
                                             </tr>
                                         ))}
 
-                                        {visibleCompanies.length === 0 && (
+                                        {companies.length === 0 && (
                                             <tr>
                                                 <td colSpan={6} className="admin-table-card__empty">
                                                     No registrations match this view.
@@ -644,6 +623,8 @@ function AdminDashboard({ page, onNavigate, onLoggedOut }) {
                                     </tbody>
                                 </table>
                             </div>
+
+                            <Pagination meta={meta} onPageChange={setPage} />
                         </section>
                     </div>
 

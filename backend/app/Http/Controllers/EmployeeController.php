@@ -9,11 +9,17 @@ use Illuminate\Validation\Rule;
 
 class EmployeeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(
-            Employee::latest()->get()
-        );
+        $query = Employee::latest();
+
+        // Pickers (e.g. the technician dropdown on the service form) need
+        // every employee at once, not one page of the table view.
+        if ($request->boolean('all')) {
+            return response()->json($query->get());
+        }
+
+        return response()->json($query->paginate((int) $request->query('per_page', 15)));
     }
 
     public function store(Request $request)

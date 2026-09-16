@@ -1,14 +1,22 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
 import Modal from "../../components/Modal/Modal";
 import CustomerForm from "../../components/CustomerForm/CustomerForm";
+import Pagination from "../../components/Pagination/Pagination";
 import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
 import { usePressedRow } from "../../lib/usePressedRow";
+import { usePaginatedResource } from "../../lib/usePaginatedResource";
 
 function Customers({ shellProps }) {
-    const [customers, setCustomers] = useState([]);
+    const {
+        items: customers,
+        meta,
+        error: loadError,
+        setPage,
+        reload,
+    } = usePaginatedResource("/customers");
     const [error, setError] = useState("");
     const [editingCustomer, setEditingCustomer] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
@@ -17,10 +25,6 @@ function Customers({ shellProps }) {
     const [busyId, setBusyId] = useState(null);
     const [expandedIds, setExpandedIds] = useState(new Set());
     const { pressedId, pressHandlers } = usePressedRow();
-
-    useEffect(() => {
-        loadCustomers();
-    }, []);
 
     function toggleExpanded(id) {
         setExpandedIds((prev) => {
@@ -32,15 +36,6 @@ function Customers({ shellProps }) {
             }
             return next;
         });
-    }
-
-    async function loadCustomers() {
-        try {
-            const response = await api.get("/customers");
-            setCustomers(response.data);
-        } catch (err) {
-            setError(getErrorMessage(err, "Unable to load customers."));
-        }
     }
 
     function openEditModal(customer) {
@@ -69,7 +64,7 @@ function Customers({ shellProps }) {
             await api.put(`/customers/${editingCustomer.id}`, values);
             showToast("Customer updated.");
             closeModal();
-            loadCustomers();
+            reload();
         } catch (err) {
             setFormError(getErrorMessage(err, "Unable to save customer."));
         } finally {
@@ -96,7 +91,7 @@ function Customers({ shellProps }) {
             const action = customer.is_suspended ? "unsuspend" : "suspend";
             await api.post(`/customers/${customer.id}/${action}`);
             showToast(customer.is_suspended ? "Customer reinstated." : "Customer suspended.");
-            loadCustomers();
+            reload();
         } catch (err) {
             const message = getErrorMessage(err, "Unable to update customer status.");
             setError(message);
@@ -122,7 +117,7 @@ function Customers({ shellProps }) {
         try {
             await api.delete(`/customers/${customer.id}`);
             showToast("Customer deleted.");
-            loadCustomers();
+            reload();
         } catch (err) {
             const message = getErrorMessage(err, "Unable to delete customer.");
             setError(message);
@@ -133,7 +128,12 @@ function Customers({ shellProps }) {
     }
 
     return (
-        <TenantShell {...shellProps} title="Customers" subtitle="Everyone who has used your service center." error={error}>
+        <TenantShell
+            {...shellProps}
+            title="Customers"
+            subtitle="Everyone who has used your service center."
+            error={error || loadError}
+        >
             <section className="tenant-card">
                 <div className="tenant-card__head">
                     <h2>Customers</h2>
@@ -224,6 +224,8 @@ function Customers({ shellProps }) {
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination meta={meta} onPageChange={setPage} />
             </section>
 
             {modalOpen && (

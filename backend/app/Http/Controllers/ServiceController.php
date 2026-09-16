@@ -20,7 +20,36 @@ class ServiceController extends Controller
             $query->where('status', $status);
         }
 
-        return response()->json($query->get());
+        if ($search = trim((string) $request->query('search', ''))) {
+            $query->where(function ($q) use ($search) {
+                $q->where('id', 'like', "%{$search}%")
+                    ->orWhere('ref_no', 'like', "%{$search}%")
+                    ->orWhere('fault', 'like', "%{$search}%")
+                    ->orWhere('service_date', 'like', "%{$search}%")
+                    ->orWhere('started_date', 'like', "%{$search}%")
+                    ->orWhere('completed_date', 'like', "%{$search}%")
+                    ->orWhere('delivered_date', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function ($c) use ($search) {
+                        $c->where('name', 'like', "%{$search}%")->orWhere('nic', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('item', function ($i) use ($search) {
+                        $i->where('name', 'like', "%{$search}%")
+                            ->orWhere('model', 'like', "%{$search}%")
+                            ->orWhere('serial_number', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('employee', function ($e) use ($search) {
+                        $e->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $response = $query->paginate((int) $request->query('per_page', 15))->toArray();
+
+        // Services.jsx shows an "open" count across every status except
+        // delivered — an aggregate the current page alone can't answer.
+        $response['open_count'] = Service::where('status', '!=', 'delivered')->count();
+
+        return response()->json($response);
     }
 
     public function show(int $id)
@@ -112,10 +141,11 @@ class ServiceController extends Controller
     {
         $service = Service::with(['customer', 'item', 'employee', 'work'])->findOrFail($id);
 
+        // No manually-set final price yet — default it to the sum of the
+        // logged work costs rather than blocking invoice generation.
         if ($service->price === null) {
-            return response()->json([
-                'message' => 'Set a final price before generating an invoice.',
-            ], 422);
+            $service->price = $service->work->sum('cost');
+            $service->save();
         }
 
         $pdf = ServicePdfGenerator::renderInvoice($service, app('currentCompany'));

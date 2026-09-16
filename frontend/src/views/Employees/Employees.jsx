@@ -1,14 +1,22 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
 import Modal from "../../components/Modal/Modal";
 import EmployeeForm from "../../components/EmployeeForm/EmployeeForm";
+import Pagination from "../../components/Pagination/Pagination";
 import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
 import { usePressedRow } from "../../lib/usePressedRow";
+import { usePaginatedResource } from "../../lib/usePaginatedResource";
 
 function Employees({ shellProps }) {
-    const [employees, setEmployees] = useState([]);
+    const {
+        items: employees,
+        meta,
+        error: loadError,
+        setPage,
+        reload,
+    } = usePaginatedResource("/employees");
     const [error, setError] = useState("");
     const [editingEmployee, setEditingEmployee] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
@@ -17,10 +25,6 @@ function Employees({ shellProps }) {
     const [busyId, setBusyId] = useState(null);
     const [expandedIds, setExpandedIds] = useState(new Set());
     const { pressedId, pressHandlers } = usePressedRow();
-
-    useEffect(() => {
-        loadEmployees();
-    }, []);
 
     function toggleExpanded(id) {
         setExpandedIds((prev) => {
@@ -32,15 +36,6 @@ function Employees({ shellProps }) {
             }
             return next;
         });
-    }
-
-    async function loadEmployees() {
-        try {
-            const response = await api.get("/employees");
-            setEmployees(response.data);
-        } catch (err) {
-            setError(getErrorMessage(err, "Unable to load employees."));
-        }
     }
 
     function openAddModal() {
@@ -83,7 +78,7 @@ function Employees({ shellProps }) {
             }
 
             closeModal();
-            loadEmployees();
+            reload();
         } catch (err) {
             setFormError(getErrorMessage(err, "Unable to save employee."));
         } finally {
@@ -110,7 +105,7 @@ function Employees({ shellProps }) {
             const action = employee.is_active ? "deactivate" : "activate";
             await api.post(`/employees/${employee.id}/${action}`);
             showToast(employee.is_active ? "Employee deactivated." : "Employee activated.");
-            loadEmployees();
+            reload();
         } catch (err) {
             const message = getErrorMessage(err, "Unable to update employee status.");
             setError(message);
@@ -136,7 +131,7 @@ function Employees({ shellProps }) {
         try {
             await api.delete(`/employees/${employee.id}`);
             showToast("Employee deleted.");
-            loadEmployees();
+            reload();
         } catch (err) {
             const message = getErrorMessage(err, "Unable to delete employee.");
             setError(message);
@@ -147,12 +142,17 @@ function Employees({ shellProps }) {
     }
 
     return (
-        <TenantShell {...shellProps} title="Employees" subtitle="Manage your service center staff." error={error}>
+        <TenantShell
+            {...shellProps}
+            title="Employees"
+            subtitle="Manage your service center staff."
+            error={error || loadError}
+        >
             <section className="tenant-card">
                 <div className="tenant-card__head">
                     <div className="tenant-card__title-group">
                         <h2>Employees</h2>
-                        <span className="tenant-card__stat">{employees.length} total</span>
+                        <span className="tenant-card__stat">{meta?.total ?? 0} total</span>
                     </div>
                     <button className="tenant-btn tenant-btn--primary" type="button" onClick={openAddModal}>
                         Add new employee
@@ -247,6 +247,8 @@ function Employees({ shellProps }) {
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination meta={meta} onPageChange={setPage} />
             </section>
 
             {modalOpen && (

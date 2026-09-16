@@ -1,42 +1,33 @@
-import { useEffect, useState } from "react";
-import api, { getErrorMessage } from "../../api";
+import { useState } from "react";
 import TenantShell from "../../components/TenantShell/TenantShell";
 import Modal from "../../components/Modal/Modal";
 import ServiceDetails from "../../components/ServiceDetails/ServiceDetails";
-import { matchesServiceQuery } from "../../lib/serviceSearch";
+import Pagination from "../../components/Pagination/Pagination";
 import { usePressedRow } from "../../lib/usePressedRow";
+import { usePaginatedResource } from "../../lib/usePaginatedResource";
+
+const STATUS_PARAMS = { status: "delivered" };
 
 function Delivered({ shellProps }) {
-    const [services, setServices] = useState([]);
-    const [error, setError] = useState("");
+    const {
+        items: services,
+        meta,
+        error: loadError,
+        search,
+        setSearch,
+        setPage,
+        reload,
+    } = usePaginatedResource("/services", STATUS_PARAMS);
     const [selectedId, setSelectedId] = useState(null);
-    const [search, setSearch] = useState("");
     const { pressedId, pressHandlers } = usePressedRow();
-
-    async function loadServices() {
-        try {
-            const response = await api.get("/services", { params: { status: "delivered" } });
-            setServices(response.data);
-        } catch (err) {
-            setError(getErrorMessage(err, "Unable to load delivered services."));
-        }
-    }
-
-    useEffect(() => {
-        // Same fetch-on-mount pattern as Services.jsx.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        loadServices();
-    }, []);
 
     function handleUpdated() {
         setSelectedId(null);
-        loadServices();
+        reload();
     }
 
-    const visibleServices = services.filter((service) => matchesServiceQuery(service, search));
-
     return (
-        <TenantShell {...shellProps} title="Delivered" subtitle="Repairs picked up by the customer." error={error}>
+        <TenantShell {...shellProps} title="Delivered" subtitle="Repairs picked up by the customer." error={loadError}>
             <section className="tenant-card">
                 <div className="tenant-card__head">
                     <h2>Delivered services</h2>
@@ -61,7 +52,7 @@ function Delivered({ shellProps }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {visibleServices.map((service) => (
+                            {services.map((service) => (
                                 <tr
                                     key={service.id}
                                     className={[
@@ -95,16 +86,18 @@ function Delivered({ shellProps }) {
                                 </tr>
                             ))}
 
-                            {visibleServices.length === 0 && (
+                            {services.length === 0 && (
                                 <tr>
                                     <td colSpan={6} className="tenant-table-empty">
-                                        {services.length === 0 ? "No delivered services yet." : "No services match your search."}
+                                        {search.trim() ? "No services match your search." : "No delivered services yet."}
                                     </td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination meta={meta} onPageChange={setPage} />
             </section>
 
             {selectedId && (

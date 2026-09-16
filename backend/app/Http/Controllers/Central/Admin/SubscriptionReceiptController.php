@@ -18,7 +18,7 @@ class SubscriptionReceiptController extends Controller
             $query->where('status', $request->string('status'));
         }
 
-        return response()->json($query->get());
+        return response()->json($query->paginate((int) $request->query('per_page', 15)));
     }
 
     /**

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
@@ -6,17 +6,24 @@ import { SERVICE_STATUS_META } from "../../components/StatusBadge/serviceStatusM
 import PdfViewerModal from "../../components/PdfViewerModal/PdfViewerModal";
 import Modal from "../../components/Modal/Modal";
 import DateActionForm from "../../components/DateActionForm/DateActionForm";
-import { matchesServiceQuery } from "../../lib/serviceSearch";
+import Pagination from "../../components/Pagination/Pagination";
 import { usePressedRow } from "../../lib/usePressedRow";
 import { showToast } from "../../lib/toast";
+import { usePaginatedResource } from "../../lib/usePaginatedResource";
 import NewServiceWizard from "./NewServiceWizard";
 import "./Services.css";
 
 function Services({ shellProps }) {
-    const [services, setServices] = useState([]);
-    const [error, setError] = useState("");
+    const {
+        items: services,
+        meta,
+        error: loadError,
+        search,
+        setSearch,
+        setPage,
+        reload,
+    } = usePaginatedResource("/services");
     const [wizardOpen, setWizardOpen] = useState(false);
-    const [search, setSearch] = useState("");
     const [expandedIds, setExpandedIds] = useState(new Set());
     const [pdfService, setPdfService] = useState(null);
     const [startingService, setStartingService] = useState(null);
@@ -36,25 +43,9 @@ function Services({ shellProps }) {
         });
     }
 
-    async function loadServices() {
-        try {
-            const response = await api.get("/services");
-            setServices(response.data);
-        } catch (err) {
-            setError(getErrorMessage(err, "Unable to load services."));
-        }
-    }
-
-    useEffect(() => {
-        // Same fetch-on-mount pattern as Employees/TenantDashboard; the compiler
-        // linter only flags it here because it bails out of analyzing larger files.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        loadServices();
-    }, []);
-
     function handleCreated() {
         setWizardOpen(false);
-        loadServices();
+        reload();
     }
 
     function closeStartModal() {
@@ -67,12 +58,10 @@ function Services({ shellProps }) {
         setStartError("");
 
         try {
-            const response = await api.post(`/services/${startingService.id}/start`, { started_date: startedDate });
-            setServices((prev) =>
-                prev.map((service) => (service.id === response.data.service.id ? response.data.service : service))
-            );
+            await api.post(`/services/${startingService.id}/start`, { started_date: startedDate });
             showToast("Service started.");
             closeStartModal();
+            reload();
         } catch (err) {
             setStartError(getErrorMessage(err, "Unable to start service."));
         } finally {
@@ -80,15 +69,12 @@ function Services({ shellProps }) {
         }
     }
 
-    const openCount = services.filter((service) => service.status !== "delivered").length;
-    const visibleServices = services.filter((service) => matchesServiceQuery(service, search));
-
     return (
         <TenantShell
             {...shellProps}
             title="Services"
             subtitle="Intake and track customer repairs."
-            error={error}
+            error={loadError}
             actions={
                 <button className="tenant-btn tenant-btn--primary" type="button" onClick={() => setWizardOpen(true)}>
                     New service
@@ -99,8 +85,8 @@ function Services({ shellProps }) {
                 <div className="tenant-card__head">
                     <div className="tenant-card__title-group">
                         <h2>Services</h2>
-                        <span className="tenant-card__stat">{services.length} total</span>
-                        <span className="tenant-card__stat tenant-card__stat--accent">{openCount} open</span>
+                        <span className="tenant-card__stat">{meta?.total ?? 0} total</span>
+                        <span className="tenant-card__stat tenant-card__stat--accent">{meta?.open_count ?? 0} open</span>
                     </div>
                     <input
                         type="search"
@@ -126,7 +112,7 @@ function Services({ shellProps }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {visibleServices.map((service) => (
+                            {services.map((service) => (
                                 <tr
                                     key={service.id}
                                     data-toggle
@@ -200,16 +186,18 @@ function Services({ shellProps }) {
                                 </tr>
                             ))}
 
-                            {visibleServices.length === 0 && (
+                            {services.length === 0 && (
                                 <tr>
                                     <td colSpan={9} className="tenant-table-empty">
-                                        {services.length === 0 ? "No services yet." : "No services match your search."}
+                                        {search.trim() ? "No services match your search." : "No services yet."}
                                     </td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
                 </div>
+
+                <Pagination meta={meta} onPageChange={setPage} />
             </section>
 
             {wizardOpen && <NewServiceWizard onClose={() => setWizardOpen(false)} onCreated={handleCreated} />}

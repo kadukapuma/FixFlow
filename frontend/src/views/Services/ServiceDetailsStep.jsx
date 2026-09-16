@@ -12,7 +12,7 @@ function ServiceDetailsStep({ customer, item, submitting, error, onSubmit, onBac
     const [employees, setEmployees] = useState([]);
 
     useEffect(() => {
-        api.get("/employees").then((response) => {
+        api.get("/employees", { params: { all: 1 } }).then((response) => {
             setEmployees(response.data.filter((employee) => employee.is_active));
         });
     }, []);

@@ -31,6 +31,7 @@ Route::post('/admin/login', [AdminAuthController::class, 'login']);
 Route::middleware(['auth:sanctum', 'super_admin'])->prefix('admin')->group(function () {
     Route::post('/logout', [AdminAuthController::class, 'logout']);
 
+    Route::get('/companies/stats', [CompanyApprovalController::class, 'stats']);
     Route::get('/companies', [CompanyApprovalController::class, 'index']);
     Route::post('/companies/{company}/approve', [CompanyApprovalController::class, 'approve']);
     Route::post('/companies/{company}/reject', [CompanyApprovalController::class, 'reject']);

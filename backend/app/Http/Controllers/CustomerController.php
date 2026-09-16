@@ -10,10 +10,10 @@ use Illuminate\Validation\Rule;
 
 class CustomerController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         return response()->json(
-            Customer::latest()->get()
+            Customer::latest()->paginate((int) $request->query('per_page', 15))
         );
     }
 

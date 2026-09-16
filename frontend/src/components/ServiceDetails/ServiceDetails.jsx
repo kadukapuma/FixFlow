@@ -230,14 +230,16 @@ function ServiceDetails({ serviceId, onUpdated }) {
                     )}
 
                     <div className="tenant-form__actions">
-                        <button
-                            type="button"
-                            className="tenant-btn tenant-btn--ghost"
-                            disabled={delivering}
-                            onClick={() => setDeliverModalOpen(true)}
-                        >
-                            Mark as delivered
-                        </button>
+                        {service.price != null && (
+                            <button
+                                type="button"
+                                className="tenant-btn tenant-btn--ghost"
+                                disabled={delivering}
+                                onClick={() => setDeliverModalOpen(true)}
+                            >
+                                Mark as delivered
+                            </button>
+                        )}
                         <button type="submit" className="tenant-btn tenant-btn--primary" disabled={saving}>
                             {saving ? "Saving..." : "Save price"}
                         </button>

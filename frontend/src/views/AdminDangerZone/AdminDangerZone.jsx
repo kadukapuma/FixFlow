@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import api, { getErrorMessage, setAuthToken } from "../../api";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
+import Pagination from "../../components/Pagination/Pagination";
 import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
+import { usePaginatedResource } from "../../lib/usePaginatedResource";
 import "../AdminDashboard/AdminDashboard.css";
 import "./AdminDangerZone.css";
 
@@ -12,25 +14,17 @@ function effectiveStatus(company) {
 }
 
 function AdminDangerZone({ page, onNavigate, onLoggedOut }) {
-    const [companies, setCompanies] = useState([]);
+    const {
+        items: companies,
+        meta,
+        error: loadError,
+        search,
+        setSearch,
+        setPage,
+        reload,
+    } = usePaginatedResource("/admin/companies");
     const [error, setError] = useState("");
     const [busyId, setBusyId] = useState(null);
-    const [search, setSearch] = useState("");
-
-    async function load() {
-        try {
-            const response = await api.get("/admin/companies");
-            setCompanies(response.data);
-        } catch (err) {
-            setError(getErrorMessage(err, "Unable to load companies."));
-        }
-    }
-
-    useEffect(() => {
-        // Same fetch-on-mount pattern as elsewhere in the admin views.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        load();
-    }, []);
 
     async function deleteCompany(company) {
         const confirmed = await confirmAction({
@@ -55,7 +49,7 @@ function AdminDangerZone({ page, onNavigate, onLoggedOut }) {
         try {
             await api.delete(`/admin/companies/${company.id}`);
             showToast(`${company.name} was permanently deleted.`);
-            await load();
+            reload();
         } catch (err) {
             const message = getErrorMessage(err, "Deletion failed.");
             setError(message);
@@ -144,17 +138,6 @@ function AdminDangerZone({ page, onNavigate, onLoggedOut }) {
         }
     }, []);
 
-    const visibleCompanies = useMemo(() => {
-        if (!search.trim()) return companies;
-        const q = search.trim().toLowerCase();
-        return companies.filter(
-            (c) =>
-                c.name.toLowerCase().includes(q) ||
-                c.subdomain.toLowerCase().includes(q) ||
-                c.owner_email.toLowerCase().includes(q)
-        );
-    }, [companies, search]);
-
     return (
         <div className="admin-dashboard">
             <Sidebar items={sidebarItems} footerLabel={adminEmail} onLogout={logout} />
@@ -167,9 +150,9 @@ function AdminDangerZone({ page, onNavigate, onLoggedOut }) {
                     </div>
                 </header>
 
-                {error && (
+                {(error || loadError) && (
                     <p className="admin-alert" role="alert">
-                        {error}
+                        {error || loadError}
                     </p>
                 )}
 
@@ -195,7 +178,7 @@ function AdminDangerZone({ page, onNavigate, onLoggedOut }) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {visibleCompanies.map((company) => (
+                                {companies.map((company) => (
                                     <tr key={company.id}>
                                         <td data-label="Company">
                                             <div className="admin-company-cell">
@@ -227,7 +210,7 @@ function AdminDangerZone({ page, onNavigate, onLoggedOut }) {
                                     </tr>
                                 ))}
 
-                                {visibleCompanies.length === 0 && (
+                                {companies.length === 0 && (
                                     <tr>
                                         <td colSpan={4} className="admin-table-card__empty">
                                             No companies match this view.
@@ -237,6 +220,8 @@ function AdminDangerZone({ page, onNavigate, onLoggedOut }) {
                             </tbody>
                         </table>
                     </div>
+
+                    <Pagination meta={meta} onPageChange={setPage} />
                 </section>
             </div>
         </div>

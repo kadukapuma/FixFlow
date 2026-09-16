@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import api, { getErrorMessage, setAuthToken } from "../../api";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import { RECEIPT_STATUS_META } from "../../components/StatusBadge/statusMeta";
 import PdfViewerModal from "../../components/PdfViewerModal/PdfViewerModal";
 import Modal from "../../components/Modal/Modal";
+import Pagination from "../../components/Pagination/Pagination";
 import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
+import { usePaginatedResource } from "../../lib/usePaginatedResource";
 import "../AdminDashboard/AdminDashboard.css";
 
 const FILTERS = ["pending", "approved", "rejected", "all"];
@@ -23,28 +25,18 @@ function formatDate(value) {
 }
 
 function AdminReceipts({ page, onNavigate, onLoggedOut }) {
-    const [receipts, setReceipts] = useState([]);
+    const [filter, setFilter] = useState("pending");
+    const {
+        items: receipts,
+        meta,
+        error: loadError,
+        setPage,
+        reload,
+    } = usePaginatedResource("/admin/receipts", filter === "all" ? {} : { status: filter });
     const [error, setError] = useState("");
     const [busyId, setBusyId] = useState(null);
-    const [filter, setFilter] = useState("pending");
     const [viewingReceipt, setViewingReceipt] = useState(null);
     const [imageObjectUrl, setImageObjectUrl] = useState(null);
-
-    useEffect(() => {
-        load();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filter]);
-
-    async function load() {
-        try {
-            const response = await api.get("/admin/receipts", {
-                params: filter === "all" ? {} : { status: filter },
-            });
-            setReceipts(response.data);
-        } catch (err) {
-            setError(getErrorMessage(err, "Unable to load receipts."));
-        }
-    }
 
     async function approve(receipt) {
         const confirmed = await confirmAction({
@@ -61,7 +53,7 @@ function AdminReceipts({ page, onNavigate, onLoggedOut }) {
         try {
             await api.post(`/admin/receipts/${receipt.id}/approve`);
             showToast("Receipt approved. Subscription renewed.");
-            await load();
+            reload();
         } catch (err) {
             const message = getErrorMessage(err, "Approval failed.");
             setError(message);
@@ -80,7 +72,7 @@ function AdminReceipts({ page, onNavigate, onLoggedOut }) {
         try {
             await api.post(`/admin/receipts/${receipt.id}/reject`, { reason });
             showToast("Receipt rejected.");
-            await load();
+            reload();
         } catch (err) {
             const message = getErrorMessage(err, "Rejection failed.");
             setError(message);
@@ -106,7 +98,7 @@ function AdminReceipts({ page, onNavigate, onLoggedOut }) {
         try {
             await api.delete(`/admin/receipts/${receipt.id}/file`);
             showToast("Receipt file deleted.");
-            await load();
+            reload();
         } catch (err) {
             const message = getErrorMessage(err, "Unable to delete receipt file.");
             setError(message);
@@ -228,9 +220,9 @@ function AdminReceipts({ page, onNavigate, onLoggedOut }) {
                     </div>
                 </header>
 
-                {error && (
+                {(error || loadError) && (
                     <p className="admin-alert" role="alert">
-                        {error}
+                        {error || loadError}
                     </p>
                 )}
 
@@ -338,6 +330,8 @@ function AdminReceipts({ page, onNavigate, onLoggedOut }) {
                             </tbody>
                         </table>
                     </div>
+
+                    <Pagination meta={meta} onPageChange={setPage} />
                 </section>
             </div>
 
