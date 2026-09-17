@@ -2,10 +2,17 @@ import { useEffect } from "react";
 import "./Modal.css";
 
 
-function Modal({ title, onClose, children, maxWidth = 600, className = "" }) {
+function Modal({
+    title,
+    onClose,
+    children,
+    maxWidth = 600,
+    className = "",
+    closeOnBackdrop = false,
+}) {
     useEffect(() => {
         function handleKeyDown(event) {
-            if (event.key === "Escape") onClose();
+            if (event.key === "Escape") onClose?.();
         }
 
         document.addEventListener("keydown", handleKeyDown);
@@ -13,7 +20,10 @@ function Modal({ title, onClose, children, maxWidth = 600, className = "" }) {
     }, [onClose]);
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
+        <div
+            className="modal-overlay"
+            onClick={closeOnBackdrop ? onClose : undefined}
+        >
             <div
                 className={`modal-card ${className}`.trim()}
                 style={{ maxWidth }}
