@@ -8,9 +8,12 @@ import PdfViewerModal from "../PdfViewerModal/PdfViewerModal";
 import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
 
+const EMPTY_PAYMENT_FORM = { amount: "", method: "cash", paid_at: "", note: "" };
+
 function ServiceDetails({ serviceId, onUpdated }) {
     const [service, setService] = useState(null);
     const [workEntries, setWorkEntries] = useState([]);
+    const [payments, setPayments] = useState([]);
     const [price, setPrice] = useState("");
     const [advance, setAdvance] = useState("");
     const [loading, setLoading] = useState(true);
@@ -19,6 +22,9 @@ function ServiceDetails({ serviceId, onUpdated }) {
     const [delivering, setDelivering] = useState(false);
     const [deliverModalOpen, setDeliverModalOpen] = useState(false);
     const [invoiceOpen, setInvoiceOpen] = useState(false);
+    const [paymentForm, setPaymentForm] = useState(EMPTY_PAYMENT_FORM);
+    const [paymentError, setPaymentError] = useState("");
+    const [recordingPayment, setRecordingPayment] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -28,15 +34,17 @@ function ServiceDetails({ serviceId, onUpdated }) {
             setError("");
 
             try {
-                const [serviceResponse, workResponse] = await Promise.all([
+                const [serviceResponse, workResponse, paymentsResponse] = await Promise.all([
                     api.get(`/services/${serviceId}`),
                     api.get("/work", { params: { service_id: serviceId } }),
+                    api.get(`/services/${serviceId}/payments`),
                 ]);
 
                 if (cancelled) return;
 
                 setService(serviceResponse.data);
                 setWorkEntries(workResponse.data);
+                setPayments(paymentsResponse.data);
 
                 const workTotal = workResponse.data.reduce((sum, entry) => sum + Number(entry.cost), 0);
                 setPrice(serviceResponse.data.price != null ? String(serviceResponse.data.price) : workTotal.toFixed(2));
@@ -56,6 +64,29 @@ function ServiceDetails({ serviceId, onUpdated }) {
     }, [serviceId]);
 
     const workTotal = workEntries.reduce((sum, entry) => sum + Number(entry.cost), 0);
+    const paidTotal = payments.reduce((sum, entry) => sum + Number(entry.amount), 0);
+
+    async function handleRecordPayment(event) {
+        event.preventDefault();
+        setRecordingPayment(true);
+        setPaymentError("");
+
+        try {
+            const response = await api.post(`/services/${serviceId}/payments`, {
+                amount: paymentForm.amount,
+                method: paymentForm.method,
+                paid_at: paymentForm.paid_at || undefined,
+                note: paymentForm.note || undefined,
+            });
+            setPayments((prev) => [response.data.payment, ...prev]);
+            setPaymentForm(EMPTY_PAYMENT_FORM);
+            showToast("Payment recorded.");
+        } catch (err) {
+            setPaymentError(getErrorMessage(err, "Unable to record payment."));
+        } finally {
+            setRecordingPayment(false);
+        }
+    }
 
     async function handleSavePrice(event) {
         event.preventDefault();
@@ -145,6 +176,21 @@ function ServiceDetails({ serviceId, onUpdated }) {
                     <span className="detail-grid__label">Technician</span>
                     <strong>{service.employee?.name}</strong>
                 </div>
+                {service.commission_type && (
+                    <div>
+                        <span className="detail-grid__label">Technician commission</span>
+                        <strong>
+                            {service.commission_amount != null
+                                ? `Rs. ${service.commission_amount} earned`
+                                : service.commission_type === "percentage"
+                                ? `${service.commission_value}% of price`
+                                : `Rs. ${service.commission_value}`}
+                        </strong>
+                        {service.commission_amount != null && (
+                            <span>Paid out from the Commissions tab, not here.</span>
+                        )}
+                    </div>
+                )}
                 <div>
                     <span className="detail-grid__label">Fault</span>
                     <strong>{service.fault || "—"}</strong>
@@ -214,6 +260,109 @@ function ServiceDetails({ serviceId, onUpdated }) {
                 </table>
             </div>
 
+            <div className="tenant-card__head">
+                <h2>Customer payments received</h2>
+            </div>
+
+            <div className="tenant-table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {payments.map((entry) => (
+                            <tr key={entry.id}>
+                                <td data-label="Date">{entry.paid_at}</td>
+                                <td data-label="Amount">Rs. {entry.amount}</td>
+                                <td data-label="Method">{entry.method}</td>
+                                <td data-label="Note">{entry.note || "—"}</td>
+                            </tr>
+                        ))}
+
+                        {payments.length === 0 && (
+                            <tr>
+                                <td colSpan={4} className="tenant-table-empty">
+                                    No payments recorded.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td>
+                                <strong>Paid</strong>
+                            </td>
+                            <td colSpan={3}>
+                                <strong>Rs. {paidTotal.toFixed(2)}</strong>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <form className="tenant-form tenant-form--2col" onSubmit={handleRecordPayment}>
+                <label>
+                    Amount
+                    <input
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        value={paymentForm.amount}
+                        onChange={(e) => setPaymentForm((prev) => ({ ...prev, amount: e.target.value }))}
+                        required
+                    />
+                </label>
+
+                <label>
+                    Method
+                    <select
+                        value={paymentForm.method}
+                        onChange={(e) => setPaymentForm((prev) => ({ ...prev, method: e.target.value }))}
+                    >
+                        <option value="cash">Cash</option>
+                        <option value="bank">Bank</option>
+                        <option value="upi">UPI</option>
+                        <option value="card">Card</option>
+                        <option value="other">Other</option>
+                    </select>
+                </label>
+
+                <label>
+                    Date
+                    <input
+                        type="date"
+                        value={paymentForm.paid_at}
+                        onChange={(e) => setPaymentForm((prev) => ({ ...prev, paid_at: e.target.value }))}
+                    />
+                </label>
+
+                <label>
+                    Note
+                    <input
+                        value={paymentForm.note}
+                        onChange={(e) => setPaymentForm((prev) => ({ ...prev, note: e.target.value }))}
+                        placeholder="Optional"
+                    />
+                </label>
+
+                {paymentError && (
+                    <p className="tenant-alert tenant-form__error" role="alert">
+                        {paymentError}
+                    </p>
+                )}
+
+                <div className="tenant-form__actions">
+                    <button type="submit" className="tenant-btn tenant-btn--primary" disabled={recordingPayment}>
+                        {recordingPayment ? "Recording..." : "Record customer payment"}
+                    </button>
+                </div>
+            </form>
+
             {service.status === "completed" && (
                 <form className="tenant-form tenant-form--1col" onSubmit={handleSavePrice}>
                     <label>
@@ -240,9 +389,9 @@ function ServiceDetails({ serviceId, onUpdated }) {
                         />
                     </label>
 
-                    {price !== "" && advance !== "" && !Number.isNaN(Number(price)) && !Number.isNaN(Number(advance)) && (
+                    {price !== "" && !Number.isNaN(Number(price)) && (
                         <p className="wizard-hint">
-                            Balance due: Rs. {(Number(price) - Number(advance)).toFixed(2)}
+                            Balance due: Rs. {(Number(price) - paidTotal).toFixed(2)}
                         </p>
                     )}
 
@@ -290,17 +439,15 @@ function ServiceDetails({ serviceId, onUpdated }) {
                             <span className="detail-grid__label">Final price</span>
                             <strong>{service.price != null ? `Rs. ${service.price}` : "—"}</strong>
                         </div>
-                        {service.advance_amount != null && (
+                        {paidTotal > 0 && (
                             <>
                                 <div>
-                                    <span className="detail-grid__label">Advance paid</span>
-                                    <strong>Rs. {service.advance_amount}</strong>
+                                    <span className="detail-grid__label">Paid</span>
+                                    <strong>Rs. {paidTotal.toFixed(2)}</strong>
                                 </div>
                                 <div>
                                     <span className="detail-grid__label">Balance due</span>
-                                    <strong>
-                                        Rs. {(Number(service.price ?? 0) - Number(service.advance_amount)).toFixed(2)}
-                                    </strong>
+                                    <strong>Rs. {(Number(service.price ?? 0) - paidTotal).toFixed(2)}</strong>
                                 </div>
                             </>
                         )}

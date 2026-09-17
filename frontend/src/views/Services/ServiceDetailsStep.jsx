@@ -11,6 +11,8 @@ const EMPTY_FORM = {
     note: "",
     price: "",
     advance_amount: "",
+    commission_type: "",
+    commission_value: "",
     service_date: todayIsoDate(),
     ref_no: "",
 };
@@ -111,6 +113,34 @@ function ServiceDetailsStep({ customer, item, submitting, error, onSubmit, onBac
                         placeholder="Optional, e.g. 500.00"
                     />
                 </label>
+
+                <label>
+                    Technician commission
+                    <select
+                        value={form.commission_type}
+                        onChange={(e) => updateField("commission_type", e.target.value)}
+                    >
+                        <option value="">None</option>
+                        <option value="flat">Flat amount</option>
+                        <option value="percentage">Percentage of price</option>
+                    </select>
+                </label>
+
+                {form.commission_type && (
+                    <label>
+                        {form.commission_type === "percentage" ? "Commission (%)" : "Commission (₹)"}
+                        <input
+                            type="number"
+                            min="0"
+                            max={form.commission_type === "percentage" ? "100" : undefined}
+                            step="0.01"
+                            value={form.commission_value}
+                            onChange={(e) => updateField("commission_value", e.target.value)}
+                            placeholder={form.commission_type === "percentage" ? "e.g. 10" : "e.g. 200.00"}
+                            required
+                        />
+                    </label>
+                )}
 
                 {error && (
                     <p className="tenant-alert tenant-form__error" role="alert">

@@ -11,6 +11,7 @@ import Services from "../views/Services/Services";
 import StartWork from "../views/StartWork/StartWork";
 import Completed from "../views/Completed/Completed";
 import Delivered from "../views/Delivered/Delivered";
+import Commissions from "../views/Commissions/Commissions";
 import CompanySettings from "../views/CompanySettings/CompanySettings";
 import Subscription from "../views/Subscription/Subscription";
 
@@ -153,6 +154,18 @@ const DELIVERED_ICON = (
     </svg>
 );
 
+const COMMISSIONS_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M12 3v18M17 7.5c0-1.9-2.2-3-5-3s-5 1.1-5 3 2.2 3 5 3 5 1.1 5 3-2.2 3-5 3-5-1.1-5-3"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
 function TenantApp() {
     const [token, setToken] = useState(() => localStorage.getItem("tenant_token"));
     const [page, setPage] = usePageParam("dashboard");
@@ -256,6 +269,13 @@ function TenantApp() {
                 icon: DELIVERED_ICON,
             },
             {
+                key: "commissions",
+                title: "Commissions",
+                active: page === "commissions",
+                onClick: () => setPage("commissions"),
+                icon: COMMISSIONS_ICON,
+            },
+            {
                 key: "settings",
                 title: "Settings",
                 active: page === "settings",
@@ -301,6 +321,10 @@ function TenantApp() {
 
     if (page === "delivered") {
         return <Delivered shellProps={shellProps} />;
+    }
+
+    if (page === "commissions") {
+        return <Commissions shellProps={shellProps} />;
     }
 
     if (page === "settings") {

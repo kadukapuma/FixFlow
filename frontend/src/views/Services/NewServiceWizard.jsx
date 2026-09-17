@@ -105,6 +105,8 @@ function NewServiceWizard({ onClose, onCreated }) {
                 status: "pending",
                 price: serviceDetails.price === "" ? null : serviceDetails.price,
                 advance_amount: serviceDetails.advance_amount === "" ? null : serviceDetails.advance_amount,
+                commission_type: serviceDetails.commission_type === "" ? null : serviceDetails.commission_type,
+                commission_value: serviceDetails.commission_value === "" ? null : serviceDetails.commission_value,
                 service_date: serviceDetails.service_date,
                 item_ids: itemIds,
             });

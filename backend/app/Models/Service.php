@@ -20,6 +20,9 @@ class Service extends Model
         'status',
         'price',
         'advance_amount',
+        'commission_type',
+        'commission_value',
+        'commission_amount',
         'service_date',
         'started_date',
         'completed_date',
@@ -29,6 +32,8 @@ class Service extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'advance_amount' => 'decimal:2',
+        'commission_value' => 'decimal:2',
+        'commission_amount' => 'decimal:2',
         'service_date' => 'date:Y-m-d',
         'started_date' => 'date:Y-m-d',
         'completed_date' => 'date:Y-m-d',
@@ -53,6 +58,11 @@ class Service extends Model
     public function work()
     {
         return $this->hasMany(Work::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(ServicePayment::class);
     }
 
     public function receivedItems()

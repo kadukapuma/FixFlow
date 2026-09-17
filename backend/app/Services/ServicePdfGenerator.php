@@ -42,12 +42,14 @@ class ServicePdfGenerator
     public static function renderInvoice(Service $service, Company $company, ?string $logoDataOverride = null): string
     {
         $workTotal = (float) $service->work->sum('cost');
+        $paidTotal = (float) $service->payments->sum('amount');
 
         return Pdf::loadView('pdf.invoice', [
             'service' => $service,
             'company' => $company,
             'logoData' => self::resolveLogoData($company, $logoDataOverride),
             'workTotal' => $workTotal,
+            'paidTotal' => $paidTotal,
         ])->output();
     }
 

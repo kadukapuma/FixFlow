@@ -29,4 +29,9 @@ class Employee extends Model
     {
         return $this->hasMany(Service::class);
     }
+
+    public function commissionPayouts()
+    {
+        return $this->hasMany(CommissionPayout::class);
+    }
 }

@@ -396,18 +396,18 @@
         </div>
         <div class="summary-cell">
             <table class="summary">
-                @if($service->advance_amount)
+                @if($paidTotal > 0)
                     <tr>
                         <td class="summary-label">Total price</td>
                         <td class="summary-amount">{{ number_format((float) $service->price, 2) }}</td>
                     </tr>
                     <tr>
-                        <td class="summary-label">Advance paid</td>
-                        <td class="summary-amount">- {{ number_format((float) $service->advance_amount, 2) }}</td>
+                        <td class="summary-label">Paid</td>
+                        <td class="summary-amount">- {{ number_format($paidTotal, 2) }}</td>
                     </tr>
                     <tr class="summary-total">
                         <td class="summary-label">Balance due</td>
-                        <td class="summary-amount">{{ number_format((float) $service->price - (float) $service->advance_amount, 2) }}</td>
+                        <td class="summary-amount">{{ number_format((float) $service->price - $paidTotal, 2) }}</td>
                     </tr>
                 @else
                     <tr class="summary-total">

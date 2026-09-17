@@ -7,12 +7,18 @@ use App\Models\Employee;
 use App\Models\GettingItemsFromCustomer;
 use App\Models\Item;
 use App\Models\Service;
+use App\Models\ServicePayment;
+use App\Services\LedgerService;
 use App\Services\ServicePdfGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class ServiceController extends Controller
 {
+    public function __construct(private LedgerService $ledger)
+    {
+    }
+
     public function index(Request $request)
     {
         $query = Service::with(['customer', 'item', 'employee'])->latest();
@@ -103,6 +109,8 @@ class ServiceController extends Controller
             'status' => ['required', 'string', Rule::in(['pending', 'in_progress', 'completed', 'delivered'])],
             'price' => ['nullable', 'numeric', 'min:0'],
             'advance_amount' => ['nullable', 'numeric', 'min:0'],
+            'commission_type' => ['nullable', 'string', Rule::in(['flat', 'percentage'])],
+            'commission_value' => ['nullable', 'numeric', 'min:0', 'required_with:commission_type'],
             'service_date' => ['nullable', 'date'],
             'item_ids' => ['nullable', 'array'],
             'item_ids.*' => ['integer', Rule::exists(GettingItemsFromCustomer::class, 'id')],
@@ -120,15 +128,33 @@ class ServiceController extends Controller
             return $response;
         }
 
+        if ($response = $this->validateCommission($validated['price'] ?? null, $validated['commission_type'] ?? null, $validated['commission_value'] ?? null)) {
+            return $response;
+        }
+
         $validated['service_date'] ??= now()->toDateString();
 
         $itemIds = $validated['item_ids'] ?? [];
         unset($validated['item_ids']);
 
+        $advanceAmount = $validated['advance_amount'] ?? null;
+
         $service = Service::create($validated);
 
         if ($itemIds) {
             $service->receivedItems()->attach($itemIds);
+        }
+
+        if ($advanceAmount) {
+            $payment = ServicePayment::create([
+                'service_id' => $service->id,
+                'amount' => $advanceAmount,
+                'method' => 'cash',
+                'paid_at' => $service->service_date,
+                'note' => 'Initial advance',
+            ]);
+
+            $this->ledger->postServicePayment($payment);
         }
 
         $service->load(['customer', 'item', 'employee', 'receivedItems']);
@@ -155,7 +181,7 @@ class ServiceController extends Controller
 
     public function invoice(int $id)
     {
-        $service = Service::with(['customer', 'item', 'employee', 'work', 'receivedItems'])->findOrFail($id);
+        $service = Service::with(['customer', 'item', 'employee', 'work', 'receivedItems', 'payments'])->findOrFail($id);
 
         // No manually-set final price yet — default it to the sum of the
         // logged work costs rather than blocking invoice generation.
@@ -228,6 +254,22 @@ class ServiceController extends Controller
 
         $service->update(['status' => 'completed', 'completed_date' => $completedDate]);
 
+        if ($service->commission_type && $service->commission_amount === null) {
+            if ($service->commission_type === 'percentage' && $service->price === null) {
+                return response()->json([
+                    'message' => 'Set the service price before marking it complete so the commission can be calculated.',
+                ], 422);
+            }
+
+            $commissionAmount = $service->commission_type === 'percentage'
+                ? round((float) $service->price * (float) $service->commission_value / 100, 2)
+                : (float) $service->commission_value;
+
+            $service->update(['commission_amount' => $commissionAmount]);
+
+            $this->ledger->postCommissionAccrual($service);
+        }
+
         return response()->json([
             'message' => 'Service marked as completed.',
             'service' => $service->load(['customer', 'item', 'employee']),
@@ -271,6 +313,8 @@ class ServiceController extends Controller
         $validated = $request->validate([
             'price' => ['required', 'numeric', 'min:0'],
             'advance_amount' => ['nullable', 'numeric', 'min:0'],
+            'commission_type' => ['nullable', 'string', Rule::in(['flat', 'percentage'])],
+            'commission_value' => ['nullable', 'numeric', 'min:0', 'required_with:commission_type'],
         ]);
 
         $advanceAmount = array_key_exists('advance_amount', $validated)
@@ -279,6 +323,19 @@ class ServiceController extends Controller
 
         if ($response = $this->validateAdvanceAgainstPrice($validated['price'], $advanceAmount)) {
             return $response;
+        }
+
+        // Commission was already earned and snapshotted at completion —
+        // editing the price afterwards shouldn't silently change what's owed.
+        if ($service->commission_amount === null) {
+            $commissionType = array_key_exists('commission_type', $validated) ? $validated['commission_type'] : $service->commission_type;
+            $commissionValue = array_key_exists('commission_value', $validated) ? $validated['commission_value'] : $service->commission_value;
+
+            if ($response = $this->validateCommission($validated['price'], $commissionType, $commissionValue)) {
+                return $response;
+            }
+        } else {
+            unset($validated['commission_type'], $validated['commission_value']);
         }
 
         $service->update($validated);
@@ -301,6 +358,33 @@ class ServiceController extends Controller
             return response()->json([
                 'message' => "Advance amount can't exceed the price.",
                 'errors' => ['advance_amount' => ["Advance amount can't exceed the price."]],
+            ], 422);
+        }
+
+        return null;
+    }
+
+    /**
+     * A flat commission bigger than the price it's drawn from doesn't make
+     * sense; a percentage commission can't exceed 100%.
+     */
+    private function validateCommission(?float $price, ?string $commissionType, ?float $commissionValue)
+    {
+        if ($commissionType === null || $commissionValue === null) {
+            return null;
+        }
+
+        if ($commissionType === 'percentage' && $commissionValue > 100) {
+            return response()->json([
+                'message' => "Commission percentage can't exceed 100%.",
+                'errors' => ['commission_value' => ["Commission percentage can't exceed 100%."]],
+            ], 422);
+        }
+
+        if ($commissionType === 'flat' && $price !== null && $commissionValue > $price) {
+            return response()->json([
+                'message' => "Commission amount can't exceed the price.",
+                'errors' => ['commission_value' => ["Commission amount can't exceed the price."]],
             ], 422);
         }
 

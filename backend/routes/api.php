@@ -5,6 +5,7 @@ use App\Http\Controllers\Central\Admin\CompanyApprovalController;
 use App\Http\Controllers\Central\Admin\SubscriptionReceiptController as AdminSubscriptionReceiptController;
 use App\Http\Controllers\Central\CompanyLoginLookupController;
 use App\Http\Controllers\Central\CompanyRegistrationController;
+use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CompanySettingsController;
 use App\Http\Controllers\CustomerController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\GettingItemsFromCustomerController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\ServicePaymentController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\Tenant\AuthController as TenantAuthController;
 use App\Http\Controllers\WorkController;
@@ -108,6 +110,12 @@ Route::middleware('company')->group(function () {
         Route::post('/services/{id}/complete', [ServiceController::class, 'complete']);
         Route::post('/services/{id}/deliver', [ServiceController::class, 'deliver']);
         Route::put('/services/{id}/price', [ServiceController::class, 'updatePrice']);
+        Route::get('/services/{id}/payments', [ServicePaymentController::class, 'index']);
+        Route::post('/services/{id}/payments', [ServicePaymentController::class, 'store']);
+
+        Route::get('/commissions', [CommissionController::class, 'index']);
+        Route::get('/commissions/{employeeId}', [CommissionController::class, 'show']);
+        Route::post('/commissions/{employeeId}/payouts', [CommissionController::class, 'payout']);
 
         Route::get('/work', [WorkController::class, 'index']);
         Route::post('/work', [WorkController::class, 'store']);
