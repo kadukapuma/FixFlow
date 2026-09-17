@@ -17,8 +17,8 @@ const EMPTY_FORM = {
     ref_no: "",
 };
 
-function ServiceDetailsStep({ customer, item, submitting, error, onSubmit, onBack }) {
-    const [form, setForm] = useState(EMPTY_FORM);
+function ServiceDetailsStep({ customer, item, initialValues, submitting, error, onSubmit, onBack }) {
+    const [form, setForm] = useState(initialValues || EMPTY_FORM);
     const [employees, setEmployees] = useState([]);
 
     useEffect(() => {

@@ -20,6 +20,7 @@ function NewServiceWizard({ onClose, onCreated }) {
     const [customer, setCustomer] = useState(null);
     const [item, setItem] = useState(null);
     const [serviceDetails, setServiceDetails] = useState(null);
+    const [receivedItemIds, setReceivedItemIds] = useState([]);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
     const [createdService, setCreatedService] = useState(null);
@@ -198,6 +199,7 @@ function NewServiceWizard({ onClose, onCreated }) {
                 <ServiceDetailsStep
                     customer={customer}
                     item={item}
+                    initialValues={serviceDetails}
                     submitting={submitting}
                     error={error}
                     onSubmit={handleDetailsNext}
@@ -209,6 +211,8 @@ function NewServiceWizard({ onClose, onCreated }) {
                 <ReceivedItemsStep
                     customer={customer}
                     item={item}
+                    selectedIds={receivedItemIds}
+                    onChangeSelectedIds={setReceivedItemIds}
                     submitting={submitting}
                     error={error}
                     onSubmit={handleFinalSubmit}

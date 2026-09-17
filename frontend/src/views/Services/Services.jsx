@@ -5,6 +5,7 @@ import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import { SERVICE_STATUS_META } from "../../components/StatusBadge/serviceStatusMeta";
 import PdfViewerModal from "../../components/PdfViewerModal/PdfViewerModal";
 import Modal from "../../components/Modal/Modal";
+import ServiceDetails from "../../components/ServiceDetails/ServiceDetails";
 import DateActionForm from "../../components/DateActionForm/DateActionForm";
 import Pagination from "../../components/Pagination/Pagination";
 import { usePressedRow } from "../../lib/usePressedRow";
@@ -24,23 +25,16 @@ function Services({ shellProps }) {
         reload,
     } = usePaginatedResource("/services");
     const [wizardOpen, setWizardOpen] = useState(false);
-    const [expandedIds, setExpandedIds] = useState(new Set());
+    const [selectedId, setSelectedId] = useState(null);
     const [pdfService, setPdfService] = useState(null);
     const [startingService, setStartingService] = useState(null);
     const [startError, setStartError] = useState("");
     const [starting, setStarting] = useState(false);
     const { pressedId, pressHandlers } = usePressedRow();
 
-    function toggleExpanded(id) {
-        setExpandedIds((prev) => {
-            const next = new Set(prev);
-            if (next.has(id)) {
-                next.delete(id);
-            } else {
-                next.add(id);
-            }
-            return next;
-        });
+    function handleUpdated() {
+        setSelectedId(null);
+        reload();
     }
 
     function handleCreated() {
@@ -116,14 +110,14 @@ function Services({ shellProps }) {
                             {services.map((service) => (
                                 <tr
                                     key={service.id}
-                                    data-toggle
                                     className={[
-                                        expandedIds.has(service.id) ? "tenant-row--expanded" : "",
+                                        "clickable-row",
                                         pressedId === service.id ? "tenant-row--pressed" : "",
+                                        selectedId === service.id ? "tenant-row--selected" : "",
                                     ]
                                         .filter(Boolean)
                                         .join(" ")}
-                                    onClick={() => toggleExpanded(service.id)}
+                                    onClick={() => setSelectedId(service.id)}
                                     {...pressHandlers(service.id)}
                                 >
                                     <td data-label="Service ID" className="mobile-summary">
@@ -205,6 +199,12 @@ function Services({ shellProps }) {
             </section>
 
             {wizardOpen && <NewServiceWizard onClose={() => setWizardOpen(false)} onCreated={handleCreated} />}
+
+            {selectedId && (
+                <Modal title={`Service #${selectedId}`} onClose={() => setSelectedId(null)} maxWidth={640}>
+                    <ServiceDetails serviceId={selectedId} onUpdated={handleUpdated} />
+                </Modal>
+            )}
 
             {pdfService && (
                 <PdfViewerModal

@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import api from "../../api";
 
-function ReceivedItemsStep({ customer, item, submitting, error, onSubmit, onBack }) {
+function ReceivedItemsStep({ customer, item, selectedIds, onChangeSelectedIds, submitting, error, onSubmit, onBack }) {
     const [availableItems, setAvailableItems] = useState([]);
-    const [selectedIds, setSelectedIds] = useState([]);
 
     useEffect(() => {
         api.get("/received-items", { params: { all: 1 } }).then((response) => {
@@ -12,7 +11,9 @@ function ReceivedItemsStep({ customer, item, submitting, error, onSubmit, onBack
     }, []);
 
     function toggleItem(id) {
-        setSelectedIds((prev) => (prev.includes(id) ? prev.filter((existing) => existing !== id) : [...prev, id]));
+        onChangeSelectedIds(
+            selectedIds.includes(id) ? selectedIds.filter((existing) => existing !== id) : [...selectedIds, id]
+        );
     }
 
     function handleSubmit(event) {
