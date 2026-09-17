@@ -5,7 +5,15 @@ function todayIsoDate() {
     return new Date().toISOString().slice(0, 10);
 }
 
-const EMPTY_FORM = { employee_id: "", fault: "", note: "", price: "", service_date: todayIsoDate(), ref_no: "" };
+const EMPTY_FORM = {
+    employee_id: "",
+    fault: "",
+    note: "",
+    price: "",
+    advance_amount: "",
+    service_date: todayIsoDate(),
+    ref_no: "",
+};
 
 function ServiceDetailsStep({ customer, item, submitting, error, onSubmit, onBack }) {
     const [form, setForm] = useState(EMPTY_FORM);
@@ -89,6 +97,18 @@ function ServiceDetailsStep({ customer, item, submitting, error, onSubmit, onBac
                         value={form.price}
                         onChange={(e) => updateField("price", e.target.value)}
                         placeholder="0.00"
+                    />
+                </label>
+
+                <label>
+                    Advance received
+                    <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={form.advance_amount}
+                        onChange={(e) => updateField("advance_amount", e.target.value)}
+                        placeholder="Optional, e.g. 500.00"
                     />
                 </label>
 

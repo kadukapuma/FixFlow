@@ -19,6 +19,7 @@ class Service extends Model
         'note',
         'status',
         'price',
+        'advance_amount',
         'service_date',
         'started_date',
         'completed_date',
@@ -27,6 +28,7 @@ class Service extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'advance_amount' => 'decimal:2',
         'service_date' => 'date:Y-m-d',
         'started_date' => 'date:Y-m-d',
         'completed_date' => 'date:Y-m-d',

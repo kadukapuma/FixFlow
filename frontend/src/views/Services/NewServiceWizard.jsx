@@ -104,6 +104,7 @@ function NewServiceWizard({ onClose, onCreated }) {
                 note: serviceDetails.note,
                 status: "pending",
                 price: serviceDetails.price === "" ? null : serviceDetails.price,
+                advance_amount: serviceDetails.advance_amount === "" ? null : serviceDetails.advance_amount,
                 service_date: serviceDetails.service_date,
                 item_ids: itemIds,
             });

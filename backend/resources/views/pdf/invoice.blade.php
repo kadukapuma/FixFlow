@@ -5,7 +5,7 @@
     <title>Invoice #{{ $service->ref_no ?? $service->id }}</title>
     <style>
         @page {
-            margin: 28px 34px;
+            margin: 30px 36px;
         }
 
         body {
@@ -18,14 +18,15 @@
         .header {
             display: table;
             width: 100%;
-            border-bottom: 2px solid #1f2937;
-            padding-bottom: 10px;
-            margin-bottom: 14px;
+            border-bottom: 3px solid #14151a;
+            padding-bottom: 12px;
+            margin-bottom: 18px;
         }
 
         .header .brand {
             display: table-cell;
             vertical-align: middle;
+            width: 60%;
         }
 
         .header .brand-inner {
@@ -35,12 +36,12 @@
         .header .logo-cell {
             display: table-cell;
             vertical-align: middle;
-            width: 60px;
+            width: 56px;
         }
 
         .header .logo-cell img {
-            max-width: 52px;
-            max-height: 52px;
+            max-width: 48px;
+            max-height: 48px;
         }
 
         .header .name-cell {
@@ -50,56 +51,99 @@
         }
 
         .company-name {
-            font-size: 19px;
+            font-size: 18px;
             font-weight: bold;
             color: #111827;
-            margin: 0;
+            margin: 0 0 3px;
         }
 
-        .header .contact {
-            display: table-cell;
-            vertical-align: middle;
-            text-align: right;
-            font-size: 10px;
-            color: #4b5563;
+        .company-contact {
+            font-size: 9.5px;
+            color: #6b7280;
+            margin: 0;
             line-height: 1.5;
         }
 
-        h1.doc-title {
-            font-size: 14px;
-            text-decoration: underline;
-            margin: 0 0 14px;
+        .header .doc-heading {
+            display: table-cell;
+            vertical-align: middle;
+            text-align: right;
         }
 
-        table.info {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 10px;
-        }
-
-        table.info td {
-            vertical-align: top;
-            width: 50%;
-            padding: 4px 0;
-            font-size: 11.5px;
-        }
-
-        table.info .label {
+        .doc-title-lg {
+            font-size: 22px;
             font-weight: bold;
+            letter-spacing: 0.06em;
+            color: #14151a;
+            margin: 0 0 6px;
         }
 
-        table.info .value {
-            margin-left: 4px;
+        .doc-meta {
+            font-size: 10px;
+            color: #4b5563;
+            margin: 2px 0;
         }
 
-        hr.rule {
-            border: none;
-            border-top: 1px solid #d1d5db;
-            margin: 10px 0;
+        .doc-meta span {
+            display: inline-block;
+            min-width: 62px;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-size: 8.5px;
         }
 
-        .fault-line {
-            margin: 0 0 14px;
+        table.info-grid {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 10px 0;
+            margin: 0 -10px 16px;
+        }
+
+        .info-box {
+            width: 50%;
+            vertical-align: top;
+            background: #f8f8f5;
+            border: 1px solid #e6e4da;
+            border-radius: 5px;
+            padding: 10px 13px;
+        }
+
+        .info-box-title {
+            font-size: 8.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #9b9a8f;
+            font-weight: bold;
+            margin: 0 0 6px;
+        }
+
+        .info-box-name {
+            font-size: 13px;
+            font-weight: bold;
+            color: #111827;
+            margin: 0 0 3px;
+        }
+
+        .info-box-line {
+            font-size: 10.5px;
+            color: #374151;
+            margin: 3px 0;
+        }
+
+        .info-box-line .k {
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .note-block {
+            margin: 0 0 16px;
+            font-size: 10.5px;
+            line-height: 1.6;
+        }
+
+        .note-block strong {
+            color: #111827;
         }
 
         table.works {
@@ -108,64 +152,103 @@
             margin-bottom: 4px;
         }
 
-        table.works th, table.works td {
-            border: 1px solid #d1d5db;
-            padding: 6px 8px;
+        table.works th {
+            background: #14151a;
+            color: #f4f3ec;
+            border: 1px solid #14151a;
+            padding: 8px 10px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            text-align: left;
+        }
+
+        table.works td {
+            border: 1px solid #e6e4da;
+            padding: 7px 10px;
             font-size: 11px;
             text-align: left;
         }
 
-        table.works th {
-            background: #f3f4f6;
+        table.works tbody tr:nth-child(even) td {
+            background: #fbfaf6;
         }
 
         table.works td.amount, table.works th.amount {
             text-align: right;
-            width: 100px;
+            width: 110px;
         }
 
         table.works tfoot td {
             font-weight: bold;
+            border-top: 2px solid #14151a;
+            background: #f2f1ea;
         }
 
-        .total-row {
+        .summary-wrap {
             display: table;
             width: 100%;
-            margin: 18px 0 14px;
+            margin: 8px 0 18px;
         }
 
-        .total-row .note {
+        .summary-wrap .note {
             display: table-cell;
-            vertical-align: middle;
-            font-size: 10px;
+            vertical-align: bottom;
+            font-size: 9.5px;
+            color: #9b9a8f;
+            font-style: italic;
+        }
+
+        .summary-wrap .summary-cell {
+            display: table-cell;
+            width: 250px;
+            vertical-align: top;
+        }
+
+        table.summary {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #e6e4da;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        table.summary td {
+            padding: 7px 12px;
+            font-size: 10.5px;
+        }
+
+        table.summary tr + tr td {
+            border-top: 1px solid #e6e4da;
+        }
+
+        table.summary .summary-label {
             color: #6b7280;
         }
 
-        .total-row .total-box {
-            display: table-cell;
-            width: 220px;
-            vertical-align: middle;
+        table.summary .summary-amount {
             text-align: right;
+            font-weight: 600;
+            color: #111827;
         }
 
-        .total-box .box {
-            display: inline-block;
-            border: 1px solid #1f2937;
-            border-radius: 4px;
-            padding: 10px 14px;
-            text-align: right;
+        table.summary tr.summary-total {
+            background: #14151a;
         }
 
-        .total-box .box-label {
-            font-size: 9px;
-            color: #6b7280;
-            margin: 0 0 3px;
+        table.summary tr.summary-total td {
+            border-top: none;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 11px 12px;
+        }
+
+        table.summary tr.summary-total .summary-label {
+            color: #ddfb5e;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-        }
-
-        .total-box .box-amount {
-            font-size: 18px;
+            font-size: 9.5px;
             font-weight: bold;
         }
 
@@ -178,6 +261,8 @@
         .callout-row .fields {
             display: table-cell;
             vertical-align: middle;
+            font-size: 11px;
+            color: #374151;
         }
 
         .callout-row .phone-box {
@@ -188,7 +273,7 @@
         }
 
         .phone-box .box {
-            border: 1px solid #1f2937;
+            border: 1px solid #14151a;
             border-radius: 4px;
             padding: 10px 8px;
             font-size: 15px;
@@ -207,6 +292,7 @@
             margin-top: 16px;
             font-size: 10.5px;
             line-height: 1.5;
+            color: #4b5563;
         }
 
         .signatures {
@@ -239,44 +325,41 @@
                 @endif
                 <div class="name-cell">
                     <p class="company-name">{{ $company->name }}</p>
+                    <p class="company-contact">
+                        @if($company->address){{ $company->address }}@endif
+                        @if($company->phone) &middot; Tel: {{ $company->phone }}@endif
+                    </p>
                 </div>
             </div>
         </div>
-        <div class="contact">
-            @if($company->address){{ $company->address }}<br>@endif
-            @if($company->phone)Tel: {{ $company->phone }}@endif
+        <div class="doc-heading">
+            <p class="doc-title-lg">INVOICE</p>
+            <p class="doc-meta"><span>Invoice No.</span> {{ $service->ref_no ?: ('SV-' . str_pad((string) $service->id, 5, '0', STR_PAD_LEFT)) }}</p>
+            <p class="doc-meta"><span>Date</span> {{ ($service->delivered_date ?? $service->service_date)?->format('d M Y') ?: '—' }}</p>
         </div>
     </div>
 
-    <h1 class="doc-title">Service Invoice</h1>
-
-    <table class="info">
+    <table class="info-grid">
         <tr>
-            <td><span class="label">Service ID:</span> <span class="value">{{ $service->id }}</span></td>
-            <td>
-                <span class="label">Item:</span>
-                <span class="value">{{ $service->item->name }}@if($service->item->model) ({{ $service->item->model }})@endif</span>
+            <td class="info-box">
+                <p class="info-box-title">Billed To</p>
+                <p class="info-box-name">{{ $service->customer->name }}</p>
+                <p class="info-box-line">{{ $service->customer->phone ?: '—' }}</p>
             </td>
-        </tr>
-        <tr>
-            <td><span class="label">Reference No:</span> <span class="value">{{ $service->ref_no ?: '—' }}</span></td>
-            <td><span class="label">Customer Name:</span> <span class="value">{{ $service->customer->name }}</span></td>
-        </tr>
-        <tr>
-            <td><span class="label">Service Date:</span> <span class="value">{{ $service->service_date?->format('d M Y') }}</span></td>
-            <td><span class="label">Contact No:</span> <span class="value">{{ $service->customer->phone ?: '—' }}</span></td>
-        </tr>
-        <tr>
-            <td><span class="label">Delivered Date:</span> <span class="value">{{ $service->delivered_date?->format('d M Y') ?: '—' }}</span></td>
-            <td><span class="label">Serial No:</span> <span class="value">{{ $service->item->serial_number ?: '—' }}</span></td>
+            <td class="info-box">
+                <p class="info-box-title">Service Details</p>
+                <p class="info-box-line"><span class="k">Item:</span> {{ $service->item->name }}@if($service->item->model) ({{ $service->item->model }})@endif</p>
+                <p class="info-box-line"><span class="k">Serial No:</span> {{ $service->item->serial_number ?: '—' }}</p>
+                <p class="info-box-line"><span class="k">Service Date:</span> {{ $service->service_date?->format('d M Y') ?: '—' }}</p>
+                <p class="info-box-line"><span class="k">Delivered:</span> {{ $service->delivered_date?->format('d M Y') ?: '—' }}</p>
+            </td>
         </tr>
     </table>
 
-    <hr class="rule">
-
-    <p class="fault-line"><strong>Fault reported:</strong> {{ $service->fault ?: '—' }}</p>
-
-    <p class="fault-line"><strong>Items received:</strong> {{ $service->receivedItems->isNotEmpty() ? $service->receivedItems->pluck('item_name')->join(', ') : '—' }}</p>
+    <p class="note-block">
+        <strong>Fault reported:</strong> {{ $service->fault ?: '—' }}<br>
+        <strong>Items received:</strong> {{ $service->receivedItems->isNotEmpty() ? $service->receivedItems->pluck('item_name')->join(', ') : '—' }}
+    </p>
 
     <table class="works">
         <thead>
@@ -305,17 +388,34 @@
         </tfoot>
     </table>
 
-    <div class="total-row">
+    <div class="summary-wrap">
         <div class="note">
             @if((float) $service->price !== $workTotal)
                 Final price adjusted from the logged work total.
             @endif
         </div>
-        <div class="total-box">
-            <div class="box">
-                <p class="box-label">Total amount due</p>
-                <p class="box-amount">{{ number_format((float) $service->price, 2) }}</p>
-            </div>
+        <div class="summary-cell">
+            <table class="summary">
+                @if($service->advance_amount)
+                    <tr>
+                        <td class="summary-label">Total price</td>
+                        <td class="summary-amount">{{ number_format((float) $service->price, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="summary-label">Advance paid</td>
+                        <td class="summary-amount">- {{ number_format((float) $service->advance_amount, 2) }}</td>
+                    </tr>
+                    <tr class="summary-total">
+                        <td class="summary-label">Balance due</td>
+                        <td class="summary-amount">{{ number_format((float) $service->price - (float) $service->advance_amount, 2) }}</td>
+                    </tr>
+                @else
+                    <tr class="summary-total">
+                        <td class="summary-label">Total amount due</td>
+                        <td class="summary-amount">{{ number_format((float) $service->price, 2) }}</td>
+                    </tr>
+                @endif
+            </table>
         </div>
     </div>
 

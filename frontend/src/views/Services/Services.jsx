@@ -108,6 +108,7 @@ function Services({ shellProps }) {
                                 <th>Service date</th>
                                 <th>Status</th>
                                 <th>Price</th>
+                                <th>Advance</th>
                                 <th>Document</th>
                             </tr>
                         </thead>
@@ -155,6 +156,9 @@ function Services({ shellProps }) {
                                     <td data-label="Price">
                                         {service.price != null ? `Rs. ${service.price}` : "—"}
                                     </td>
+                                    <td data-label="Advance">
+                                        {service.advance_amount != null ? `Rs. ${service.advance_amount}` : "—"}
+                                    </td>
                                     <td data-label="Document">
                                         <div className="tenant-table-actions">
                                             {service.status === "pending" && (
@@ -188,7 +192,7 @@ function Services({ shellProps }) {
 
                             {services.length === 0 && (
                                 <tr>
-                                    <td colSpan={9} className="tenant-table-empty">
+                                    <td colSpan={10} className="tenant-table-empty">
                                         {search.trim() ? "No services match your search." : "No services yet."}
                                     </td>
                                 </tr>

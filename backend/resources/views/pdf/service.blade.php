@@ -226,6 +226,15 @@
                 <span class="value">{{ $service->price !== null ? number_format((float) $service->price, 2) : '—' }}</span>
             </td>
         </tr>
+        @if($service->advance_amount)
+            <tr>
+                <td></td>
+                <td>
+                    <span class="label">Advance Received:</span>
+                    <span class="value">{{ number_format((float) $service->advance_amount, 2) }}</span>
+                </td>
+            </tr>
+        @endif
     </table>
 
     <hr class="rule">

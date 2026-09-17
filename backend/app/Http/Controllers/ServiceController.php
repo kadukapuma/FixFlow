@@ -102,6 +102,7 @@ class ServiceController extends Controller
             'note' => ['nullable', 'string'],
             'status' => ['required', 'string', Rule::in(['pending', 'in_progress', 'completed', 'delivered'])],
             'price' => ['nullable', 'numeric', 'min:0'],
+            'advance_amount' => ['nullable', 'numeric', 'min:0'],
             'service_date' => ['nullable', 'date'],
             'item_ids' => ['nullable', 'array'],
             'item_ids.*' => ['integer', Rule::exists(GettingItemsFromCustomer::class, 'id')],
@@ -113,6 +114,10 @@ class ServiceController extends Controller
             return response()->json([
                 'message' => "This customer is suspended and can't be booked for a new service.",
             ], 422);
+        }
+
+        if ($response = $this->validateAdvanceAgainstPrice($validated['price'] ?? null, $validated['advance_amount'] ?? null)) {
+            return $response;
         }
 
         $validated['service_date'] ??= now()->toDateString();
@@ -265,7 +270,16 @@ class ServiceController extends Controller
 
         $validated = $request->validate([
             'price' => ['required', 'numeric', 'min:0'],
+            'advance_amount' => ['nullable', 'numeric', 'min:0'],
         ]);
+
+        $advanceAmount = array_key_exists('advance_amount', $validated)
+            ? $validated['advance_amount']
+            : $service->advance_amount;
+
+        if ($response = $this->validateAdvanceAgainstPrice($validated['price'], $advanceAmount)) {
+            return $response;
+        }
 
         $service->update($validated);
 
@@ -273,5 +287,23 @@ class ServiceController extends Controller
             'message' => 'Service price updated.',
             'service' => $service->load(['customer', 'item', 'employee']),
         ]);
+    }
+
+    /**
+     * An advance bigger than the price it's being collected against doesn't
+     * make sense — catches that whether the price and advance are set
+     * together at creation, or the advance was set earlier and the price is
+     * only being finalized now.
+     */
+    private function validateAdvanceAgainstPrice(?float $price, ?float $advanceAmount)
+    {
+        if ($price !== null && $advanceAmount !== null && $advanceAmount > $price) {
+            return response()->json([
+                'message' => "Advance amount can't exceed the price.",
+                'errors' => ['advance_amount' => ["Advance amount can't exceed the price."]],
+            ], 422);
+        }
+
+        return null;
     }
 }

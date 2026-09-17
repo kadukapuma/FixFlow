@@ -12,6 +12,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
     const [service, setService] = useState(null);
     const [workEntries, setWorkEntries] = useState([]);
     const [price, setPrice] = useState("");
+    const [advance, setAdvance] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [saving, setSaving] = useState(false);
@@ -39,6 +40,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
 
                 const workTotal = workResponse.data.reduce((sum, entry) => sum + Number(entry.cost), 0);
                 setPrice(serviceResponse.data.price != null ? String(serviceResponse.data.price) : workTotal.toFixed(2));
+                setAdvance(serviceResponse.data.advance_amount != null ? String(serviceResponse.data.advance_amount) : "");
             } catch (err) {
                 if (!cancelled) setError(getErrorMessage(err, "Unable to load service details."));
             } finally {
@@ -75,7 +77,10 @@ function ServiceDetails({ serviceId, onUpdated }) {
         setError("");
 
         try {
-            const response = await api.put(`/services/${serviceId}/price`, { price });
+            const response = await api.put(`/services/${serviceId}/price`, {
+                price,
+                advance_amount: advance === "" ? null : advance,
+            });
             setService(response.data.service);
             showToast("Price saved.");
             onUpdated(response.data.service);
@@ -223,6 +228,24 @@ function ServiceDetails({ serviceId, onUpdated }) {
                         />
                     </label>
 
+                    <label>
+                        Advance received
+                        <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={advance}
+                            onChange={(e) => setAdvance(e.target.value)}
+                            placeholder="Optional, e.g. 500.00"
+                        />
+                    </label>
+
+                    {price !== "" && advance !== "" && !Number.isNaN(Number(price)) && !Number.isNaN(Number(advance)) && (
+                        <p className="wizard-hint">
+                            Balance due: Rs. {(Number(price) - Number(advance)).toFixed(2)}
+                        </p>
+                    )}
+
                     {error && (
                         <p className="tenant-alert tenant-form__error" role="alert">
                             {error}
@@ -267,6 +290,20 @@ function ServiceDetails({ serviceId, onUpdated }) {
                             <span className="detail-grid__label">Final price</span>
                             <strong>{service.price != null ? `Rs. ${service.price}` : "—"}</strong>
                         </div>
+                        {service.advance_amount != null && (
+                            <>
+                                <div>
+                                    <span className="detail-grid__label">Advance paid</span>
+                                    <strong>Rs. {service.advance_amount}</strong>
+                                </div>
+                                <div>
+                                    <span className="detail-grid__label">Balance due</span>
+                                    <strong>
+                                        Rs. {(Number(service.price ?? 0) - Number(service.advance_amount)).toFixed(2)}
+                                    </strong>
+                                </div>
+                            </>
+                        )}
                     </div>
 
                     <div className="tenant-form__actions">
