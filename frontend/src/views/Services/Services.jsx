@@ -201,7 +201,12 @@ function Services({ shellProps }) {
             {wizardOpen && <NewServiceWizard onClose={() => setWizardOpen(false)} onCreated={handleCreated} />}
 
             {selectedId && (
-                <Modal title={`Service #${selectedId}`} onClose={() => setSelectedId(null)} maxWidth={640}>
+                <Modal
+                    title={`Service #${selectedId}`}
+                    onClose={() => setSelectedId(null)}
+                    maxWidth={1040}
+                    className="modal-card--service-details"
+                >
                     <ServiceDetails serviceId={selectedId} onUpdated={handleUpdated} />
                 </Modal>
             )}

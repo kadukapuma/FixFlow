@@ -62,6 +62,7 @@ class ServiceController extends Controller
     public function show(int $id)
     {
         $service = Service::with(['customer', 'item', 'employee'])->findOrFail($id);
+        $service = Service::with(['customer', 'item', 'employee', 'receivedItems'])->findOrFail($id);
 
         return response()->json($service);
     }
@@ -75,6 +76,7 @@ class ServiceController extends Controller
         }
 
         $serviceQuery = Service::with(['customer', 'item', 'employee']);
+        $serviceQuery = Service::with(['customer', 'item', 'employee', 'receivedItems']);
 
         if (ctype_digit($query)) {
             $serviceQuery->where(function ($q) use ($query) {

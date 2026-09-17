@@ -7,24 +7,55 @@ import DateActionForm from "../DateActionForm/DateActionForm";
 import PdfViewerModal from "../PdfViewerModal/PdfViewerModal";
 import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
+import "./ServiceDetails.css";
 
-const EMPTY_PAYMENT_FORM = { amount: "", method: "cash", paid_at: "", note: "" };
+const EMPTY_PAYMENT_FORM = {
+    amount: "",
+    method: "cash",
+    paid_at: "",
+    note: "",
+};
+
+const STATUS_LEVELS = {
+    pending: 1,
+    in_progress: 2,
+    completed: 3,
+    delivered: 4,
+};
+
+function commissionLabel(service) {
+    if (service.commission_amount != null) {
+        return `Rs. ${Number(service.commission_amount).toFixed(2)} earned`;
+    }
+
+    if (service.commission_type === "percentage") {
+        return `${service.commission_value}% of price`;
+    }
+
+    return `Rs. ${Number(service.commission_value || 0).toFixed(2)}`;
+}
 
 function ServiceDetails({ serviceId, onUpdated }) {
     const [service, setService] = useState(null);
     const [workEntries, setWorkEntries] = useState([]);
     const [payments, setPayments] = useState([]);
+
     const [price, setPrice] = useState("");
     const [advance, setAdvance] = useState("");
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [saving, setSaving] = useState(false);
     const [delivering, setDelivering] = useState(false);
+
     const [deliverModalOpen, setDeliverModalOpen] = useState(false);
     const [invoiceOpen, setInvoiceOpen] = useState(false);
+
     const [paymentForm, setPaymentForm] = useState(EMPTY_PAYMENT_FORM);
     const [paymentError, setPaymentError] = useState("");
     const [recordingPayment, setRecordingPayment] = useState(false);
+
+    const [activeTab, setActiveTab] = useState("overview");
 
     useEffect(() => {
         let cancelled = false;
@@ -36,23 +67,48 @@ function ServiceDetails({ serviceId, onUpdated }) {
             try {
                 const [serviceResponse, workResponse, paymentsResponse] = await Promise.all([
                     api.get(`/services/${serviceId}`),
-                    api.get("/work", { params: { service_id: serviceId } }),
+                    api.get("/work", {
+                        params: { service_id: serviceId },
+                    }),
                     api.get(`/services/${serviceId}/payments`),
                 ]);
 
                 if (cancelled) return;
 
-                setService(serviceResponse.data);
-                setWorkEntries(workResponse.data);
-                setPayments(paymentsResponse.data);
+                const loadedService = serviceResponse.data;
+                const loadedWork = workResponse.data || [];
+                const loadedPayments = paymentsResponse.data || [];
 
-                const workTotal = workResponse.data.reduce((sum, entry) => sum + Number(entry.cost), 0);
-                setPrice(serviceResponse.data.price != null ? String(serviceResponse.data.price) : workTotal.toFixed(2));
-                setAdvance(serviceResponse.data.advance_amount != null ? String(serviceResponse.data.advance_amount) : "");
+                setService(loadedService);
+                setWorkEntries(loadedWork);
+                setPayments(loadedPayments);
+
+                const loadedWorkTotal = loadedWork.reduce(
+                    (sum, entry) => sum + Number(entry.cost || 0),
+                    0
+                );
+
+                setPrice(
+                    loadedService.price != null
+                        ? String(loadedService.price)
+                        : loadedWorkTotal > 0
+                        ? loadedWorkTotal.toFixed(2)
+                        : ""
+                );
+
+                setAdvance(
+                    loadedService.advance_amount != null
+                        ? String(loadedService.advance_amount)
+                        : ""
+                );
             } catch (err) {
-                if (!cancelled) setError(getErrorMessage(err, "Unable to load service details."));
+                if (!cancelled) {
+                    setError(getErrorMessage(err, "Unable to load service details."));
+                }
             } finally {
-                if (!cancelled) setLoading(false);
+                if (!cancelled) {
+                    setLoading(false);
+                }
             }
         }
 
@@ -63,8 +119,20 @@ function ServiceDetails({ serviceId, onUpdated }) {
         };
     }, [serviceId]);
 
-    const workTotal = workEntries.reduce((sum, entry) => sum + Number(entry.cost), 0);
-    const paidTotal = payments.reduce((sum, entry) => sum + Number(entry.amount), 0);
+    const workTotal = workEntries.reduce(
+        (sum, entry) => sum + Number(entry.cost || 0),
+        0
+    );
+
+    const paidTotal = payments.reduce(
+        (sum, entry) => sum + Number(entry.amount || 0),
+        0
+    );
+
+    const balanceDue =
+        service?.price != null
+            ? Math.max(0, Number(service.price) - paidTotal)
+            : null;
 
     async function handleRecordPayment(event) {
         event.preventDefault();
@@ -78,9 +146,10 @@ function ServiceDetails({ serviceId, onUpdated }) {
                 paid_at: paymentForm.paid_at || undefined,
                 note: paymentForm.note || undefined,
             });
+
             setPayments((prev) => [response.data.payment, ...prev]);
             setPaymentForm(EMPTY_PAYMENT_FORM);
-            showToast("Payment recorded.");
+            showToast("Payment recorded successfully.");
         } catch (err) {
             setPaymentError(getErrorMessage(err, "Unable to record payment."));
         } finally {
@@ -91,16 +160,19 @@ function ServiceDetails({ serviceId, onUpdated }) {
     async function handleSavePrice(event) {
         event.preventDefault();
 
+        if (!service) return;
+
         const hadPrice = service.price != null;
         const changed = Number(service.price) !== Number(price);
 
         if (hadPrice && changed) {
             const confirmed = await confirmAction({
                 title: "Overwrite price?",
-                message: `This service already has a price of Rs. ${service.price}. Overwrite it with Rs. ${price}?`,
+                message: `This service already has a price of Rs. ${Number(service.price).toFixed(2)}. Overwrite it with Rs. ${Number(price).toFixed(2)}?`,
                 confirmLabel: "Overwrite",
                 danger: true,
             });
+
             if (!confirmed) return;
         }
 
@@ -112,9 +184,13 @@ function ServiceDetails({ serviceId, onUpdated }) {
                 price,
                 advance_amount: advance === "" ? null : advance,
             });
+
             setService(response.data.service);
-            showToast("Price saved.");
-            onUpdated(response.data.service);
+            showToast("Price updated successfully.");
+
+            if (onUpdated) {
+                onUpdated(response.data.service);
+            }
         } catch (err) {
             setError(getErrorMessage(err, "Unable to save price."));
         } finally {
@@ -127,11 +203,17 @@ function ServiceDetails({ serviceId, onUpdated }) {
         setError("");
 
         try {
-            const response = await api.post(`/services/${serviceId}/deliver`, { delivered_date: deliveredDate });
+            const response = await api.post(`/services/${serviceId}/deliver`, {
+                delivered_date: deliveredDate,
+            });
+
             setService(response.data.service);
             showToast("Service marked as delivered.");
             setDeliverModalOpen(false);
-            onUpdated(response.data.service);
+
+            if (onUpdated) {
+                onUpdated(response.data.service);
+            }
         } catch (err) {
             setError(getErrorMessage(err, "Unable to mark as delivered."));
         } finally {
@@ -140,7 +222,12 @@ function ServiceDetails({ serviceId, onUpdated }) {
     }
 
     if (loading) {
-        return <p className="wizard-hint">Loading...</p>;
+        return (
+            <div className="sd-loading-state">
+                <div className="sd-spinner" />
+                <span>Loading service details...</span>
+            </div>
+        );
     }
 
     if (!service) {
@@ -151,274 +238,757 @@ function ServiceDetails({ serviceId, onUpdated }) {
         );
     }
 
+    const currentLevel = STATUS_LEVELS[service.status] || 1;
+
+    const timelineSteps = [
+        {
+            key: "booked",
+            level: 1,
+            label: "Booked",
+            date: service.service_date,
+            isDone: currentLevel >= 1,
+            isCurrent: currentLevel === 1,
+            description: "Service created and registered",
+        },
+        {
+            key: "started",
+            level: 2,
+            label: "Work Started",
+            date: service.started_date || (currentLevel >= 2 ? "In progress" : "Pending"),
+            isDone: currentLevel >= 2,
+            isCurrent: currentLevel === 2,
+            description: service.employee?.name ? `Assigned to ${service.employee.name}` : "Work in progress",
+        },
+        {
+            key: "completed",
+            level: 3,
+            label: "Completed",
+            date: service.completed_date || (currentLevel >= 3 ? "Completed" : "Pending"),
+            isDone: currentLevel >= 3,
+            isCurrent: currentLevel === 3,
+            description: "Repairs finished & ready for billing",
+        },
+        {
+            key: "delivered",
+            level: 4,
+            label: "Delivered",
+            date: service.delivered_date || (currentLevel >= 4 ? "Delivered" : "Pending"),
+            isDone: currentLevel >= 4,
+            isCurrent: currentLevel === 4,
+            description: "Handed over to customer",
+        },
+    ];
+
     return (
-        <div>
-            <div className="tenant-card__head">
-                <h2>Details{service.ref_no ? ` · ${service.ref_no}` : ""}</h2>
-                <StatusBadge status={service.status} meta={SERVICE_STATUS_META} />
-            </div>
-
-            <div className="detail-grid">
-                <div>
-                    <span className="detail-grid__label">Customer</span>
-                    <strong>{service.customer?.name}</strong>
-                    <span>{service.customer?.nic}</span>
-                </div>
-                <div>
-                    <span className="detail-grid__label">Item</span>
-                    <strong>{service.item?.name}</strong>
-                    <span>
-                        {service.item?.model || "—"}
-                        {service.item?.serial_number ? ` · ${service.item.serial_number}` : ""}
-                    </span>
-                </div>
-                <div>
-                    <span className="detail-grid__label">Technician</span>
-                    <strong>{service.employee?.name}</strong>
-                </div>
-                {service.commission_type && (
-                    <div>
-                        <span className="detail-grid__label">Technician commission</span>
-                        <strong>
-                            {service.commission_amount != null
-                                ? `Rs. ${service.commission_amount} earned`
-                                : service.commission_type === "percentage"
-                                ? `${service.commission_value}% of price`
-                                : `Rs. ${service.commission_value}`}
-                        </strong>
-                        {service.commission_amount != null && (
-                            <span>Paid out from the Commissions tab, not here.</span>
-                        )}
-                    </div>
-                )}
-                <div>
-                    <span className="detail-grid__label">Fault</span>
-                    <strong>{service.fault || "—"}</strong>
-                </div>
-                <div>
-                    <span className="detail-grid__label">Note</span>
-                    <strong>{service.note || "—"}</strong>
-                </div>
-                <div>
-                    <span className="detail-grid__label">Service date</span>
-                    <strong>{service.service_date || "—"}</strong>
-                </div>
-                <div>
-                    <span className="detail-grid__label">Started</span>
-                    <strong>{service.started_date || "—"}</strong>
-                </div>
-                <div>
-                    <span className="detail-grid__label">Completed</span>
-                    <strong>{service.completed_date || "—"}</strong>
-                </div>
-                {service.delivered_date && (
-                    <div>
-                        <span className="detail-grid__label">Delivered</span>
-                        <strong>{service.delivered_date}</strong>
-                    </div>
-                )}
-            </div>
-
-            <div className="tenant-card__head">
-                <h2>Work log</h2>
-            </div>
-
-            <div className="tenant-table-scroll">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Description</th>
-                            <th>Cost</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {workEntries.map((entry) => (
-                            <tr key={entry.id}>
-                                <td data-label="Description">{entry.description || "—"}</td>
-                                <td data-label="Cost">Rs. {entry.cost}</td>
-                            </tr>
-                        ))}
-
-                        {workEntries.length === 0 && (
-                            <tr>
-                                <td colSpan={2} className="tenant-table-empty">
-                                    No work logged.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td>
-                                <strong>Work total</strong>
-                            </td>
-                            <td>
-                                <strong>Rs. {workTotal.toFixed(2)}</strong>
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-
-            <div className="tenant-card__head">
-                <h2>Customer payments received</h2>
-            </div>
-
-            <div className="tenant-table-scroll">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Amount</th>
-                            <th>Method</th>
-                            <th>Note</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {payments.map((entry) => (
-                            <tr key={entry.id}>
-                                <td data-label="Date">{entry.paid_at}</td>
-                                <td data-label="Amount">Rs. {entry.amount}</td>
-                                <td data-label="Method">{entry.method}</td>
-                                <td data-label="Note">{entry.note || "—"}</td>
-                            </tr>
-                        ))}
-
-                        {payments.length === 0 && (
-                            <tr>
-                                <td colSpan={4} className="tenant-table-empty">
-                                    No payments recorded.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td>
-                                <strong>Paid</strong>
-                            </td>
-                            <td colSpan={3}>
-                                <strong>Rs. {paidTotal.toFixed(2)}</strong>
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-
-            <form className="tenant-form tenant-form--2col" onSubmit={handleRecordPayment}>
-                <label>
-                    Amount
-                    <input
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        value={paymentForm.amount}
-                        onChange={(e) => setPaymentForm((prev) => ({ ...prev, amount: e.target.value }))}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Method
-                    <select
-                        value={paymentForm.method}
-                        onChange={(e) => setPaymentForm((prev) => ({ ...prev, method: e.target.value }))}
-                    >
-                        <option value="cash">Cash</option>
-                        <option value="bank">Bank</option>
-                        <option value="upi">UPI</option>
-                        <option value="card">Card</option>
-                        <option value="other">Other</option>
-                    </select>
-                </label>
-
-                <label>
-                    Date
-                    <input
-                        type="date"
-                        value={paymentForm.paid_at}
-                        onChange={(e) => setPaymentForm((prev) => ({ ...prev, paid_at: e.target.value }))}
-                    />
-                </label>
-
-                <label>
-                    Note
-                    <input
-                        value={paymentForm.note}
-                        onChange={(e) => setPaymentForm((prev) => ({ ...prev, note: e.target.value }))}
-                        placeholder="Optional"
-                    />
-                </label>
-
-                {paymentError && (
-                    <p className="tenant-alert tenant-form__error" role="alert">
-                        {paymentError}
-                    </p>
-                )}
-
-                <div className="tenant-form__actions">
-                    <button type="submit" className="tenant-btn tenant-btn--primary" disabled={recordingPayment}>
-                        {recordingPayment ? "Recording..." : "Record customer payment"}
-                    </button>
-                </div>
-            </form>
-
-            {service.status === "completed" && (
-                <form className="tenant-form tenant-form--1col" onSubmit={handleSavePrice}>
-                    <label>
-                        Final price
-                        <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={price}
-                            onChange={(e) => setPrice(e.target.value)}
-                            required
-                        />
-                    </label>
-
-                    <label>
-                        Advance received
-                        <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={advance}
-                            onChange={(e) => setAdvance(e.target.value)}
-                            placeholder="Optional, e.g. 500.00"
-                        />
-                    </label>
-
-                    {price !== "" && !Number.isNaN(Number(price)) && (
-                        <p className="wizard-hint">
-                            Balance due: Rs. {(Number(price) - paidTotal).toFixed(2)}
-                        </p>
-                    )}
-
-                    {error && (
-                        <p className="tenant-alert tenant-form__error" role="alert">
-                            {error}
-                        </p>
-                    )}
-
-                    <div className="tenant-form__actions">
-                        {service.price != null && (
-                            <button
-                                type="button"
-                                className="tenant-btn tenant-btn--ghost"
-                                disabled={delivering}
-                                onClick={() => setDeliverModalOpen(true)}
-                            >
-                                Mark as delivered
-                            </button>
-                        )}
-                        <button type="submit" className="tenant-btn tenant-btn--primary" disabled={saving}>
-                            {saving ? "Saving..." : "Save price"}
-                        </button>
-                    </div>
-                </form>
+        <div className="sd-root">
+            {error && (
+                <p className="tenant-alert" role="alert" style={{ marginBottom: 12 }}>
+                    {error}
+                </p>
             )}
 
+            {/* UNIFIED HERO HEADER */}
+            <header className="sd-header">
+                <div className="sd-header__main">
+                    <div className="sd-header__title-row">
+                        <h3 className="sd-header__item-name">
+                            {service.item?.name || "Service Item"}
+                        </h3>
+                        <span className="sd-header__ref-badge">
+                            {service.ref_no ? service.ref_no : `#${service.id}`}
+                        </span>
+                        {service.ref_no && (
+                            <span className="sd-header__id-tag">
+                                ID #{service.id}
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="sd-header__meta">
+                        <span className="sd-header__meta-item" title="Customer">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            <strong>{service.customer?.name || "Unknown Customer"}</strong>
+                            {service.customer?.phone && (
+                                <span className="sd-header__phone">
+                                    · {service.customer.phone}
+                                </span>
+                            )}
+                        </span>
+
+                        <span className="sd-header__meta-divider">•</span>
+
+                        <span className="sd-header__meta-item" title="Technician">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                            </svg>
+                            <span>Tech: <strong>{service.employee?.name || "Unassigned"}</strong></span>
+                        </span>
+                    </div>
+                </div>
+
+                <div className="sd-header__aside">
+                    <StatusBadge status={service.status} meta={SERVICE_STATUS_META} />
+
+                    <button
+                        type="button"
+                        className={`sd-header__finance-btn ${
+                            balanceDue && balanceDue > 0
+                                ? "sd-header__finance-btn--due"
+                                : "sd-header__finance-btn--paid"
+                        }`}
+                        onClick={() => setActiveTab("billing")}
+                        title="Click to manage pricing and payments"
+                    >
+                        <span className="sd-header__finance-label">
+                            {service.price != null
+                                ? `Rs. ${Number(service.price).toFixed(2)}`
+                                : "Price Pending"}
+                        </span>
+                        <span className="sd-header__finance-sub">
+                            {service.price != null
+                                ? balanceDue > 0
+                                    ? `Due: Rs. ${balanceDue.toFixed(2)}`
+                                    : "Paid in full"
+                                : "Set price →"}
+                        </span>
+                    </button>
+                </div>
+            </header>
+
+            {/* TAB NAVIGATION BAR */}
+            <nav className="sd-nav-tabs" aria-label="Service Details Tabs">
+                <button
+                    type="button"
+                    className={`sd-nav-tab ${activeTab === "overview" ? "sd-nav-tab--active" : ""}`}
+                    onClick={() => setActiveTab("overview")}
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="M9 3v18" />
+                        <path d="M15 9h3" />
+                        <path d="M15 15h3" />
+                    </svg>
+                    <span>Overview</span>
+                </button>
+
+                <button
+                    type="button"
+                    className={`sd-nav-tab ${activeTab === "timeline" ? "sd-nav-tab--active" : ""}`}
+                    onClick={() => setActiveTab("timeline")}
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    <span>Lifecycle</span>
+                    <span className="sd-tab-indicator sd-tab-indicator--step">
+                        {currentLevel}/4
+                    </span>
+                </button>
+
+                <button
+                    type="button"
+                    className={`sd-nav-tab ${activeTab === "work" ? "sd-nav-tab--active" : ""}`}
+                    onClick={() => setActiveTab("work")}
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                    </svg>
+                    <span>Work Log</span>
+                    {workEntries.length > 0 && (
+                        <span className="sd-tab-indicator">
+                            {workEntries.length}
+                        </span>
+                    )}
+                </button>
+
+                <button
+                    type="button"
+                    className={`sd-nav-tab ${activeTab === "billing" ? "sd-nav-tab--active" : ""}`}
+                    onClick={() => setActiveTab("billing")}
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="2" y="5" width="20" height="14" rx="2" />
+                        <line x1="2" y1="10" x2="22" y2="10" />
+                    </svg>
+                    <span>Billing & Payments</span>
+                    {payments.length > 0 && (
+                        <span className={`sd-tab-indicator ${balanceDue > 0 ? "sd-tab-indicator--due" : "sd-tab-indicator--paid"}`}>
+                            {payments.length}
+                        </span>
+                    )}
+                </button>
+            </nav>
+
+            {/* TAB CONTENT PANELS */}
+            <div className="sd-content-area">
+                {/* TAB 1: OVERVIEW */}
+                {activeTab === "overview" && (
+                    <div className="sd-tab-pane sd-tab-pane--overview">
+                        <div className="sd-overview-grid">
+                            {/* CARD 1: DEVICE & ACCESSORIES */}
+                            <div className="sd-card">
+                                <div className="sd-card__head">
+                                    <h4 className="sd-card__title">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <rect x="2" y="3" width="20" height="14" rx="2" />
+                                            <line x1="8" y1="21" x2="16" y2="21" />
+                                            <line x1="12" y1="17" x2="12" y2="21" />
+                                        </svg>
+                                        Device & Accessories
+                                    </h4>
+                                </div>
+                                <div className="sd-card__body">
+                                    <div className="sd-data-row">
+                                        <span className="sd-data-row__label">Item Name</span>
+                                        <span className="sd-data-row__value">{service.item?.name || "—"}</span>
+                                    </div>
+                                    <div className="sd-data-row">
+                                        <span className="sd-data-row__label">Model & Serial</span>
+                                        <span className="sd-data-row__value">
+                                            {service.item?.model || "—"}
+                                            {service.item?.serial_number ? ` · ${service.item.serial_number}` : ""}
+                                        </span>
+                                    </div>
+                                    <div className="sd-data-row sd-data-row--tags">
+                                        <span className="sd-data-row__label">Handed-over Items</span>
+                                        {service.received_items && service.received_items.length > 0 ? (
+                                            <div className="sd-tag-list">
+                                                {service.received_items.map((ri) => (
+                                                    <span key={ri.id} className="sd-tag">
+                                                        ✓ {ri.item_name}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <span className="sd-data-row__sub">None recorded</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* CARD 2: CUSTOMER & STAFF */}
+                            <div className="sd-card">
+                                <div className="sd-card__head">
+                                    <h4 className="sd-card__title">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                            <circle cx="12" cy="7" r="4" />
+                                        </svg>
+                                        Customer & Staff
+                                    </h4>
+                                </div>
+                                <div className="sd-card__body">
+                                    <div className="sd-data-row">
+                                        <span className="sd-data-row__label">Customer Name</span>
+                                        <span className="sd-data-row__value">{service.customer?.name || "—"}</span>
+                                    </div>
+                                    <div className="sd-data-row">
+                                        <span className="sd-data-row__label">NIC Number</span>
+                                        <span className="sd-data-row__value">{service.customer?.nic || "—"}</span>
+                                    </div>
+                                    <div className="sd-data-row">
+                                        <span className="sd-data-row__label">Phone Number</span>
+                                        <span className="sd-data-row__value">
+                                            {service.customer?.phone ? (
+                                                <a href={`tel:${service.customer.phone}`} className="sd-link">
+                                                    {service.customer.phone}
+                                                </a>
+                                            ) : (
+                                                "—"
+                                            )}
+                                        </span>
+                                    </div>
+                                    <div className="sd-data-row">
+                                        <span className="sd-data-row__label">Assigned Technician</span>
+                                        <span className="sd-data-row__value sd-data-row__value--highlight">
+                                            {service.employee?.name || "Unassigned"}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* CARD 3: ISSUE & SERVICE INFO */}
+                            <div className="sd-card">
+                                <div className="sd-card__head">
+                                    <h4 className="sd-card__title">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <line x1="12" y1="8" x2="12" y2="12" />
+                                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                                        </svg>
+                                        Issue & Service Info
+                                    </h4>
+                                </div>
+                                <div className="sd-card__body">
+                                    <div className="sd-data-row">
+                                        <span className="sd-data-row__label">Reported Fault</span>
+                                        <div className="sd-fault-box">
+                                            {service.fault || "None specified"}
+                                        </div>
+                                    </div>
+                                    <div className="sd-data-row">
+                                        <span className="sd-data-row__label">Service Date</span>
+                                        <span className="sd-data-row__value">{service.service_date || "—"}</span>
+                                    </div>
+                                    <div className="sd-data-row">
+                                        <span className="sd-data-row__label">Internal Remarks</span>
+                                        <span className="sd-data-row__sub">
+                                            {service.note || "No internal notes recorded"}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* TAB 2: LIFECYCLE */}
+                {activeTab === "timeline" && (
+                    <div className="sd-tab-pane sd-tab-pane--timeline">
+                        <div className="sd-timeline-container">
+                            <div className="sd-timeline-head">
+                                <div>
+                                    <h4 className="sd-pane-title">Service Lifecycle & Milestones</h4>
+                                    <p className="sd-pane-desc">Track step-by-step progress from intake to customer delivery</p>
+                                </div>
+                                <div className="sd-timeline-status-badge">
+                                    <span>Current Status:</span>
+                                    <strong>{service.status.replace("_", " ").toUpperCase()}</strong>
+                                </div>
+                            </div>
+
+                            <div className="sd-timeline">
+                                <div className="sd-timeline__line-bg" />
+                                <div
+                                    className="sd-timeline__line-active"
+                                    style={{
+                                        width: `${((currentLevel - 1) / (timelineSteps.length - 1)) * 100}%`,
+                                    }}
+                                />
+
+                                {timelineSteps.map((step) => {
+                                    const stepClass = step.isDone
+                                        ? "sd-timeline__step--done"
+                                        : step.isCurrent
+                                        ? "sd-timeline__step--current"
+                                        : "sd-timeline__step--pending";
+
+                                    return (
+                                        <div key={step.key} className={`sd-timeline__step ${stepClass}`}>
+                                            <div className="sd-timeline__node">
+                                                {step.isDone ? "✓" : step.level}
+                                            </div>
+                                            <span className="sd-timeline__label">{step.label}</span>
+                                            <span className="sd-timeline__date">{step.date || "Pending"}</span>
+                                            <span className="sd-timeline__desc">{step.description}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="sd-timeline-footer">
+                                <div className="sd-timeline-footer__info">
+                                    <span className="sd-timeline-footer__icon">ℹ️</span>
+                                    <span>
+                                        {service.status === "completed"
+                                            ? "Technician work is completed. Service can now be delivered once price and payment are settled."
+                                            : service.status === "delivered"
+                                            ? `Delivered to customer on ${service.delivered_date || "record"}. Order is finalized.`
+                                            : "Service order is currently active. Progress updates automatically as technicians log actions."}
+                                    </span>
+                                </div>
+
+                                <div className="sd-timeline-footer__actions">
+                                    {service.status === "completed" && service.price != null && (
+                                        <button
+                                            type="button"
+                                            className="tenant-btn tenant-btn--primary tenant-btn--sm"
+                                            disabled={delivering}
+                                            onClick={() => setDeliverModalOpen(true)}
+                                        >
+                                            Mark as Delivered
+                                        </button>
+                                    )}
+                                    {service.status === "delivered" && (
+                                        <button
+                                            type="button"
+                                            className="tenant-btn tenant-btn--primary tenant-btn--sm"
+                                            onClick={() => setInvoiceOpen(true)}
+                                        >
+                                            View Invoice (PDF)
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* TAB 3: WORK LOG */}
+                {activeTab === "work" && (
+                    <div className="sd-tab-pane sd-tab-pane--work">
+                        <div className="sd-work-card">
+                            <div className="sd-work-head">
+                                <div>
+                                    <h4 className="sd-pane-title">Work Performed & Replacement Parts</h4>
+                                    <p className="sd-pane-desc">Tasks, repairs, and components logged by assigned technicians</p>
+                                </div>
+
+                                <div className="sd-work-total-badge">
+                                    <span>Total Work Cost:</span>
+                                    <strong>Rs. {workTotal.toFixed(2)}</strong>
+                                </div>
+                            </div>
+
+                            {workEntries.length > 0 ? (
+                                <div className="sd-table-wrap">
+                                    <table className="sd-table">
+                                        <thead>
+                                            <tr>
+                                                <th style={{ width: 48 }}>#</th>
+                                                <th>Description / Task</th>
+                                                <th style={{ textAlign: "right", width: 140 }}>Cost (Rs.)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {workEntries.map((entry, idx) => (
+                                                <tr key={entry.id || idx}>
+                                                    <td className="sd-table__cell-index">{idx + 1}</td>
+                                                    <td className="sd-table__cell-desc">{entry.description || "—"}</td>
+                                                    <td className="sd-table__cell-cost">
+                                                        Rs. {Number(entry.cost || 0).toFixed(2)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colSpan={2}>Total Work Cost</td>
+                                                <td style={{ textAlign: "right", fontWeight: 700 }}>
+                                                    Rs. {workTotal.toFixed(2)}
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="sd-empty-state">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                                    </svg>
+                                    <h5>No work entries recorded</h5>
+                                    <p>Technicians have not logged tasks or spare parts for this service yet.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* TAB 4: BILLING & PAYMENTS */}
+                {activeTab === "billing" && (
+                    <div className="sd-tab-pane sd-tab-pane--billing">
+                        {/* KPI METRIC CARDS */}
+                        <div className="sd-kpi-bar">
+                            <div className="sd-kpi-card">
+                                <span className="sd-kpi-card__label">Final Service Price</span>
+                                <span className="sd-kpi-card__value">
+                                    {service.price != null
+                                        ? `Rs. ${Number(service.price).toFixed(2)}`
+                                        : service.status === "completed"
+                                        ? "Ready to set"
+                                        : "Pending completion"}
+                                </span>
+                            </div>
+
+                            <div className="sd-kpi-card">
+                                <span className="sd-kpi-card__label">Total Customer Paid</span>
+                                <span className="sd-kpi-card__value">
+                                    Rs. {paidTotal.toFixed(2)}
+                                </span>
+                            </div>
+
+                            <div
+                                className={`sd-kpi-card ${
+                                    service.price != null
+                                        ? balanceDue > 0
+                                            ? "sd-kpi-card--due"
+                                            : "sd-kpi-card--paid"
+                                        : ""
+                                }`}
+                            >
+                                <span className="sd-kpi-card__label">Balance Due</span>
+                                <span className="sd-kpi-card__value">
+                                    {service.price != null
+                                        ? balanceDue > 0
+                                            ? `Rs. ${balanceDue.toFixed(2)}`
+                                            : "Paid in full"
+                                        : "Pending price"}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* 2-COLUMN SPLIT */}
+                        <div className="sd-billing-grid">
+                            {/* LEFT COLUMN: PRICING & ACTIONS */}
+                            <div className="sd-billing-col">
+                                <div className="sd-panel">
+                                    <div className="sd-panel__head">
+                                        <h4 className="sd-panel__title">Price Settings & Handover</h4>
+                                    </div>
+
+                                    {service.status === "completed" ? (
+                                        <form className="sd-panel-compact-form" onSubmit={handleSavePrice}>
+                                            <div className="sd-form-row">
+                                                <label>
+                                                    Final Price (Rs.)
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        value={price}
+                                                        onChange={(e) => setPrice(e.target.value)}
+                                                        required
+                                                    />
+                                                </label>
+
+                                                <label>
+                                                    Advance Received (Rs.)
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        value={advance}
+                                                        onChange={(e) => setAdvance(e.target.value)}
+                                                        placeholder="e.g. 500.00"
+                                                    />
+                                                </label>
+                                            </div>
+
+                                            {price !== "" && !Number.isNaN(Number(price)) && (
+                                                <div className="sd-form-calc-note">
+                                                    Expected Balance Due:{" "}
+                                                    <strong>
+                                                        Rs. {(Number(price) - paidTotal).toFixed(2)}
+                                                    </strong>
+                                                </div>
+                                            )}
+
+                                            <div className="sd-form-actions">
+                                                {service.price != null && (
+                                                    <button
+                                                        type="button"
+                                                        className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                                                        disabled={delivering}
+                                                        onClick={() => setDeliverModalOpen(true)}
+                                                    >
+                                                        Mark as delivered
+                                                    </button>
+                                                )}
+
+                                                <button
+                                                    type="submit"
+                                                    className="tenant-btn tenant-btn--primary tenant-btn--sm"
+                                                    disabled={saving}
+                                                >
+                                                    {saving ? "Saving..." : "Save price"}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    ) : service.status === "delivered" ? (
+                                        <div className="sd-delivered-banner">
+                                            <div className="sd-delivered-banner__icon">✓</div>
+                                            <div className="sd-delivered-banner__text">
+                                                <strong>Delivered on {service.delivered_date || "record"}</strong>
+                                                <p>This service order is fully settled and handed over.</p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                className="tenant-btn tenant-btn--primary tenant-btn--sm"
+                                                onClick={() => setInvoiceOpen(true)}
+                                            >
+                                                View Invoice (PDF)
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="sd-notice-box">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <circle cx="12" cy="12" r="10" />
+                                                <line x1="12" y1="8" x2="12" y2="12" />
+                                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                                            </svg>
+                                            <div>
+                                                <strong>Service is {service.status === "in_progress" ? "In Progress" : "Pending"}</strong>
+                                                <p>Final price setup and customer handover are enabled once the technician completes work.</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* TECHNICIAN COMMISSION */}
+                                {service.commission_type && (
+                                    <div className="sd-panel">
+                                        <div className="sd-panel__head">
+                                            <h4 className="sd-panel__title">Technician Commission</h4>
+                                        </div>
+                                        <div className="sd-commission-box">
+                                            <span>{service.employee?.name || "Technician"}</span>
+                                            <strong>{commissionLabel(service)}</strong>
+                                        </div>
+                                        {service.commission_amount != null && (
+                                            <span className="sd-commission-sub">
+                                                Paid out and settled from Commissions tab.
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* RIGHT COLUMN: PAYMENTS & RECORD FORM */}
+                            <div className="sd-billing-col">
+                                <div className="sd-panel">
+                                    <div className="sd-panel__head">
+                                        <h4 className="sd-panel__title">Customer Payment History</h4>
+                                        <span className="sd-panel__badge">{payments.length} recorded</span>
+                                    </div>
+
+                                    {payments.length > 0 ? (
+                                        <div className="sd-payment-table-wrap">
+                                            <table className="sd-payment-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Method</th>
+                                                        <th>Note</th>
+                                                        <th style={{ textAlign: "right" }}>Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {payments.map((entry) => (
+                                                        <tr key={entry.id}>
+                                                            <td>{entry.paid_at || "—"}</td>
+                                                            <td>
+                                                                <span className="sd-method-badge">
+                                                                    {entry.method}
+                                                                </span>
+                                                            </td>
+                                                            <td className="sd-payment-note">{entry.note || "—"}</td>
+                                                            <td className="sd-payment-amount">
+                                                                Rs. {Number(entry.amount || 0).toFixed(2)}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <p className="sd-empty-text">No customer payments recorded yet.</p>
+                                    )}
+                                </div>
+
+                                {/* RECORD PAYMENT FORM */}
+                                {service.price != null && service.status !== "delivered" && (
+                                    <div className="sd-panel">
+                                        <div className="sd-panel__head">
+                                            <h4 className="sd-panel__title">Record Payment</h4>
+                                        </div>
+
+                                        <form className="sd-panel-compact-form" onSubmit={handleRecordPayment}>
+                                            <div className="sd-form-grid-4">
+                                                <label>
+                                                    Amount (Rs.)
+                                                    <input
+                                                        type="number"
+                                                        min="0.01"
+                                                        step="0.01"
+                                                        value={paymentForm.amount}
+                                                        onChange={(e) =>
+                                                            setPaymentForm((prev) => ({
+                                                                ...prev,
+                                                                amount: e.target.value,
+                                                            }))
+                                                        }
+                                                        placeholder="0.00"
+                                                        required
+                                                    />
+                                                </label>
+
+                                                <label>
+                                                    Method
+                                                    <select
+                                                        value={paymentForm.method}
+                                                        onChange={(e) =>
+                                                            setPaymentForm((prev) => ({
+                                                                ...prev,
+                                                                method: e.target.value,
+                                                            }))
+                                                        }
+                                                    >
+                                                        <option value="cash">Cash</option>
+                                                        <option value="bank">Bank</option>
+                                                        <option value="upi">UPI</option>
+                                                        <option value="card">Card</option>
+                                                        <option value="other">Other</option>
+                                                    </select>
+                                                </label>
+
+                                                <label>
+                                                    Date
+                                                    <input
+                                                        type="date"
+                                                        value={paymentForm.paid_at}
+                                                        onChange={(e) =>
+                                                            setPaymentForm((prev) => ({
+                                                                ...prev,
+                                                                paid_at: e.target.value,
+                                                            }))
+                                                        }
+                                                    />
+                                                </label>
+
+                                                <label>
+                                                    Note
+                                                    <input
+                                                        value={paymentForm.note}
+                                                        onChange={(e) =>
+                                                            setPaymentForm((prev) => ({
+                                                                ...prev,
+                                                                note: e.target.value,
+                                                            }))
+                                                        }
+                                                        placeholder="Optional"
+                                                    />
+                                                </label>
+                                            </div>
+
+                                            {paymentError && (
+                                                <p className="tenant-alert" role="alert">
+                                                    {paymentError}
+                                                </p>
+                                            )}
+
+                                            <div className="sd-form-actions">
+                                                <button
+                                                    type="submit"
+                                                    className="tenant-btn tenant-btn--primary tenant-btn--sm"
+                                                    disabled={recordingPayment}
+                                                >
+                                                    {recordingPayment ? "Recording..." : "Record Payment"}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* DELIVERY MODAL */}
             {deliverModalOpen && (
                 <Modal title="Mark as delivered" onClose={() => setDeliverModalOpen(false)}>
                     <DateActionForm
@@ -432,39 +1002,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
                 </Modal>
             )}
 
-            {service.status === "delivered" && (
-                <>
-                    <div className="detail-grid">
-                        <div>
-                            <span className="detail-grid__label">Final price</span>
-                            <strong>{service.price != null ? `Rs. ${service.price}` : "—"}</strong>
-                        </div>
-                        {paidTotal > 0 && (
-                            <>
-                                <div>
-                                    <span className="detail-grid__label">Paid</span>
-                                    <strong>Rs. {paidTotal.toFixed(2)}</strong>
-                                </div>
-                                <div>
-                                    <span className="detail-grid__label">Balance due</span>
-                                    <strong>Rs. {(Number(service.price ?? 0) - paidTotal).toFixed(2)}</strong>
-                                </div>
-                            </>
-                        )}
-                    </div>
-
-                    <div className="tenant-form__actions">
-                        <button
-                            type="button"
-                            className="tenant-btn tenant-btn--primary"
-                            onClick={() => setInvoiceOpen(true)}
-                        >
-                            View Invoice
-                        </button>
-                    </div>
-                </>
-            )}
-
+            {/* INVOICE MODAL */}
             {invoiceOpen && (
                 <PdfViewerModal
                     title={`Invoice — Service #${serviceId}`}
