@@ -8,11 +8,13 @@ import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
 import { usePressedRow } from "../../lib/usePressedRow";
 import { usePaginatedResource } from "../../lib/usePaginatedResource";
+import TableSkeleton from "../../components/TableSkeleton/TableSkeleton";
 
 function Employees({ shellProps }) {
     const {
         items: employees,
         meta,
+        loading,
         error: loadError,
         setPage,
         reload,
@@ -173,71 +175,75 @@ function Employees({ shellProps }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {employees.map((employee) => (
-                                <tr
-                                    key={employee.id}
-                                    data-toggle
-                                    className={[
-                                        expandedIds.has(employee.id) ? "tenant-row--expanded" : "",
-                                        pressedId === employee.id ? "tenant-row--pressed" : "",
-                                    ]
-                                        .filter(Boolean)
-                                        .join(" ")}
-                                    onClick={() => toggleExpanded(employee.id)}
-                                    {...pressHandlers(employee.id)}
-                                >
-                                    <td data-label="Name" className="mobile-summary">
-                                        <div className="tenant-cell">
-                                            <strong>{employee.name}</strong>
-                                        </div>
-                                    </td>
-                                    <td data-label="NIC">{employee.nic}</td>
-                                    <td data-label="Contact">
-                                        <div className="tenant-cell">
-                                            <strong>{employee.phone || "—"}</strong>
-                                            <span>{employee.email || "—"}</span>
-                                        </div>
-                                    </td>
-                                    <td data-label="Address">{employee.address || "—"}</td>
-                                    <td data-label="Date of birth">{employee.dob || "—"}</td>
-                                    <td data-label="Active">
-                                        <input
-                                            type="checkbox"
-                                            checked={employee.is_active}
-                                            disabled={busyId === employee.id}
-                                            onChange={() => toggleActive(employee)}
-                                            onClick={(e) => e.stopPropagation()}
-                                            onPointerDown={(e) => e.stopPropagation()}
-                                            title={employee.is_active ? "Active — click to deactivate" : "Inactive — click to activate"}
-                                        />
-                                    </td>
-                                    <td data-label="Actions" className="mobile-summary">
-                                        <div
-                                            className="tenant-table-actions"
-                                            onClick={(e) => e.stopPropagation()}
-                                            onPointerDown={(e) => e.stopPropagation()}
-                                        >
-                                            <button
-                                                className="tenant-btn tenant-btn--ghost tenant-btn--sm"
-                                                type="button"
-                                                onClick={() => openEditModal(employee)}
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                className="tenant-btn tenant-btn--ghost tenant-btn--sm"
-                                                type="button"
+                            {loading ? (
+                                <TableSkeleton columns={7} rows={6} hasActions />
+                            ) : (
+                                employees.map((employee) => (
+                                    <tr
+                                        key={employee.id}
+                                        data-toggle
+                                        className={[
+                                            expandedIds.has(employee.id) ? "tenant-row--expanded" : "",
+                                            pressedId === employee.id ? "tenant-row--pressed" : "",
+                                        ]
+                                            .filter(Boolean)
+                                            .join(" ")}
+                                        onClick={() => toggleExpanded(employee.id)}
+                                        {...pressHandlers(employee.id)}
+                                    >
+                                        <td data-label="Name" className="mobile-summary">
+                                            <div className="tenant-cell">
+                                                <strong>{employee.name}</strong>
+                                            </div>
+                                        </td>
+                                        <td data-label="NIC">{employee.nic}</td>
+                                        <td data-label="Contact">
+                                            <div className="tenant-cell">
+                                                <strong>{employee.phone || "—"}</strong>
+                                                <span>{employee.email || "—"}</span>
+                                            </div>
+                                        </td>
+                                        <td data-label="Address">{employee.address || "—"}</td>
+                                        <td data-label="Date of birth">{employee.dob || "—"}</td>
+                                        <td data-label="Active">
+                                            <input
+                                                type="checkbox"
+                                                checked={employee.is_active}
                                                 disabled={busyId === employee.id}
-                                                onClick={() => handleDelete(employee)}
+                                                onChange={() => toggleActive(employee)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                onPointerDown={(e) => e.stopPropagation()}
+                                                title={employee.is_active ? "Active — click to deactivate" : "Inactive — click to activate"}
+                                            />
+                                        </td>
+                                        <td data-label="Actions" className="mobile-summary">
+                                            <div
+                                                className="tenant-table-actions"
+                                                onClick={(e) => e.stopPropagation()}
+                                                onPointerDown={(e) => e.stopPropagation()}
                                             >
-                                                Delete
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                                <button
+                                                    className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                                                    type="button"
+                                                    onClick={() => openEditModal(employee)}
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                                                    type="button"
+                                                    disabled={busyId === employee.id}
+                                                    onClick={() => handleDelete(employee)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
 
-                            {employees.length === 0 && (
+                            {!loading && employees.length === 0 && (
                                 <tr>
                                     <td colSpan={7} className="tenant-table-empty">
                                         No employees yet.

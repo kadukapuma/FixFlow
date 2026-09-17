@@ -8,11 +8,13 @@ import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
 import { usePressedRow } from "../../lib/usePressedRow";
 import { usePaginatedResource } from "../../lib/usePaginatedResource";
+import TableSkeleton from "../../components/TableSkeleton/TableSkeleton";
 
 function Customers({ shellProps }) {
     const {
         items: customers,
         meta,
+        loading,
         error: loadError,
         setPage,
         reload,
@@ -152,69 +154,73 @@ function Customers({ shellProps }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {customers.map((customer) => (
-                                <tr
-                                    key={customer.id}
-                                    data-toggle
-                                    className={[
-                                        expandedIds.has(customer.id) ? "tenant-row--expanded" : "",
-                                        pressedId === customer.id ? "tenant-row--pressed" : "",
-                                    ]
-                                        .filter(Boolean)
-                                        .join(" ")}
-                                    onClick={() => toggleExpanded(customer.id)}
-                                    {...pressHandlers(customer.id)}
-                                >
-                                    <td data-label="Name" className="mobile-summary">
-                                        <div className="tenant-cell">
-                                            <strong>{customer.name}</strong>
-                                        </div>
-                                    </td>
-                                    <td data-label="NIC">{customer.nic}</td>
-                                    <td data-label="Phone">{customer.phone || "—"}</td>
-                                    <td data-label="Address">{customer.address || "—"}</td>
-                                    <td data-label="Suspended">
-                                        <input
-                                            type="checkbox"
-                                            checked={customer.is_suspended}
-                                            disabled={busyId === customer.id}
-                                            onChange={() => toggleSuspended(customer)}
-                                            onClick={(e) => e.stopPropagation()}
-                                            onPointerDown={(e) => e.stopPropagation()}
-                                            title={
-                                                customer.is_suspended
-                                                    ? "Suspended — click to reinstate"
-                                                    : "Active — click to suspend"
-                                            }
-                                        />
-                                    </td>
-                                    <td data-label="Actions" className="mobile-summary">
-                                        <div
-                                            className="tenant-table-actions"
-                                            onClick={(e) => e.stopPropagation()}
-                                            onPointerDown={(e) => e.stopPropagation()}
-                                        >
-                                            <button
-                                                className="tenant-btn tenant-btn--ghost tenant-btn--sm"
-                                                type="button"
-                                                onClick={() => openEditModal(customer)}
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                className="tenant-btn tenant-btn--ghost tenant-btn--sm"
-                                                type="button"
+                            {loading ? (
+                                <TableSkeleton columns={6} rows={6} hasActions />
+                            ) : (
+                                customers.map((customer) => (
+                                    <tr
+                                        key={customer.id}
+                                        data-toggle
+                                        className={[
+                                            expandedIds.has(customer.id) ? "tenant-row--expanded" : "",
+                                            pressedId === customer.id ? "tenant-row--pressed" : "",
+                                        ]
+                                            .filter(Boolean)
+                                            .join(" ")}
+                                        onClick={() => toggleExpanded(customer.id)}
+                                        {...pressHandlers(customer.id)}
+                                    >
+                                        <td data-label="Name" className="mobile-summary">
+                                            <div className="tenant-cell">
+                                                <strong>{customer.name}</strong>
+                                            </div>
+                                        </td>
+                                        <td data-label="NIC">{customer.nic}</td>
+                                        <td data-label="Phone">{customer.phone || "—"}</td>
+                                        <td data-label="Address">{customer.address || "—"}</td>
+                                        <td data-label="Suspended">
+                                            <input
+                                                type="checkbox"
+                                                checked={customer.is_suspended}
                                                 disabled={busyId === customer.id}
-                                                onClick={() => handleDelete(customer)}
+                                                onChange={() => toggleSuspended(customer)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                onPointerDown={(e) => e.stopPropagation()}
+                                                title={
+                                                    customer.is_suspended
+                                                        ? "Suspended — click to reinstate"
+                                                        : "Active — click to suspend"
+                                                }
+                                            />
+                                        </td>
+                                        <td data-label="Actions" className="mobile-summary">
+                                            <div
+                                                className="tenant-table-actions"
+                                                onClick={(e) => e.stopPropagation()}
+                                                onPointerDown={(e) => e.stopPropagation()}
                                             >
-                                                Delete
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                                <button
+                                                    className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                                                    type="button"
+                                                    onClick={() => openEditModal(customer)}
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                                                    type="button"
+                                                    disabled={busyId === customer.id}
+                                                    onClick={() => handleDelete(customer)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
 
-                            {customers.length === 0 && (
+                            {!loading && customers.length === 0 && (
                                 <tr>
                                     <td colSpan={6} className="tenant-table-empty">
                                         No customers yet. Customers are added when a new service is created.

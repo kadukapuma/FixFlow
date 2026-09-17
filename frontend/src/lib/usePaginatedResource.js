@@ -16,7 +16,7 @@ export function usePaginatedResource(url, extraParams = {}, perPage = DEFAULT_PE
     const [items, setItems] = useState([]);
     const [meta, setMeta] = useState(null);
     const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [reloadToken, setReloadToken] = useState(0);
 
     const extraKey = JSON.stringify(extraParams);

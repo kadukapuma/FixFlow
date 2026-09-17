@@ -8,6 +8,7 @@ import { STATUS_META } from "../../components/StatusBadge/statusMeta";
 import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
 import { usePaginatedResource } from "../../lib/usePaginatedResource";
+import TableSkeleton from "../../components/TableSkeleton/TableSkeleton";
 import "./AdminDashboard.css";
 
 const ACTIONABLE_STATUSES = ["pending", "failed"];
@@ -68,6 +69,7 @@ function downloadCsv(companies) {
 function AdminDashboard({ page, onNavigate, onLoggedOut }) {
     const [filter, setFilter] = useState("all");
     const {
+        loading,
         items: companies,
         meta,
         error: loadError,
@@ -514,111 +516,117 @@ function AdminDashboard({ page, onNavigate, onLoggedOut }) {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {companies.map((company) => (
-                                            <tr key={company.id}>
-                                                <td data-label="Company">
-                                                    <div className="admin-company-cell">
-                                                        <strong>{company.name}</strong>
-                                                        <span>{company.subdomain}</span>
-                                                    </div>
-                                                </td>
-                                                <td data-label="Owner">
-                                                    <div className="admin-company-cell">
-                                                        <strong>{company.owner_name}</strong>
-                                                        <span>{company.owner_email}</span>
-                                                    </div>
-                                                </td>
-                                                <td data-label="Monthly price">
-                                                    <div className="admin-table-card__actions">
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            step="0.01"
-                                                            className="admin-price-input"
-                                                            placeholder="Not set"
-                                                            value={priceDrafts[company.id] ?? company.subscription_price ?? ""}
-                                                            onChange={(e) =>
-                                                                setPriceDrafts((prev) => ({ ...prev, [company.id]: e.target.value }))
-                                                            }
-                                                        />
-                                                        {priceDrafts[company.id] !== undefined &&
-                                                            priceDrafts[company.id] !== (company.subscription_price ?? "") && (
-                                                                <button
-                                                                    className="admin-btn admin-btn--ghost admin-btn--sm"
-                                                                    disabled={busyId === company.id}
-                                                                    onClick={() => savePrice(company)}
-                                                                    type="button"
-                                                                >
-                                                                    Save
-                                                                </button>
+                                        {loading ? (
+                                            <TableSkeleton columns={6} rows={6} hasActions hasBadges />
+                                        ) : (
+                                            <>
+                                                {companies.map((company) => (
+                                                    <tr key={company.id}>
+                                                        <td data-label="Company">
+                                                            <div className="admin-company-cell">
+                                                                <strong>{company.name}</strong>
+                                                                <span>{company.subdomain}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td data-label="Owner">
+                                                            <div className="admin-company-cell">
+                                                                <strong>{company.owner_name}</strong>
+                                                                <span>{company.owner_email}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td data-label="Monthly price">
+                                                            <div className="admin-table-card__actions">
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    step="0.01"
+                                                                    className="admin-price-input"
+                                                                    placeholder="Not set"
+                                                                    value={priceDrafts[company.id] ?? company.subscription_price ?? ""}
+                                                                    onChange={(e) =>
+                                                                        setPriceDrafts((prev) => ({ ...prev, [company.id]: e.target.value }))
+                                                                    }
+                                                                />
+                                                                {priceDrafts[company.id] !== undefined &&
+                                                                    priceDrafts[company.id] !== (company.subscription_price ?? "") && (
+                                                                        <button
+                                                                            className="admin-btn admin-btn--ghost admin-btn--sm"
+                                                                            disabled={busyId === company.id}
+                                                                            onClick={() => savePrice(company)}
+                                                                            type="button"
+                                                                        >
+                                                                            Save
+                                                                        </button>
+                                                                    )}
+                                                            </div>
+                                                        </td>
+                                                        <td data-label="Status">
+                                                            <StatusBadge status={effectiveStatus(company)} />
+                                                            {company.status === "failed" && company.provisioning_error && (
+                                                                <p className="admin-table-card__error">{company.provisioning_error}</p>
                                                             )}
-                                                    </div>
-                                                </td>
-                                                <td data-label="Status">
-                                                    <StatusBadge status={effectiveStatus(company)} />
-                                                    {company.status === "failed" && company.provisioning_error && (
-                                                        <p className="admin-table-card__error">{company.provisioning_error}</p>
-                                                    )}
-                                                </td>
-                                                <td data-label="Registered">{company.created_at ? relativeTime(company.created_at) : "—"}</td>
-                                                <td data-label="Actions">
-                                                    {(ACTIONABLE_STATUSES.includes(company.status) ||
-                                                        company.status === "approved") && (
-                                                        <div className="admin-table-card__actions">
-                                                            {ACTIONABLE_STATUSES.includes(company.status) && (
-                                                                <>
-                                                                    <button
-                                                                        className="admin-btn admin-btn--primary admin-btn--sm"
-                                                                        disabled={busyId === company.id}
-                                                                        onClick={() => approve(company)}
-                                                                        type="button"
-                                                                    >
-                                                                        {company.status === "failed" ? "Retry" : "Approve"}
-                                                                    </button>
-                                                                    <button
-                                                                        className="admin-btn admin-btn--ghost admin-btn--sm"
-                                                                        disabled={busyId === company.id}
-                                                                        onClick={() => reject(company)}
-                                                                        type="button"
-                                                                    >
-                                                                        Reject
-                                                                    </button>
-                                                                </>
-                                                            )}
+                                                        </td>
+                                                        <td data-label="Registered">{company.created_at ? relativeTime(company.created_at) : "—"}</td>
+                                                        <td data-label="Actions">
+                                                            {(ACTIONABLE_STATUSES.includes(company.status) ||
+                                                                company.status === "approved") && (
+                                                                <div className="admin-table-card__actions">
+                                                                    {ACTIONABLE_STATUSES.includes(company.status) && (
+                                                                        <>
+                                                                            <button
+                                                                                className="admin-btn admin-btn--primary admin-btn--sm"
+                                                                                disabled={busyId === company.id}
+                                                                                onClick={() => approve(company)}
+                                                                                type="button"
+                                                                            >
+                                                                                {company.status === "failed" ? "Retry" : "Approve"}
+                                                                            </button>
+                                                                            <button
+                                                                                className="admin-btn admin-btn--ghost admin-btn--sm"
+                                                                                disabled={busyId === company.id}
+                                                                                onClick={() => reject(company)}
+                                                                                type="button"
+                                                                            >
+                                                                                Reject
+                                                                            </button>
+                                                                        </>
+                                                                    )}
 
-                                                            {company.status === "approved" && company.is_active && (
-                                                                <button
-                                                                    className="admin-btn admin-btn--ghost admin-btn--sm"
-                                                                    disabled={busyId === company.id}
-                                                                    onClick={() => deactivate(company)}
-                                                                    type="button"
-                                                                >
-                                                                    Deactivate
-                                                                </button>
-                                                            )}
+                                                                    {company.status === "approved" && company.is_active && (
+                                                                        <button
+                                                                            className="admin-btn admin-btn--ghost admin-btn--sm"
+                                                                            disabled={busyId === company.id}
+                                                                            onClick={() => deactivate(company)}
+                                                                            type="button"
+                                                                        >
+                                                                            Deactivate
+                                                                        </button>
+                                                                    )}
 
-                                                            {company.status === "approved" && !company.is_active && (
-                                                                <button
-                                                                    className="admin-btn admin-btn--primary admin-btn--sm"
-                                                                    disabled={busyId === company.id}
-                                                                    onClick={() => activate(company)}
-                                                                    type="button"
-                                                                >
-                                                                    Reactivate
-                                                                </button>
+                                                                    {company.status === "approved" && !company.is_active && (
+                                                                        <button
+                                                                            className="admin-btn admin-btn--primary admin-btn--sm"
+                                                                            disabled={busyId === company.id}
+                                                                            onClick={() => activate(company)}
+                                                                            type="button"
+                                                                        >
+                                                                            Reactivate
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                             )}
-                                                        </div>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
+                                                        </td>
+                                                    </tr>
+                                                ))}
 
-                                        {companies.length === 0 && (
-                                            <tr>
-                                                <td colSpan={6} className="admin-table-card__empty">
-                                                    No registrations match this view.
-                                                </td>
-                                            </tr>
+                                                {companies.length === 0 && (
+                                                    <tr>
+                                                        <td colSpan={6} className="admin-table-card__empty">
+                                                            No registrations match this view.
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </>
                                         )}
                                     </tbody>
                                 </table>

@@ -11,6 +11,7 @@ import Pagination from "../../components/Pagination/Pagination";
 import { usePressedRow } from "../../lib/usePressedRow";
 import { showToast } from "../../lib/toast";
 import { usePaginatedResource } from "../../lib/usePaginatedResource";
+import TableSkeleton from "../../components/TableSkeleton/TableSkeleton";
 import NewServiceWizard from "./NewServiceWizard";
 import "./Services.css";
 
@@ -18,6 +19,7 @@ function Services({ shellProps }) {
     const {
         items: services,
         meta,
+        loading,
         error: loadError,
         search,
         setSearch,
@@ -107,95 +109,99 @@ function Services({ shellProps }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {services.map((service) => (
-                                <tr
-                                    key={service.id}
-                                    className={[
-                                        "clickable-row",
-                                        pressedId === service.id ? "tenant-row--pressed" : "",
-                                        selectedId === service.id ? "tenant-row--selected" : "",
-                                    ]
-                                        .filter(Boolean)
-                                        .join(" ")}
-                                    onClick={() => setSelectedId(service.id)}
-                                    {...pressHandlers(service.id)}
-                                >
-                                    <td data-label="Service ID" className="mobile-summary">
-                                        <div className="tenant-cell">
-                                            <strong>#{service.id}</strong>
-                                            {service.ref_no && <span>{service.ref_no}</span>}
-                                        </div>
-                                    </td>
-                                    <td data-label="Customer" className="mobile-summary">
-                                        <div className="tenant-cell">
-                                            <strong>{service.customer?.name}</strong>
-                                            <span>{service.customer?.nic}</span>
-                                        </div>
-                                    </td>
-                                    <td data-label="Item">
-                                        <div className="tenant-cell">
-                                            <strong>{service.item?.name}</strong>
-                                            <span>
-                                                {service.item?.model || "—"}
-                                                {service.item?.serial_number ? ` · ${service.item.serial_number}` : ""}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td data-label="Fault">{service.fault || "—"}</td>
-                                    <td data-label="Technician">{service.employee?.name}</td>
-                                    <td data-label="Service date">{service.service_date || "—"}</td>
-                                    <td data-label="Status" className="mobile-summary">
-                                        <StatusBadge status={service.status} meta={SERVICE_STATUS_META} />
-                                    </td>
-                                    <td data-label="Price">
-                                        {service.price != null ? `Rs. ${service.price}` : "—"}
-                                    </td>
-                                    <td data-label="Advance">
-                                        {service.advance_amount != null ? `Rs. ${service.advance_amount}` : "—"}
-                                    </td>
-                                    <td data-label="Document" style={{ textAlign: "right" }}>
-                                        <div className="tenant-table-actions tenant-table-actions--right">
-                                            {service.status === "pending" && (
+                            {loading ? (
+                                <TableSkeleton columns={10} rows={6} hasActions hasBadges />
+                            ) : (
+                                services.map((service) => (
+                                    <tr
+                                        key={service.id}
+                                        className={[
+                                            "clickable-row",
+                                            pressedId === service.id ? "tenant-row--pressed" : "",
+                                            selectedId === service.id ? "tenant-row--selected" : "",
+                                        ]
+                                            .filter(Boolean)
+                                            .join(" ")}
+                                        onClick={() => setSelectedId(service.id)}
+                                        {...pressHandlers(service.id)}
+                                    >
+                                        <td data-label="Service ID" className="mobile-summary">
+                                            <div className="tenant-cell">
+                                                <strong>#{service.id}</strong>
+                                                {service.ref_no && <span>{service.ref_no}</span>}
+                                            </div>
+                                        </td>
+                                        <td data-label="Customer" className="mobile-summary">
+                                            <div className="tenant-cell">
+                                                <strong>{service.customer?.name}</strong>
+                                                <span>{service.customer?.nic}</span>
+                                            </div>
+                                        </td>
+                                        <td data-label="Item">
+                                            <div className="tenant-cell">
+                                                <strong>{service.item?.name}</strong>
+                                                <span>
+                                                    {service.item?.model || "—"}
+                                                    {service.item?.serial_number ? ` · ${service.item.serial_number}` : ""}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td data-label="Fault">{service.fault || "—"}</td>
+                                        <td data-label="Technician">{service.employee?.name}</td>
+                                        <td data-label="Service date">{service.service_date || "—"}</td>
+                                        <td data-label="Status" className="mobile-summary">
+                                            <StatusBadge status={service.status} meta={SERVICE_STATUS_META} />
+                                        </td>
+                                        <td data-label="Price">
+                                            {service.price != null ? `Rs. ${service.price}` : "—"}
+                                        </td>
+                                        <td data-label="Advance">
+                                            {service.advance_amount != null ? `Rs. ${service.advance_amount}` : "—"}
+                                        </td>
+                                        <td data-label="Document" style={{ textAlign: "right" }}>
+                                            <div className="tenant-table-actions tenant-table-actions--right">
+                                                {service.status === "pending" && (
+                                                    <button
+                                                        type="button"
+                                                        className="tenant-btn tenant-btn--primary tenant-btn--icon"
+                                                        title="Start Service"
+                                                        aria-label="Start Service"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setStartingService(service);
+                                                        }}
+                                                        onPointerDown={(e) => e.stopPropagation()}
+                                                    >
+                                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                                                            <polygon points="6 4 20 12 6 20 6 4" />
+                                                        </svg>
+                                                    </button>
+                                                )}
                                                 <button
                                                     type="button"
-                                                    className="tenant-btn tenant-btn--primary tenant-btn--icon"
-                                                    title="Start Service"
-                                                    aria-label="Start Service"
+                                                    className="tenant-btn tenant-btn--ghost tenant-btn--icon"
+                                                    title="View PDF"
+                                                    aria-label="View PDF"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        setStartingService(service);
+                                                        setPdfService(service);
                                                     }}
                                                     onPointerDown={(e) => e.stopPropagation()}
                                                 >
-                                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
-                                                        <polygon points="6 4 20 12 6 20 6 4" />
+                                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                        <polyline points="14 2 14 8 20 8" />
+                                                        <line x1="16" y1="13" x2="8" y2="13" />
+                                                        <line x1="16" y1="17" x2="8" y2="17" />
                                                     </svg>
                                                 </button>
-                                            )}
-                                            <button
-                                                type="button"
-                                                className="tenant-btn tenant-btn--ghost tenant-btn--icon"
-                                                title="View PDF"
-                                                aria-label="View PDF"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setPdfService(service);
-                                                }}
-                                                onPointerDown={(e) => e.stopPropagation()}
-                                            >
-                                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                                    <polyline points="14 2 14 8 20 8" />
-                                                    <line x1="16" y1="13" x2="8" y2="13" />
-                                                    <line x1="16" y1="17" x2="8" y2="17" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
 
-                            {services.length === 0 && (
+                            {!loading && services.length === 0 && (
                                 <tr>
                                     <td colSpan={10} className="tenant-table-empty">
                                         {search.trim() ? "No services match your search." : "No services yet."}

@@ -8,11 +8,13 @@ import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
 import { usePressedRow } from "../../lib/usePressedRow";
 import { usePaginatedResource } from "../../lib/usePaginatedResource";
+import TableSkeleton from "../../components/TableSkeleton/TableSkeleton";
 
 function ReceivedItems({ shellProps }) {
     const {
         items: receivedItems,
         meta,
+        loading,
         error: loadError,
         setPage,
         reload,
@@ -126,38 +128,42 @@ function ReceivedItems({ shellProps }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {receivedItems.map((item) => (
-                                <tr
-                                    key={item.id}
-                                    className={pressedId === item.id ? "tenant-row--pressed" : ""}
-                                    {...pressHandlers(item.id)}
-                                >
-                                    <td data-label="Item name" className="mobile-summary">
-                                        <strong>{item.item_name}</strong>
-                                    </td>
-                                    <td data-label="Actions" className="mobile-summary">
-                                        <div className="tenant-table-actions">
-                                            <button
-                                                className="tenant-btn tenant-btn--ghost tenant-btn--sm"
-                                                type="button"
-                                                onClick={() => openEditModal(item)}
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                className="tenant-btn tenant-btn--ghost tenant-btn--sm"
-                                                type="button"
-                                                disabled={busyId === item.id}
-                                                onClick={() => handleDelete(item)}
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                            {loading ? (
+                                <TableSkeleton columns={2} rows={5} hasActions />
+                            ) : (
+                                receivedItems.map((item) => (
+                                    <tr
+                                        key={item.id}
+                                        className={pressedId === item.id ? "tenant-row--pressed" : ""}
+                                        {...pressHandlers(item.id)}
+                                    >
+                                        <td data-label="Item name" className="mobile-summary">
+                                            <strong>{item.item_name}</strong>
+                                        </td>
+                                        <td data-label="Actions" className="mobile-summary">
+                                            <div className="tenant-table-actions">
+                                                <button
+                                                    className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                                                    type="button"
+                                                    onClick={() => openEditModal(item)}
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                                                    type="button"
+                                                    disabled={busyId === item.id}
+                                                    onClick={() => handleDelete(item)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
 
-                            {receivedItems.length === 0 && (
+                            {!loading && receivedItems.length === 0 && (
                                 <tr>
                                     <td colSpan={2} className="tenant-table-empty">
                                         No items yet.

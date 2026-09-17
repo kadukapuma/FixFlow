@@ -9,6 +9,7 @@ import Pagination from "../../components/Pagination/Pagination";
 import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
 import { usePaginatedResource } from "../../lib/usePaginatedResource";
+import TableSkeleton from "../../components/TableSkeleton/TableSkeleton";
 import "../AdminDashboard/AdminDashboard.css";
 
 const FILTERS = ["pending", "approved", "rejected", "all"];
@@ -27,6 +28,7 @@ function formatDate(value) {
 function AdminReceipts({ page, onNavigate, onLoggedOut }) {
     const [filter, setFilter] = useState("pending");
     const {
+        loading,
         items: receipts,
         meta,
         error: loadError,
@@ -253,79 +255,85 @@ function AdminReceipts({ page, onNavigate, onLoggedOut }) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {receipts.map((receipt) => (
-                                    <tr key={receipt.id}>
-                                        <td data-label="Company">
-                                            <div className="admin-company-cell">
-                                                <strong>{receipt.company?.name}</strong>
-                                                <span>{receipt.company?.subdomain}</span>
-                                            </div>
-                                        </td>
-                                        <td data-label="Amount">{receipt.amount ?? "—"}</td>
-                                        <td data-label="Note">{receipt.note ?? "—"}</td>
-                                        <td data-label="Uploaded">{formatDate(receipt.created_at)}</td>
-                                        <td data-label="Status">
-                                            <StatusBadge status={receipt.status} meta={RECEIPT_STATUS_META} />
-                                            {receipt.status === "rejected" && receipt.rejection_reason && (
-                                                <p className="admin-table-card__error">{receipt.rejection_reason}</p>
-                                            )}
-                                        </td>
-                                        <td data-label="Actions">
-                                            <div className="admin-table-card__actions">
-                                                {receipt.has_file ? (
-                                                    <button
-                                                        className="admin-btn admin-btn--ghost admin-btn--sm"
-                                                        type="button"
-                                                        onClick={() => openReceipt(receipt)}
-                                                    >
-                                                        View
-                                                    </button>
-                                                ) : (
-                                                    <span className="admin-receipts__no-file">File deleted</span>
-                                                )}
+                                {loading ? (
+                                    <TableSkeleton columns={6} rows={6} hasActions hasBadges />
+                                ) : (
+                                    <>
+                                        {receipts.map((receipt) => (
+                                            <tr key={receipt.id}>
+                                                <td data-label="Company">
+                                                    <div className="admin-company-cell">
+                                                        <strong>{receipt.company?.name}</strong>
+                                                        <span>{receipt.company?.subdomain}</span>
+                                                    </div>
+                                                </td>
+                                                <td data-label="Amount">{receipt.amount ?? "—"}</td>
+                                                <td data-label="Note">{receipt.note ?? "—"}</td>
+                                                <td data-label="Uploaded">{formatDate(receipt.created_at)}</td>
+                                                <td data-label="Status">
+                                                    <StatusBadge status={receipt.status} meta={RECEIPT_STATUS_META} />
+                                                    {receipt.status === "rejected" && receipt.rejection_reason && (
+                                                        <p className="admin-table-card__error">{receipt.rejection_reason}</p>
+                                                    )}
+                                                </td>
+                                                <td data-label="Actions">
+                                                    <div className="admin-table-card__actions">
+                                                        {receipt.has_file ? (
+                                                            <button
+                                                                className="admin-btn admin-btn--ghost admin-btn--sm"
+                                                                type="button"
+                                                                onClick={() => openReceipt(receipt)}
+                                                            >
+                                                                View
+                                                            </button>
+                                                        ) : (
+                                                            <span className="admin-receipts__no-file">File deleted</span>
+                                                        )}
 
-                                                {receipt.status === "pending" && (
-                                                    <>
-                                                        <button
-                                                            className="admin-btn admin-btn--primary admin-btn--sm"
-                                                            disabled={busyId === receipt.id}
-                                                            onClick={() => approve(receipt)}
-                                                            type="button"
-                                                        >
-                                                            Approve
-                                                        </button>
-                                                        <button
-                                                            className="admin-btn admin-btn--ghost admin-btn--sm"
-                                                            disabled={busyId === receipt.id}
-                                                            onClick={() => reject(receipt)}
-                                                            type="button"
-                                                        >
-                                                            Reject
-                                                        </button>
-                                                    </>
-                                                )}
+                                                        {receipt.status === "pending" && (
+                                                            <>
+                                                                <button
+                                                                    className="admin-btn admin-btn--primary admin-btn--sm"
+                                                                    disabled={busyId === receipt.id}
+                                                                    onClick={() => approve(receipt)}
+                                                                    type="button"
+                                                                >
+                                                                    Approve
+                                                                </button>
+                                                                <button
+                                                                    className="admin-btn admin-btn--ghost admin-btn--sm"
+                                                                    disabled={busyId === receipt.id}
+                                                                    onClick={() => reject(receipt)}
+                                                                    type="button"
+                                                                >
+                                                                    Reject
+                                                                </button>
+                                                            </>
+                                                        )}
 
-                                                {receipt.status !== "pending" && receipt.has_file && (
-                                                    <button
-                                                        className="admin-btn admin-btn--ghost admin-btn--sm"
-                                                        disabled={busyId === receipt.id}
-                                                        onClick={() => deleteFile(receipt)}
-                                                        type="button"
-                                                    >
-                                                        Delete file
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                                        {receipt.status !== "pending" && receipt.has_file && (
+                                                            <button
+                                                                className="admin-btn admin-btn--ghost admin-btn--sm"
+                                                                disabled={busyId === receipt.id}
+                                                                onClick={() => deleteFile(receipt)}
+                                                                type="button"
+                                                            >
+                                                                Delete file
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
 
-                                {receipts.length === 0 && (
-                                    <tr>
-                                        <td colSpan={6} className="admin-table-card__empty">
-                                            No receipts match this view.
-                                        </td>
-                                    </tr>
+                                        {receipts.length === 0 && (
+                                            <tr>
+                                                <td colSpan={6} className="admin-table-card__empty">
+                                                    No receipts match this view.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </>
                                 )}
                             </tbody>
                         </table>

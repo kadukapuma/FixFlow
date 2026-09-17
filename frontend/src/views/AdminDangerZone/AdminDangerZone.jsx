@@ -6,6 +6,7 @@ import Pagination from "../../components/Pagination/Pagination";
 import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
 import { usePaginatedResource } from "../../lib/usePaginatedResource";
+import TableSkeleton from "../../components/TableSkeleton/TableSkeleton";
 import "../AdminDashboard/AdminDashboard.css";
 import "./AdminDangerZone.css";
 
@@ -15,6 +16,7 @@ function effectiveStatus(company) {
 
 function AdminDangerZone({ page, onNavigate, onLoggedOut }) {
     const {
+        loading,
         items: companies,
         meta,
         error: loadError,
@@ -178,44 +180,50 @@ function AdminDangerZone({ page, onNavigate, onLoggedOut }) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {companies.map((company) => (
-                                    <tr key={company.id}>
-                                        <td data-label="Company">
-                                            <div className="admin-company-cell">
-                                                <strong>{company.name}</strong>
-                                                <span>{company.subdomain}</span>
-                                            </div>
-                                        </td>
-                                        <td data-label="Owner">
-                                            <div className="admin-company-cell">
-                                                <strong>{company.owner_name}</strong>
-                                                <span>{company.owner_email}</span>
-                                            </div>
-                                        </td>
-                                        <td data-label="Status">
-                                            <StatusBadge status={effectiveStatus(company)} />
-                                        </td>
-                                        <td data-label="Actions">
-                                            <div className="admin-table-card__actions">
-                                                <button
-                                                    className="admin-btn admin-btn--danger admin-btn--sm"
-                                                    disabled={busyId === company.id}
-                                                    onClick={() => deleteCompany(company)}
-                                                    type="button"
-                                                >
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {loading ? (
+                                    <TableSkeleton columns={4} rows={6} hasActions hasBadges />
+                                ) : (
+                                    <>
+                                        {companies.map((company) => (
+                                            <tr key={company.id}>
+                                                <td data-label="Company">
+                                                    <div className="admin-company-cell">
+                                                        <strong>{company.name}</strong>
+                                                        <span>{company.subdomain}</span>
+                                                    </div>
+                                                </td>
+                                                <td data-label="Owner">
+                                                    <div className="admin-company-cell">
+                                                        <strong>{company.owner_name}</strong>
+                                                        <span>{company.owner_email}</span>
+                                                    </div>
+                                                </td>
+                                                <td data-label="Status">
+                                                    <StatusBadge status={effectiveStatus(company)} />
+                                                </td>
+                                                <td data-label="Actions">
+                                                    <div className="admin-table-card__actions">
+                                                        <button
+                                                            className="admin-btn admin-btn--danger admin-btn--sm"
+                                                            disabled={busyId === company.id}
+                                                            onClick={() => deleteCompany(company)}
+                                                            type="button"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
 
-                                {companies.length === 0 && (
-                                    <tr>
-                                        <td colSpan={4} className="admin-table-card__empty">
-                                            No companies match this view.
-                                        </td>
-                                    </tr>
+                                        {companies.length === 0 && (
+                                            <tr>
+                                                <td colSpan={4} className="admin-table-card__empty">
+                                                    No companies match this view.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </>
                                 )}
                             </tbody>
                         </table>

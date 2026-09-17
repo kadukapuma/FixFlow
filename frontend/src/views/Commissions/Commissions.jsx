@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
 import Modal from "../../components/Modal/Modal";
+import TableSkeleton from "../../components/TableSkeleton/TableSkeleton";
 import { showToast } from "../../lib/toast";
 import { usePressedRow } from "../../lib/usePressedRow";
 
@@ -560,27 +561,31 @@ function Commissions({ shellProps }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {rows.map((row) => (
-                                <tr
-                                    key={row.employee_id}
-                                    className={[
-                                        "clickable-row",
-                                        pressedId === row.employee_id ? "tenant-row--pressed" : "",
-                                        selectedId === row.employee_id ? "tenant-row--selected" : "",
-                                    ]
-                                        .filter(Boolean)
-                                        .join(" ")}
-                                    onClick={() => setSelectedId(row.employee_id)}
-                                    {...pressHandlers(row.employee_id)}
-                                >
-                                    <td data-label="Technician" className="mobile-summary">
-                                        <strong>{row.name}</strong>
-                                    </td>
-                                    <td data-label="Earned">Rs. {row.total_earned.toFixed(2)}</td>
-                                    <td data-label="Paid">Rs. {row.total_paid.toFixed(2)}</td>
-                                    <td data-label="Outstanding">Rs. {row.outstanding.toFixed(2)}</td>
-                                </tr>
-                            ))}
+                            {loading ? (
+                                <TableSkeleton columns={4} rows={5} />
+                            ) : (
+                                rows.map((row) => (
+                                    <tr
+                                        key={row.employee_id}
+                                        className={[
+                                            "clickable-row",
+                                            pressedId === row.employee_id ? "tenant-row--pressed" : "",
+                                            selectedId === row.employee_id ? "tenant-row--selected" : "",
+                                        ]
+                                            .filter(Boolean)
+                                            .join(" ")}
+                                        onClick={() => setSelectedId(row.employee_id)}
+                                        {...pressHandlers(row.employee_id)}
+                                    >
+                                        <td data-label="Technician" className="mobile-summary">
+                                            <strong>{row.name}</strong>
+                                        </td>
+                                        <td data-label="Earned">Rs. {row.total_earned.toFixed(2)}</td>
+                                        <td data-label="Paid">Rs. {row.total_paid.toFixed(2)}</td>
+                                        <td data-label="Outstanding">Rs. {row.outstanding.toFixed(2)}</td>
+                                    </tr>
+                                ))
+                            )}
 
                             {!loading && rows.length === 0 && (
                                 <tr>

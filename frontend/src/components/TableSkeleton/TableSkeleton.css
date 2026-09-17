@@ -1,0 +1,203 @@
+/* Content Placeholders Skeleton Table Styles */
+.skeleton-row {
+    pointer-events: none;
+    user-select: none;
+}
+
+.skeleton-td {
+    padding: 14px 10px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f2f1ea;
+}
+
+/* Skeleton Bone - Smooth Shimmer */
+.skeleton-bone {
+    height: 14px;
+    border-radius: 6px;
+    background: linear-gradient(
+        90deg,
+        #f0eee6 0%,
+        #faf8f2 50%,
+        #f0eee6 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite ease-in-out;
+}
+
+.skeleton-cell-stacked {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.skeleton-bone--bold {
+    height: 15px;
+    background: linear-gradient(
+        90deg,
+        #e8e6dc 0%,
+        #f7f5ee 50%,
+        #e8e6dc 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite ease-in-out;
+}
+
+.skeleton-bone--sub {
+    height: 11px;
+    border-radius: 4px;
+    opacity: 0.7;
+}
+
+.skeleton-cell-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.skeleton-bone--btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: linear-gradient(
+        90deg,
+        #edebe2 0%,
+        #fbf9f4 50%,
+        #edebe2 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite ease-in-out;
+}
+
+.skeleton-bone--badge {
+    width: 70px;
+    height: 22px;
+    border-radius: 999px;
+    background: linear-gradient(
+        90deg,
+        #eceae2 0%,
+        #faf8f3 50%,
+        #eceae2 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite ease-in-out;
+}
+
+@keyframes skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ==========================================================================
+   Mobile Responsive Card Styles (< 768px)
+   Formats table skeleton rows into elegant, stacked card placeholders
+   matching FixFlow's mobile layout (TenantShell collapsible card system)
+   ========================================================================== */
+@media (max-width: 768px) {
+    .tenant-shell table tbody tr.skeleton-row,
+    .admin-table-card tbody tr.skeleton-row,
+    tbody tr.skeleton-row {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin-bottom: 12px !important;
+        border: 1px solid #eeece3 !important;
+        border-radius: 14px !important;
+        padding: 4px 14px !important;
+        background: #ffffff !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+    }
+
+    .tenant-shell tbody tr.skeleton-row:last-child,
+    .admin-table-card tbody tr.skeleton-row:last-child,
+    tbody tr.skeleton-row:last-child {
+        margin-bottom: 0 !important;
+    }
+
+    /* Individual cell rows within mobile skeleton cards */
+    .tenant-shell td.skeleton-td,
+    .admin-table-card td.skeleton-td,
+    td.skeleton-td {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 14px !important;
+        padding: 11px 0 !important;
+        border-bottom: 1px solid #f2f1ea !important;
+        text-align: right !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Collapsible tables hide non-summary fields on mobile by default */
+    .tenant-shell table.tenant-table--collapsible tbody tr.skeleton-row td:not(.mobile-summary) {
+        display: none !important;
+    }
+
+    .tenant-shell tr.skeleton-row td.skeleton-td:last-child,
+    .tenant-shell table.tenant-table--collapsible tr.skeleton-row td.skeleton-td.mobile-summary:last-of-type,
+    .admin-table-card tr.skeleton-row td.skeleton-td:last-child {
+        border-bottom: none !important;
+    }
+
+    /* Simulated field label placeholder on the left side of mobile card */
+    .tenant-shell td.skeleton-td::before,
+    .admin-table-card td.skeleton-td::before,
+    td.skeleton-td::before {
+        content: "";
+        display: block;
+        height: 10px;
+        width: 65px;
+        border-radius: 4px;
+        background: linear-gradient(
+            90deg,
+            #eceae1 0%,
+            #f7f5ee 50%,
+            #eceae1 100%
+        );
+        background-size: 200% 100%;
+        animation: skeleton-shimmer 1.5s infinite ease-in-out;
+        flex-shrink: 0;
+    }
+
+    /* Natural varied simulated label widths */
+    .tenant-shell td.skeleton-td:nth-child(1)::before,
+    td.skeleton-td:nth-child(1)::before { width: 72px; }
+    .tenant-shell td.skeleton-td:nth-child(2)::before,
+    td.skeleton-td:nth-child(2)::before { width: 56px; }
+    .tenant-shell td.skeleton-td:nth-child(3)::before,
+    td.skeleton-td:nth-child(3)::before { width: 78px; }
+    .tenant-shell td.skeleton-td:nth-child(4)::before,
+    td.skeleton-td:nth-child(4)::before { width: 50px; }
+
+    /* Values alignment on mobile */
+    .tenant-shell td.skeleton-td .skeleton-cell-stacked,
+    td.skeleton-td .skeleton-cell-stacked {
+        align-items: flex-end;
+        width: 130px;
+    }
+
+    .tenant-shell td.skeleton-td .skeleton-bone,
+    td.skeleton-td .skeleton-bone {
+        max-width: 140px;
+    }
+
+    .tenant-shell td.skeleton-td .skeleton-bone--badge,
+    td.skeleton-td .skeleton-bone--badge {
+        width: 68px;
+        height: 22px;
+    }
+
+    .tenant-shell td.skeleton-td .skeleton-bone--btn,
+    td.skeleton-td .skeleton-bone--btn {
+        width: 30px;
+        height: 30px;
+    }
+
+    /* Suppress interactive toggle chevron while loading skeleton in collapsible tables */
+    .tenant-shell table.tenant-table--collapsible tr.skeleton-row td.mobile-summary:first-child::after {
+        display: none !important;
+    }
+}
