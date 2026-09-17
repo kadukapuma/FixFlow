@@ -1,0 +1,389 @@
+.determinate-bars-loader {
+    width: 100%;
+    padding: 8px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-sizing: border-box;
+}
+
+/* Header Row */
+.dbl-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.dbl-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.dbl-icon {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: #f4f3ec;
+    color: #14151a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e6e4da;
+    transition: all 0.3s ease;
+}
+
+.determinate-bars-loader--complete .dbl-icon {
+    background: #ecfdf5;
+    color: #059669;
+    border-color: #a7f3d0;
+}
+
+.dbl-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.dbl-tagline {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #8b8e98;
+}
+
+.dbl-doc-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #14151a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Master Percentage Pill */
+.dbl-master-badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dbl-master-pill {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 2px;
+    padding: 6px 16px;
+    border-radius: 999px;
+    background: #14151a;
+    color: #ddfb5e;
+    box-shadow: 0 2px 8px rgba(20, 21, 26, 0.12);
+}
+
+.dbl-master-val {
+    font-size: 17px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+.dbl-master-unit {
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0.9;
+}
+
+.dbl-master-ready {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    border-radius: 999px;
+    background: #10b981;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
+/* Master Determinate Progress Bar */
+.dbl-bar-track {
+    width: 100%;
+    height: 8px;
+    background: #edece4;
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.dbl-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #14151a 0%, #292c36 55%, #10b981 100%);
+    border-radius: 999px;
+    transition: width 0.3s cubic-bezier(0.2, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.determinate-bars-loader--complete .dbl-bar-fill {
+    background: #10b981;
+}
+
+.dbl-bar-shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.4) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    animation: dbl-shimmer 1.8s infinite linear;
+    transform: translateX(-100%);
+}
+
+@keyframes dbl-shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* 3 Stages Grid - Strict Proportions & Balance */
+.dbl-grid-stages {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+.dbl-card-step {
+    background: #faf9f5;
+    border: 1px solid #eeece3;
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 94px;
+    box-sizing: border-box;
+    transition: all 0.25s ease;
+}
+
+.dbl-card-step--done {
+    background: #f8fdfb;
+    border-color: #a7f3d0;
+}
+
+.dbl-card-step--active {
+    background: #ffffff;
+    border-color: #14151a;
+    box-shadow: 0 4px 16px -2px rgba(20, 21, 26, 0.09);
+}
+
+.dbl-card-step--pending {
+    opacity: 0.8;
+}
+
+/* Top row inside card: Icon on left, Percentage on right */
+.dbl-step-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dbl-step-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.dbl-step-badge--done {
+    background: #10b981;
+    color: #ffffff;
+}
+
+.dbl-step-badge--active {
+    background: #14151a;
+    position: relative;
+}
+
+.dbl-step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ddfb5e;
+    animation: dbl-pulse-dot 1.2s infinite ease-in-out;
+}
+
+@keyframes dbl-pulse-dot {
+    0%, 100% {
+        transform: scale(0.85);
+        opacity: 0.85;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+}
+
+.dbl-step-badge--pending {
+    background: #e6e4da;
+    color: #6b7280;
+}
+
+/* Clean Tabular Percentage Value */
+.dbl-step-pct {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 1px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+}
+
+.dbl-card-step--done .dbl-step-pct {
+    color: #059669;
+}
+
+.dbl-card-step--active .dbl-step-pct {
+    color: #14151a;
+    font-weight: 800;
+}
+
+.dbl-card-step--pending .dbl-step-pct {
+    color: #9ca3af;
+}
+
+.dbl-step-pct-num {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.dbl-step-pct-sym {
+    font-size: 11px;
+    opacity: 0.85;
+}
+
+/* Bottom text block inside card */
+.dbl-step-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.dbl-step-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #374151;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dbl-card-step--active .dbl-step-name {
+    color: #14151a;
+}
+
+.dbl-card-step--done .dbl-step-name {
+    color: #065f46;
+}
+
+.dbl-step-sub {
+    font-size: 11px;
+    color: #8b8e98;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Status Footer Bar */
+.dbl-footer-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: #faf9f5;
+    border-radius: 12px;
+    border: 1px solid #eeece3;
+}
+
+.dbl-footer-signal {
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #ddfb5e;
+    box-shadow: 0 0 0 2px #14151a;
+    animation: dbl-radar 1.5s infinite ease-out;
+}
+
+.determinate-bars-loader--complete .dbl-footer-signal {
+    background: #10b981;
+    box-shadow: 0 0 0 2px #10b981;
+    animation: none;
+}
+
+@keyframes dbl-radar {
+    0% {
+        box-shadow: 0 0 0 2px #14151a, 0 0 0 0 rgba(221, 251, 94, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 2px #14151a, 0 0 0 5px rgba(221, 251, 94, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 2px #14151a, 0 0 0 0 rgba(221, 251, 94, 0);
+    }
+}
+
+.dbl-footer-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.determinate-bars-loader--complete .dbl-footer-text {
+    color: #065f46;
+}
+
+/* Mobile Responsive */
+@media (max-width: 620px) {
+    .dbl-grid-stages {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .dbl-card-step {
+        min-height: auto;
+        gap: 12px;
+    }
+
+    .dbl-header-row {
+        gap: 10px;
+    }
+
+    .dbl-icon {
+        width: 38px;
+        height: 38px;
+    }
+
+    .dbl-doc-title {
+        font-size: 15px;
+    }
+}

@@ -20,8 +20,20 @@
     overflow-x: hidden;
     padding: 8px;
     border: 1px solid #d1d5db;
-    border-radius: 6px;
+    border-radius: 8px;
     background: #f3f4f6;
+    animation: pdf-pages-fadein 0.25s ease-out;
+}
+
+@keyframes pdf-pages-fadein {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .pdf-viewer__pages:empty,

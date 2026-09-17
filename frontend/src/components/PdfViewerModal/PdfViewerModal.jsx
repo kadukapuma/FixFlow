@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import Modal from "../Modal/Modal";
+import DeterminateBarsLoader from "../DeterminateBarsLoader/DeterminateBarsLoader";
 import "./PdfViewerModal.css";
 
 // pdfjs-dist is a large library only needed once a PDF is actually viewed,
@@ -30,11 +31,11 @@ function filenameFromTitle(title) {
 // Renders every page of the loaded PDF onto its own <canvas>, sized to fit
 // the container's current width — this is what makes it work reliably on
 // mobile, where browsers generally can't render a PDF inside an <iframe>.
-async function renderPages(pdfDoc, container) {
-    // Measured from the parent, not the container itself: the container is
-    // styled display:none while empty (see CSS), and we're about to empty it
-    // right here, so reading its own clientWidth at this point would be 0.
-    const containerWidth = container.parentElement.clientWidth - 16;
+async function renderPages(pdfDoc, container, onProgress = null) {
+    // Measured from the parent, not the container itself: the container may
+    // be hidden while rendering, so reading its own clientWidth might be 0.
+    const parentWidth = container.parentElement?.clientWidth || 760;
+    const containerWidth = Math.max(300, parentWidth - 32);
     container.innerHTML = "";
     const outputScale = window.devicePixelRatio || 1;
 
@@ -57,6 +58,10 @@ async function renderPages(pdfDoc, container) {
 
         // eslint-disable-next-line no-await-in-loop
         await page.render({ canvasContext: context, viewport, transform }).promise;
+
+        if (onProgress) {
+            onProgress(pageNumber, pdfDoc.numPages);
+        }
     }
 }
 
@@ -64,6 +69,9 @@ function PdfViewerModal({ title, pdfUrl, method = "get", data = null, onClose })
     const [downloadUrl, setDownloadUrl] = useState(null);
     const [error, setError] = useState("");
     const [rendering, setRendering] = useState(true);
+    const [progress, setProgress] = useState(8);
+    const [statusMessage, setStatusMessage] = useState("Compiling document on server...");
+
     const pagesRef = useRef(null);
     const pdfDocRef = useRef(null);
     const loadingTaskRef = useRef(null);
@@ -71,18 +79,51 @@ function PdfViewerModal({ title, pdfUrl, method = "get", data = null, onClose })
     useEffect(() => {
         let cancelled = false;
         let blobUrl = null;
+        let finishTimer = null;
+
+        // Logarithmic simulated pacing for initial server DomPDF generation
+        let simulatedProgress = 8;
+        setProgress(simulatedProgress);
+        setStatusMessage("Compiling document on server...");
+
+        const progressTimer = setInterval(() => {
+            if (simulatedProgress < 42) {
+                simulatedProgress = Math.min(42, simulatedProgress + (42 - simulatedProgress) * 0.14);
+                setProgress(Math.round(simulatedProgress));
+            }
+        }, 110);
+
+        const requestConfig = {
+            responseType: "arraybuffer",
+            onDownloadProgress: (progressEvent) => {
+                if (cancelled) return;
+                if (progressEvent.total) {
+                    const downloadPct = progressEvent.loaded / progressEvent.total;
+                    const mapped = 30 + Math.round(downloadPct * 25); // 30% to 55%
+                    setProgress((prev) => Math.max(prev, mapped));
+                    setStatusMessage(`Downloading document (${Math.round(progressEvent.loaded / 1024)} KB)...`);
+                } else if (progressEvent.loaded) {
+                    setProgress((prev) => Math.max(prev, 35));
+                    setStatusMessage(`Receiving document data (${Math.round(progressEvent.loaded / 1024)} KB)...`);
+                }
+            },
+        };
 
         const request =
             method === "post"
-                ? api.post(pdfUrl, data, { responseType: "arraybuffer" })
-                : api.get(pdfUrl, { responseType: "arraybuffer" });
+                ? api.post(pdfUrl, data, requestConfig)
+                : api.get(pdfUrl, requestConfig);
 
         Promise.all([request, loadPdfjs()])
             .then(async ([response, pdfjsLib]) => {
                 if (cancelled) return;
+                clearInterval(progressTimer);
 
                 blobUrl = URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
                 setDownloadUrl(blobUrl);
+
+                setProgress(62);
+                setStatusMessage("Parsing document structure & fonts...");
 
                 // destroy() lives on the loading task, not the resolved
                 // PDFDocumentProxy — keep a ref to it so cleanup can call it.
@@ -95,10 +136,33 @@ function PdfViewerModal({ title, pdfUrl, method = "get", data = null, onClose })
                 }
 
                 pdfDocRef.current = pdfDoc;
-                await renderPages(pdfDoc, pagesRef.current);
-                if (!cancelled) setRendering(false);
+                setProgress(72);
+                setStatusMessage(`Rendering page 1 of ${pdfDoc.numPages}...`);
+
+                await renderPages(pdfDoc, pagesRef.current, (pageNumber, totalPages) => {
+                    if (cancelled) return;
+                    const renderPct = 72 + Math.round((pageNumber / totalPages) * 26);
+                    setProgress(renderPct);
+                    if (pageNumber < totalPages) {
+                        setStatusMessage(`Rendering page ${pageNumber + 1} of ${totalPages}...`);
+                    } else {
+                        setStatusMessage("Finalizing document view...");
+                    }
+                });
+
+                if (!cancelled) {
+                    setProgress(100);
+                    setStatusMessage("Document ready!");
+                    // Brief delay to allow the user to see the complete 100% state
+                    finishTimer = setTimeout(() => {
+                        if (!cancelled) {
+                            setRendering(false);
+                        }
+                    }, 240);
+                }
             })
             .catch((err) => {
+                clearInterval(progressTimer);
                 if (!cancelled) {
                     setRendering(false);
                     setError(getErrorMessage(err, "Unable to load the PDF."));
@@ -107,6 +171,8 @@ function PdfViewerModal({ title, pdfUrl, method = "get", data = null, onClose })
 
         return () => {
             cancelled = true;
+            clearInterval(progressTimer);
+            if (finishTimer) clearTimeout(finishTimer);
             if (blobUrl) URL.revokeObjectURL(blobUrl);
             loadingTaskRef.current?.destroy();
         };
@@ -164,9 +230,19 @@ function PdfViewerModal({ title, pdfUrl, method = "get", data = null, onClose })
                     </p>
                 )}
 
-                {!error && rendering && <p className="pdf-viewer__loading">Loading PDF...</p>}
+                {!error && rendering && (
+                    <DeterminateBarsLoader
+                        progress={progress}
+                        statusMessage={statusMessage}
+                        title={title}
+                    />
+                )}
 
-                <div ref={pagesRef} className="pdf-viewer__pages" hidden={!!error} />
+                <div
+                    ref={pagesRef}
+                    className="pdf-viewer__pages"
+                    hidden={!!error || rendering}
+                />
 
                 {!error && !rendering && (
                     <div className="pdf-viewer__actions">
