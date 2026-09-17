@@ -582,9 +582,13 @@ function ServiceDetails({ serviceId, onUpdated }) {
                                             <div className="sd-timeline__node">
                                                 {step.isDone ? "✓" : step.level}
                                             </div>
-                                            <span className="sd-timeline__label">{step.label}</span>
-                                            <span className="sd-timeline__date">{step.date || "Pending"}</span>
-                                            <span className="sd-timeline__desc">{step.description}</span>
+                                            <div className="sd-timeline__info">
+                                                <div className="sd-timeline__heading">
+                                                    <span className="sd-timeline__label">{step.label}</span>
+                                                    <span className="sd-timeline__date">{step.date || "Pending"}</span>
+                                                </div>
+                                                <span className="sd-timeline__desc">{step.description}</span>
+                                            </div>
                                         </div>
                                     );
                                 })}

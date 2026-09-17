@@ -103,7 +103,7 @@ function Services({ shellProps }) {
                                 <th>Status</th>
                                 <th>Price</th>
                                 <th>Advance</th>
-                                <th>Document</th>
+                                <th style={{ textAlign: "right" }}>Document</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -153,31 +153,42 @@ function Services({ shellProps }) {
                                     <td data-label="Advance">
                                         {service.advance_amount != null ? `Rs. ${service.advance_amount}` : "—"}
                                     </td>
-                                    <td data-label="Document">
-                                        <div className="tenant-table-actions">
+                                    <td data-label="Document" style={{ textAlign: "right" }}>
+                                        <div className="tenant-table-actions tenant-table-actions--right">
                                             {service.status === "pending" && (
                                                 <button
                                                     type="button"
-                                                    className="tenant-btn tenant-btn--primary tenant-btn--sm"
+                                                    className="tenant-btn tenant-btn--primary tenant-btn--icon"
+                                                    title="Start Service"
+                                                    aria-label="Start Service"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setStartingService(service);
                                                     }}
                                                     onPointerDown={(e) => e.stopPropagation()}
                                                 >
-                                                    Start Service
+                                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                                                        <polygon points="6 4 20 12 6 20 6 4" />
+                                                    </svg>
                                                 </button>
                                             )}
                                             <button
                                                 type="button"
-                                                className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                                                className="tenant-btn tenant-btn--ghost tenant-btn--icon"
+                                                title="View PDF"
+                                                aria-label="View PDF"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setPdfService(service);
                                                 }}
                                                 onPointerDown={(e) => e.stopPropagation()}
                                             >
-                                                View PDF
+                                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                    <polyline points="14 2 14 8 20 8" />
+                                                    <line x1="16" y1="13" x2="8" y2="13" />
+                                                    <line x1="16" y1="17" x2="8" y2="17" />
+                                                </svg>
                                             </button>
                                         </div>
                                     </td>

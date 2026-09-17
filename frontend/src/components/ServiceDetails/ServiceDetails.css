@@ -11,6 +11,7 @@
     color: #14151a;
     font-size: 13px;
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 /* --------------------------------------------------------------------------
@@ -49,8 +50,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    padding: 10px 16px;
+    gap: 14px;
+    padding: 10px 14px;
     background: #fbfaf6;
     border: 1px solid #eeece3;
     border-radius: 12px;
@@ -72,29 +73,32 @@
 }
 
 .sd-header__item-name {
-    font-size: 16px;
+    font-size: 15.5px;
     font-weight: 700;
     margin: 0;
     color: #14151a;
     letter-spacing: -0.01em;
+    word-break: break-word;
 }
 
 .sd-header__ref-badge {
     display: inline-flex;
     align-items: center;
-    padding: 2px 8px;
+    padding: 2px 7px;
     background: #14151a;
     color: #f4f3ec;
     font-size: 11px;
     font-weight: 600;
     border-radius: 6px;
     letter-spacing: 0.02em;
+    white-space: nowrap;
 }
 
 .sd-header__id-tag {
-    font-size: 11.5px;
+    font-size: 11px;
     color: #9b9a8f;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .sd-header__meta {
@@ -110,6 +114,7 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    white-space: nowrap;
 }
 
 .sd-header__meta-item svg {
@@ -150,6 +155,7 @@
     text-align: right;
     transition: all 0.15s ease;
     font: inherit;
+    white-space: nowrap;
 }
 
 .sd-header__finance-btn:hover {
@@ -159,7 +165,7 @@
 }
 
 .sd-header__finance-label {
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 700;
     color: #14151a;
     line-height: 1.2;
@@ -180,22 +186,33 @@
 }
 
 /* --------------------------------------------------------------------------
-   Navigation Tabs
+   Navigation Tabs (Horizontal touch scrolling, sticky at top)
    -------------------------------------------------------------------------- */
 .sd-nav-tabs {
     display: flex;
     align-items: center;
     gap: 6px;
     border-bottom: 1px solid #eeece3;
-    padding-bottom: 4px;
+    padding: 2px 2px 5px 2px;
     flex-shrink: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    position: sticky;
+    top: 0;
+    background: #ffffff;
+    z-index: 10;
+}
+
+.sd-nav-tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .sd-nav-tab {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    padding: 7px 13px;
+    gap: 6px;
+    padding: 7px 12px;
     background: transparent;
     border: none;
     border-radius: 8px;
@@ -206,6 +223,8 @@
     cursor: pointer;
     transition: all 0.15s ease;
     position: relative;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .sd-nav-tab svg {
@@ -266,6 +285,7 @@
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
     scrollbar-color: #e6e4da transparent;
 }
@@ -400,6 +420,7 @@
     font-size: 12px;
     color: #6b6b63;
     line-height: 1.35;
+    word-break: break-word;
 }
 
 .sd-fault-box {
@@ -412,6 +433,7 @@
     color: #14151a;
     font-size: 12.5px;
     line-height: 1.4;
+    word-break: break-word;
 }
 
 .sd-tag-list {
@@ -431,6 +453,7 @@
     font-size: 11px;
     font-weight: 600;
     border: 1px solid #e6e4da;
+    word-break: break-word;
 }
 
 .sd-link {
@@ -453,7 +476,7 @@
     padding: 16px 20px;
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 20px;
     height: 100%;
     box-sizing: border-box;
     justify-content: space-between;
@@ -536,6 +559,7 @@
     font-size: 11.5px;
     font-weight: 700;
     transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
 .sd-timeline__step--done .sd-timeline__node {
@@ -549,6 +573,20 @@
     border-color: #14151a;
     color: #14151a;
     box-shadow: 0 0 0 3px rgba(221, 251, 94, 0.4);
+}
+
+.sd-timeline__info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.sd-timeline__heading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
 }
 
 .sd-timeline__label {
@@ -574,7 +612,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 14px;
     padding: 12px 14px;
     background: #fbfaf6;
     border: 1px solid #eeece3;
@@ -591,6 +629,7 @@
 
 .sd-timeline-footer__icon {
     font-size: 14px;
+    flex-shrink: 0;
 }
 
 .sd-timeline-footer__actions {
@@ -633,6 +672,7 @@
     border: 1px solid #e6e4da;
     font-size: 11.5px;
     color: #6b6b63;
+    white-space: nowrap;
 }
 
 .sd-work-total-badge strong {
@@ -645,6 +685,8 @@
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border: 1px solid #eeece3;
     border-radius: 8px;
     scrollbar-width: thin;
@@ -653,6 +695,7 @@
 
 .sd-table {
     width: 100%;
+    min-width: 280px;
     border-collapse: collapse;
     font-size: 12.5px;
     text-align: left;
@@ -691,12 +734,14 @@
 .sd-table__cell-desc {
     color: #14151a;
     font-weight: 500;
+    word-break: break-word;
 }
 
 .sd-table__cell-cost {
     text-align: right;
     font-weight: 600;
     color: #14151a;
+    white-space: nowrap;
 }
 
 .sd-table tfoot td {
@@ -772,6 +817,7 @@
     font-size: 15px;
     font-weight: 700;
     color: #14151a;
+    white-space: nowrap;
 }
 
 .sd-kpi-card--due {
@@ -873,6 +919,7 @@
     border: 1px solid #e6e4da;
     background: #fbfaf6;
     box-sizing: border-box;
+    width: 100%;
 }
 
 .sd-panel-compact-form input:focus,
@@ -995,8 +1042,10 @@
 }
 
 .sd-payment-table-wrap {
-    max-height: 130px;
+    max-height: 140px;
     overflow-y: auto;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border: 1px solid #eeece3;
     border-radius: 7px;
     scrollbar-width: thin;
@@ -1005,6 +1054,7 @@
 
 .sd-payment-table {
     width: 100%;
+    min-width: 280px;
     border-collapse: collapse;
     font-size: 11.5px;
 }
@@ -1043,6 +1093,7 @@
     text-align: right;
     font-weight: 600;
     color: #14151a;
+    white-space: nowrap;
 }
 
 .sd-method-badge {
@@ -1063,30 +1114,40 @@
     padding: 4px 0;
 }
 
-/* --------------------------------------------------------------------------
-   Responsive Layout & Desktop Non-Scrollable Control
-   -------------------------------------------------------------------------- */
-@media (max-width: 860px) {
-    .sd-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-    }
+/* ==========================================================================
+   Responsive Breakpoints: Tablets & Mobile
+   ========================================================================== */
 
-    .sd-header__aside {
-        justify-content: space-between;
+/* Tablet / Medium Screens (<= 860px) */
+@media (max-width: 860px) {
+    .sd-tab-pane {
+        height: auto;
+        min-height: min-content;
     }
 
     .sd-overview-grid {
         grid-template-columns: 1fr;
         height: auto;
+        gap: 10px;
+    }
+
+    .sd-card {
+        height: auto;
+    }
+
+    /* Vertical Lifecycle Timeline */
+    .sd-timeline-container {
+        padding: 14px 12px;
+        gap: 16px;
+        height: auto;
     }
 
     .sd-timeline {
+        display: flex;
         flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
+        gap: 0;
         padding: 0;
+        position: relative;
     }
 
     .sd-timeline__line-bg,
@@ -1095,25 +1156,217 @@
     }
 
     .sd-timeline__step {
+        display: flex;
         flex-direction: row;
+        align-items: flex-start;
         text-align: left;
         gap: 12px;
+        position: relative;
+        padding-bottom: 20px;
+        flex: none;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .sd-timeline__step:last-child {
+        padding-bottom: 0;
+    }
+
+    /* Vertical line connecting nodes */
+    .sd-timeline__step:not(:last-child)::before {
+        content: "";
+        position: absolute;
+        left: 13px;
+        top: 28px;
+        bottom: 0;
+        width: 2px;
+        background: #eeece3;
+        z-index: 1;
+    }
+
+    .sd-timeline__step--done:not(:last-child)::before {
+        background: #14151a;
+    }
+
+    .sd-timeline__node {
+        flex-shrink: 0;
+        position: relative;
+        z-index: 2;
+    }
+
+    .sd-timeline__info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 3px;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .sd-timeline__heading {
+        display: flex;
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        width: 100%;
+        flex-wrap: wrap;
     }
 
     .sd-timeline__desc {
         max-width: none;
+        font-size: 11.5px;
     }
 
     .sd-timeline-footer {
         flex-direction: column;
         align-items: stretch;
+        gap: 10px;
     }
 
-    .sd-kpi-bar {
-        grid-template-columns: 1fr;
+    .sd-timeline-footer__actions {
+        width: 100%;
+    }
+
+    .sd-timeline-footer__actions button {
+        width: 100%;
+        justify-content: center;
     }
 
     .sd-billing-grid {
         grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .sd-work-card {
+        height: auto;
+    }
+}
+
+/* Mobile Screens (<= 640px) */
+@media (max-width: 640px) {
+    .sd-header {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    .sd-header__item-name {
+        font-size: 14.5px;
+    }
+
+    .sd-header__meta {
+        font-size: 11.5px;
+        gap: 6px;
+    }
+
+    .sd-header__aside {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 8px;
+        border-top: 1px dashed #e6e4da;
+    }
+
+    .sd-header__finance-btn {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 5px 10px;
+    }
+
+    .sd-nav-tab {
+        padding: 6px 10px;
+        font-size: 12px;
+        gap: 5px;
+    }
+
+    .sd-nav-tab svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .sd-timeline-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .sd-timeline-status-badge {
+        width: 100%;
+        box-sizing: border-box;
+        justify-content: space-between;
+    }
+
+    .sd-kpi-bar {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .sd-kpi-card:last-child {
+        grid-column: span 2;
+    }
+
+    .sd-kpi-card__value {
+        font-size: 14px;
+    }
+
+    .sd-form-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .sd-form-grid-4 {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .sd-form-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .sd-form-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .sd-delivered-banner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        text-align: left;
+    }
+
+    .sd-delivered-banner button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .sd-work-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .sd-work-total-badge {
+        width: 100%;
+        box-sizing: border-box;
+        justify-content: space-between;
+    }
+
+    .sd-table th,
+    .sd-table td {
+        padding: 6px 8px;
+        font-size: 11.5px;
+    }
+
+    .sd-payment-table th,
+    .sd-payment-table td {
+        padding: 5px 6px;
+        font-size: 11px;
     }
 }

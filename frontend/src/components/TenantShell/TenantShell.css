@@ -82,6 +82,24 @@
     font-size: 12px;
 }
 
+.tenant-btn--icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+}
+
+.tenant-btn--icon svg {
+    width: 15px;
+    height: 15px;
+    display: block;
+}
+
 .tenant-btn:disabled {
     opacity: 0.55;
     cursor: default;
@@ -285,6 +303,13 @@
 
 .tenant-table-actions {
     display: flex;
+    gap: 6px;
+}
+
+.tenant-table-actions--right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
     gap: 6px;
 }
 
