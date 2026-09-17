@@ -48,12 +48,14 @@
 }
 
 .modal-card--service-details,
-.modal-card--commission-details {
+.modal-card--commission-details,
+.modal-card--service-wizard {
     padding: 16px 20px;
 }
 
 .modal-card--service-details .modal-card__head,
-.modal-card--commission-details .modal-card__head {
+.modal-card--commission-details .modal-card__head,
+.modal-card--service-wizard .modal-card__head {
     margin-bottom: 10px;
     padding-bottom: 10px;
     border-bottom: 1px solid #eeece3;
@@ -61,13 +63,17 @@
 
 @media (min-width: 900px) and (min-height: 600px) {
     .modal-card--service-details,
-    .modal-card--commission-details {
-        height: min(660px, calc(100svh - 40px));
+    .modal-card--commission-details,
+    .modal-card--service-wizard {
+        height: min(670px, calc(100svh - 48px));
     }
 
     .modal-card--service-details .modal-card__body,
-    .modal-card--commission-details .modal-card__body {
+    .modal-card--commission-details .modal-card__body,
+    .modal-card--service-wizard .modal-card__body {
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
     }
 }
 
@@ -83,22 +89,25 @@
     }
 
     .modal-card--service-details,
-    .modal-card--commission-details {
-        padding: 10px 8px;
+    .modal-card--commission-details,
+    .modal-card--service-wizard {
+        padding: 12px 10px;
         height: calc(100svh - 12px);
         display: flex;
         flex-direction: column;
     }
 
     .modal-card--service-details .modal-card__head,
-    .modal-card--commission-details .modal-card__head {
-        margin-bottom: 6px;
-        padding-bottom: 6px;
+    .modal-card--commission-details .modal-card__head,
+    .modal-card--service-wizard .modal-card__head {
+        margin-bottom: 8px;
+        padding-bottom: 8px;
         flex-shrink: 0;
     }
 
     .modal-card--service-details .modal-card__body,
-    .modal-card--commission-details .modal-card__body {
+    .modal-card--commission-details .modal-card__body,
+    .modal-card--service-wizard .modal-card__body {
         flex: 1 1 auto;
         min-height: 0;
         overflow: hidden;

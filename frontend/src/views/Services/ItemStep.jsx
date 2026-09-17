@@ -18,7 +18,6 @@ function ItemStep({ customer, item, submitting, error, onNext, onBack }) {
         }
 
         let cancelled = false;
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLoadingItems(true);
 
         api.get(`/customers/${customer.id}/items`)
@@ -58,132 +57,189 @@ function ItemStep({ customer, item, submitting, error, onNext, onBack }) {
         onNext({ mode: "new", values: form });
     }
 
-    const showList = !item && !selected && existingItems.length > 0 && !addingNew;
-    const showForm = !item && !selected && (addingNew || (!loadingItems && existingItems.length === 0));
-    const nextDisabled = submitting || (!item && !selected && !addingNew && existingItems.length > 0);
+    const hasItems = existingItems.length > 0;
+    const showList = !item && !selected && hasItems && !addingNew;
+    const showForm = !item && !selected && (addingNew || (!loadingItems && !hasItems));
+    const nextDisabled = submitting || (!item && !selected && !addingNew && hasItems);
 
     return (
-        <div className="wizard-step">
-            <div className="wizard-context">
-                Customer: <strong>{customer.name}</strong> ({customer.nic})
-            </div>
+        <form className="wizard-form-container" onSubmit={handleNext}>
+            <div className="wizard-body">
+                {/* Context Bar */}
+                <div className="wizard-context-bar">
+                    <span className="wizard-context-chip">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        Customer: <strong>{customer.name}</strong> ({customer.nic})
+                    </span>
+                    {customer.phone && (
+                        <>
+                            <span className="wizard-context-divider">•</span>
+                            <span>Phone: {customer.phone}</span>
+                        </>
+                    )}
+                </div>
 
-            <form className="tenant-form tenant-form--2col" onSubmit={handleNext}>
                 {item ? (
-                    <div className="wizard-confirmed wizard-full">
+                    <div className="wizard-confirmed">
                         <div className="wizard-confirmed__card">
                             <strong>{item.name}</strong>
                             <span>
-                                {item.model || "—"} · {item.serial_number || "—"}
+                                Model: {item.model || "—"} · Serial: {item.serial_number || "—"}
                             </span>
                         </div>
                     </div>
                 ) : selected ? (
-                    <div className="wizard-confirmed wizard-full">
+                    <div className="wizard-confirmed">
                         <div className="wizard-confirmed__card">
                             <strong>{selected.name}</strong>
                             <span>
-                                {selected.model || "—"} · {selected.serial_number || "—"}
+                                Model: {selected.model || "—"} · Serial: {selected.serial_number || "—"}
                             </span>
-                            {selected.status && <StatusBadge status={selected.status} meta={SERVICE_STATUS_META} />}
+                            {selected.status && (
+                                <div style={{ marginTop: 4 }}>
+                                    <StatusBadge status={selected.status} meta={SERVICE_STATUS_META} />
+                                </div>
+                            )}
                         </div>
                         <button
                             type="button"
                             className="tenant-btn tenant-btn--ghost tenant-btn--sm"
                             onClick={() => setSelected(null)}
                         >
-                            Choose a different item
+                            Choose different item
                         </button>
                     </div>
                 ) : (
                     <>
-                        {loadingItems && <p className="wizard-hint wizard-full">Loading registered items...</p>}
+                        {loadingItems && <p className="wizard-hint">Loading registered items...</p>}
 
                         {showList && (
                             <>
-                                <p className="wizard-hint wizard-full">Registered items for this customer:</p>
-                                <ul className="wizard-results wizard-full">
+                                <p className="wizard-hint" style={{ marginBottom: 10 }}>
+                                    Select an item already registered for this customer:
+                                </p>
+                                <div className="wizard-item-grid">
                                     {existingItems.map((existing) => (
-                                        <li key={existing.id}>
-                                            <button
-                                                type="button"
-                                                className="wizard-result"
-                                                onClick={() => setSelected(existing)}
-                                            >
-                                                <strong>{existing.name}</strong>
-                                                <span>
-                                                    {existing.model || "—"} · {existing.serial_number || "—"}
+                                        <button
+                                            key={existing.id}
+                                            type="button"
+                                            className={`wizard-item-card ${selected?.id === existing.id ? "is-selected" : ""}`}
+                                            onClick={() => setSelected(existing)}
+                                        >
+                                            <div className="wizard-item-card__radio" />
+                                            <div className="wizard-item-card__info">
+                                                <span className="wizard-item-card__name">{existing.name}</span>
+                                                <span className="wizard-item-card__sub">
+                                                    {existing.model ? `Model: ${existing.model}` : "No model"}
+                                                    {existing.serial_number ? ` · S/N: ${existing.serial_number}` : ""}
                                                 </span>
                                                 {existing.status && (
-                                                    <StatusBadge status={existing.status} meta={SERVICE_STATUS_META} />
+                                                    <div style={{ marginTop: 4 }}>
+                                                        <StatusBadge status={existing.status} meta={SERVICE_STATUS_META} />
+                                                    </div>
                                                 )}
-                                            </button>
-                                        </li>
+                                            </div>
+                                        </button>
                                     ))}
-                                </ul>
-                                <button
-                                    type="button"
-                                    className="tenant-btn tenant-btn--ghost tenant-btn--sm wizard-full"
-                                    onClick={() => setAddingNew(true)}
-                                >
-                                    Register a new item instead
-                                </button>
+                                </div>
+
+                                <div style={{ textAlign: "center", margin: "14px 0" }}>
+                                    <button
+                                        type="button"
+                                        className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                                        onClick={() => setAddingNew(true)}
+                                    >
+                                        + Register a new item for this customer
+                                    </button>
+                                </div>
                             </>
                         )}
 
                         {showForm && (
-                            <>
-                                {existingItems.length > 0 && (
-                                    <p className="wizard-hint wizard-full">Or register a new item:</p>
-                                )}
-                                <label className="wizard-full">
-                                    Item
+                            <div className="wizard-section-card" style={{ marginTop: 4 }}>
+                                <div className="wizard-section-card__title">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <rect x="2" y="3" width="20" height="14" rx="2" />
+                                        <line x1="8" y1="21" x2="16" y2="21" />
+                                        <line x1="12" y1="17" x2="12" y2="21" />
+                                    </svg>
+                                    <span>Register New Device / Item</span>
+                                </div>
+
+                                <label>
+                                    Device / Item Name *
                                     <input
                                         value={form.name}
                                         onChange={(e) => updateField("name", e.target.value)}
-                                        placeholder="e.g. Laptop — Dell XPS 13"
+                                        placeholder="e.g. Laptop — Dell XPS 13, iPhone 14 Pro, Samsung TV"
                                         required
                                     />
                                 </label>
 
-                                <label>
-                                    Model
-                                    <input
-                                        value={form.model}
-                                        onChange={(e) => updateField("model", e.target.value)}
-                                        placeholder="e.g. XPS 13 9310"
-                                    />
-                                </label>
+                                <div className="wizard-field-row">
+                                    <label>
+                                        Model / Variation
+                                        <input
+                                            value={form.model}
+                                            onChange={(e) => updateField("model", e.target.value)}
+                                            placeholder="e.g. XPS 13 9310"
+                                        />
+                                    </label>
 
-                                <label>
-                                    Serial number
-                                    <input
-                                        value={form.serial_number}
-                                        onChange={(e) => updateField("serial_number", e.target.value)}
-                                        placeholder="e.g. SN-482910"
-                                    />
-                                </label>
-                            </>
+                                    <label>
+                                        Serial Number
+                                        <input
+                                            value={form.serial_number}
+                                            onChange={(e) => updateField("serial_number", e.target.value)}
+                                            placeholder="e.g. SN-892104"
+                                        />
+                                    </label>
+                                </div>
+
+                                {hasItems && (
+                                    <div style={{ marginTop: 6 }}>
+                                        <button
+                                            type="button"
+                                            className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                                            onClick={() => setAddingNew(false)}
+                                        >
+                                            ← Select from existing items instead
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </>
                 )}
 
                 {error && (
-                    <p className="tenant-alert tenant-form__error" role="alert">
+                    <p className="tenant-alert" role="alert" style={{ marginTop: 12 }}>
                         {error}
                     </p>
                 )}
+            </div>
 
-                <div className="tenant-form__actions">
+            <div className="wizard-footer">
+                <div className="wizard-footer__left">
                     <button type="button" className="tenant-btn tenant-btn--ghost" onClick={onBack}>
-                        Back
-                    </button>
-                    <button type="submit" className="tenant-btn tenant-btn--primary" disabled={nextDisabled}>
-                        {submitting ? "Saving..." : "Next"}
+                        ← Back
                     </button>
                 </div>
-            </form>
-        </div>
+                <span className="wizard-footer__step-text">Step 2 of 4</span>
+                <div className="wizard-footer__right">
+                    <button
+                        type="submit"
+                        className="tenant-btn tenant-btn--primary"
+                        disabled={nextDisabled}
+                    >
+                        {submitting ? "Saving..." : "Next: Service Details →"}
+                    </button>
+                </div>
+            </div>
+        </form>
     );
 }
 
