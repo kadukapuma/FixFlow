@@ -5,6 +5,8 @@ use App\Http\Controllers\Central\Admin\CompanyApprovalController;
 use App\Http\Controllers\Central\Admin\SubscriptionReceiptController as AdminSubscriptionReceiptController;
 use App\Http\Controllers\Central\CompanyLoginLookupController;
 use App\Http\Controllers\Central\CompanyRegistrationController;
+use App\Http\Controllers\BrandController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CompanySettingsController;
@@ -13,9 +15,14 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\GettingItemsFromCustomerController;
 use App\Http\Controllers\ItemController;
+use App\Http\Controllers\LedgerAccountController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServicePaymentController;
+use App\Http\Controllers\ServiceProductController;
+use App\Http\Controllers\StoreController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\Tenant\AuthController as TenantAuthController;
 use App\Http\Controllers\WorkController;
 use Illuminate\Support\Facades\Route;
@@ -92,6 +99,34 @@ Route::middleware('company')->group(function () {
         Route::post('/employees/{id}/activate', [EmployeeController::class, 'activate']);
         Route::post('/employees/{id}/deactivate', [EmployeeController::class, 'deactivate']);
 
+        Route::get('/categories', [CategoryController::class, 'index']);
+        Route::post('/categories', [CategoryController::class, 'store']);
+        Route::put('/categories/{id}', [CategoryController::class, 'update']);
+        Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+        Route::post('/categories/{id}/activate', [CategoryController::class, 'activate']);
+        Route::post('/categories/{id}/deactivate', [CategoryController::class, 'deactivate']);
+
+        Route::get('/brands', [BrandController::class, 'index']);
+        Route::post('/brands', [BrandController::class, 'store']);
+        Route::put('/brands/{id}', [BrandController::class, 'update']);
+        Route::delete('/brands/{id}', [BrandController::class, 'destroy']);
+        Route::post('/brands/{id}/activate', [BrandController::class, 'activate']);
+        Route::post('/brands/{id}/deactivate', [BrandController::class, 'deactivate']);
+
+        Route::get('/stores', [StoreController::class, 'index']);
+        Route::post('/stores', [StoreController::class, 'store']);
+        Route::put('/stores/{id}', [StoreController::class, 'update']);
+        Route::delete('/stores/{id}', [StoreController::class, 'destroy']);
+        Route::post('/stores/{id}/activate', [StoreController::class, 'activate']);
+        Route::post('/stores/{id}/deactivate', [StoreController::class, 'deactivate']);
+
+        Route::get('/suppliers', [SupplierController::class, 'index']);
+        Route::post('/suppliers', [SupplierController::class, 'store']);
+        Route::put('/suppliers/{id}', [SupplierController::class, 'update']);
+        Route::delete('/suppliers/{id}', [SupplierController::class, 'destroy']);
+        Route::post('/suppliers/{id}/activate', [SupplierController::class, 'activate']);
+        Route::post('/suppliers/{id}/deactivate', [SupplierController::class, 'deactivate']);
+
         Route::get('/received-items', [GettingItemsFromCustomerController::class, 'index']);
         Route::post('/received-items', [GettingItemsFromCustomerController::class, 'store']);
         Route::put('/received-items/{id}', [GettingItemsFromCustomerController::class, 'update']);
@@ -99,6 +134,13 @@ Route::middleware('company')->group(function () {
 
         Route::get('/customers/{id}/items', [ItemController::class, 'forCustomer']);
         Route::post('/items', [ItemController::class, 'store']);
+
+        Route::get('/products', [ProductController::class, 'index']);
+        Route::post('/products', [ProductController::class, 'store']);
+        Route::put('/products/{id}', [ProductController::class, 'update']);
+        Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+        Route::post('/products/{id}/activate', [ProductController::class, 'activate']);
+        Route::post('/products/{id}/deactivate', [ProductController::class, 'deactivate']);
 
         Route::get('/services', [ServiceController::class, 'index']);
         Route::post('/services', [ServiceController::class, 'store']);
@@ -117,7 +159,15 @@ Route::middleware('company')->group(function () {
         Route::get('/commissions/{employeeId}', [CommissionController::class, 'show']);
         Route::post('/commissions/{employeeId}/payouts', [CommissionController::class, 'payout']);
 
+        Route::get('/ledger-accounts', [LedgerAccountController::class, 'index']);
+        Route::get('/ledger-accounts/{id}', [LedgerAccountController::class, 'show']);
+
         Route::get('/work', [WorkController::class, 'index']);
         Route::post('/work', [WorkController::class, 'store']);
+
+        Route::get('/service-products', [ServiceProductController::class, 'index']);
+        Route::post('/service-products', [ServiceProductController::class, 'store']);
+        Route::put('/service-products/{id}', [ServiceProductController::class, 'update']);
+        Route::delete('/service-products/{id}', [ServiceProductController::class, 'destroy']);
     });
 });

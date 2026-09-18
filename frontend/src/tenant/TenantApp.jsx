@@ -6,12 +6,18 @@ import TenantLogin from "../views/TenantLogin/TenantLogin";
 import TenantDashboard from "../views/TenantDashboard/TenantDashboard";
 import Customers from "../views/Customers/Customers";
 import Employees from "../views/Employees/Employees";
+import Categories from "../views/Categories/Categories";
+import Brands from "../views/Brands/Brands";
+import Stores from "../views/Stores/Stores";
+import Suppliers from "../views/Suppliers/Suppliers";
+import Products from "../views/Products/Products";
 import ReceivedItems from "../views/ReceivedItems/ReceivedItems";
 import Services from "../views/Services/Services";
 import StartWork from "../views/StartWork/StartWork";
 import Completed from "../views/Completed/Completed";
 import Delivered from "../views/Delivered/Delivered";
 import Commissions from "../views/Commissions/Commissions";
+import Accounts from "../views/Accounts/Accounts";
 import CompanySettings from "../views/CompanySettings/CompanySettings";
 import Subscription from "../views/Subscription/Subscription";
 
@@ -43,6 +49,67 @@ const EMPLOYEES_ICON = (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
         <path
             d="M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19M20 19v-1.5a3.5 3.5 0 0 0-2.5-3.36M14.5 3.6a3.5 3.5 0 0 1 0 6.8M10 10.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const CATEGORIES_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M4 4h7v7H4V4ZM13 4h7v7h-7V4ZM4 13h7v7H4v-7ZM13 13h7v7h-7v-7Z"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const BRANDS_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="m20 10-8.3-8.3a2 2 0 0 0-1.4-.6H5a2 2 0 0 0-2 2v5.3c0 .5.2 1 .6 1.4L11.9 18a2 2 0 0 0 2.8 0L20 12.8a2 2 0 0 0 0-2.8Z"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+        <path d="M7 7h.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+);
+
+const STORES_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M3 9.5 4.5 4h15L21 9.5M3 9.5a2.5 2.5 0 0 0 5 0M8 9.5a2.5 2.5 0 0 0 5 0M13 9.5a2.5 2.5 0 0 0 5 0M18 9.5a2.5 2.5 0 0 0 3 0M5 9.5V20h14V9.5"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const SUPPLIERS_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M3 7h11v9H3V7ZM14 10h4l3 3v3h-7v-6ZM6.5 19.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17.5 19.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const PRODUCTS_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M20.5 7.3 12 3 3.5 7.3 12 11.6l8.5-4.3ZM3.5 7.3v9.4L12 21l8.5-4.3V7.3M12 11.6V21"
             stroke="currentColor"
             strokeWidth="1.8"
             strokeLinecap="round"
@@ -154,6 +221,18 @@ const DELIVERED_ICON = (
     </svg>
 );
 
+const ACCOUNTS_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M4 4h16v4H4V4ZM4 10h16M4 10v10h16V10M8 14h3M8 17h3M13 14h3M13 17h3"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
 const COMMISSIONS_ICON = (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
         <path
@@ -214,7 +293,16 @@ function TenantApp() {
             {
                 key: "master",
                 title: "Master",
-                active: ["customers", "employees", "received-items"].includes(page),
+                active: [
+                    "customers",
+                    "employees",
+                    "categories",
+                    "brands",
+                    "stores",
+                    "suppliers",
+                    "products",
+                    "received-items",
+                ].includes(page),
                 icon: MASTER_ICON,
                 children: [
                     {
@@ -230,6 +318,41 @@ function TenantApp() {
                         active: page === "employees",
                         onClick: () => setPage("employees"),
                         icon: EMPLOYEES_ICON,
+                    },
+                    {
+                        key: "categories",
+                        title: "Categories",
+                        active: page === "categories",
+                        onClick: () => setPage("categories"),
+                        icon: CATEGORIES_ICON,
+                    },
+                    {
+                        key: "brands",
+                        title: "Brands",
+                        active: page === "brands",
+                        onClick: () => setPage("brands"),
+                        icon: BRANDS_ICON,
+                    },
+                    {
+                        key: "stores",
+                        title: "Stores",
+                        active: page === "stores",
+                        onClick: () => setPage("stores"),
+                        icon: STORES_ICON,
+                    },
+                    {
+                        key: "suppliers",
+                        title: "Suppliers",
+                        active: page === "suppliers",
+                        onClick: () => setPage("suppliers"),
+                        icon: SUPPLIERS_ICON,
+                    },
+                    {
+                        key: "products",
+                        title: "Products",
+                        active: page === "products",
+                        onClick: () => setPage("products"),
+                        icon: PRODUCTS_ICON,
                     },
                     {
                         key: "received-items",
@@ -276,6 +399,13 @@ function TenantApp() {
                 icon: COMMISSIONS_ICON,
             },
             {
+                key: "accounts",
+                title: "Accounts",
+                active: page === "accounts",
+                onClick: () => setPage("accounts"),
+                icon: ACCOUNTS_ICON,
+            },
+            {
                 key: "settings",
                 title: "Settings",
                 active: page === "settings",
@@ -303,6 +433,26 @@ function TenantApp() {
         return <Employees shellProps={shellProps} />;
     }
 
+    if (page === "categories") {
+        return <Categories shellProps={shellProps} />;
+    }
+
+    if (page === "brands") {
+        return <Brands shellProps={shellProps} />;
+    }
+
+    if (page === "stores") {
+        return <Stores shellProps={shellProps} />;
+    }
+
+    if (page === "suppliers") {
+        return <Suppliers shellProps={shellProps} />;
+    }
+
+    if (page === "products") {
+        return <Products shellProps={shellProps} />;
+    }
+
     if (page === "received-items") {
         return <ReceivedItems shellProps={shellProps} />;
     }
@@ -325,6 +475,10 @@ function TenantApp() {
 
     if (page === "commissions") {
         return <Commissions shellProps={shellProps} />;
+    }
+
+    if (page === "accounts") {
+        return <Accounts shellProps={shellProps} />;
     }
 
     if (page === "settings") {

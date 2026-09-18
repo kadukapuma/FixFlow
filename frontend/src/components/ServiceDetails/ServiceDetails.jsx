@@ -3,7 +3,7 @@ import api, { getErrorMessage } from "../../api";
 import StatusBadge from "../StatusBadge/StatusBadge";
 import { SERVICE_STATUS_META } from "../StatusBadge/serviceStatusMeta";
 import Modal from "../Modal/Modal";
-import DateActionForm from "../DateActionForm/DateActionForm";
+import DeliverPaymentForm from "../DeliverPaymentForm/DeliverPaymentForm";
 import PdfViewerModal from "../PdfViewerModal/PdfViewerModal";
 import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
@@ -38,6 +38,7 @@ function commissionLabel(service) {
 function ServiceDetails({ serviceId, onUpdated }) {
     const [service, setService] = useState(null);
     const [workEntries, setWorkEntries] = useState([]);
+    const [serviceProducts, setServiceProducts] = useState([]);
     const [payments, setPayments] = useState([]);
 
     const [price, setPrice] = useState("");
@@ -65,9 +66,12 @@ function ServiceDetails({ serviceId, onUpdated }) {
             setError("");
 
             try {
-                const [serviceResponse, workResponse, paymentsResponse] = await Promise.all([
+                const [serviceResponse, workResponse, serviceProductsResponse, paymentsResponse] = await Promise.all([
                     api.get(`/services/${serviceId}`),
                     api.get("/work", {
+                        params: { service_id: serviceId },
+                    }),
+                    api.get("/service-products", {
                         params: { service_id: serviceId },
                     }),
                     api.get(`/services/${serviceId}/payments`),
@@ -77,22 +81,29 @@ function ServiceDetails({ serviceId, onUpdated }) {
 
                 const loadedService = serviceResponse.data;
                 const loadedWork = workResponse.data || [];
+                const loadedServiceProducts = serviceProductsResponse.data || [];
                 const loadedPayments = paymentsResponse.data || [];
 
                 setService(loadedService);
                 setWorkEntries(loadedWork);
+                setServiceProducts(loadedServiceProducts);
                 setPayments(loadedPayments);
 
                 const loadedWorkTotal = loadedWork.reduce(
                     (sum, entry) => sum + Number(entry.cost || 0),
                     0
                 );
+                const loadedProductsTotal = loadedServiceProducts.reduce(
+                    (sum, entry) => sum + Number(entry.line_total ?? entry.quantity * entry.unit_price),
+                    0
+                );
+                const loadedCombinedTotal = loadedWorkTotal + loadedProductsTotal;
 
                 setPrice(
                     loadedService.price != null
                         ? String(loadedService.price)
-                        : loadedWorkTotal > 0
-                        ? loadedWorkTotal.toFixed(2)
+                        : loadedCombinedTotal > 0
+                        ? loadedCombinedTotal.toFixed(2)
                         : ""
                 );
 
@@ -121,6 +132,11 @@ function ServiceDetails({ serviceId, onUpdated }) {
 
     const workTotal = workEntries.reduce(
         (sum, entry) => sum + Number(entry.cost || 0),
+        0
+    );
+
+    const productsTotal = serviceProducts.reduce(
+        (sum, entry) => sum + Number(entry.line_total ?? entry.quantity * entry.unit_price),
         0
     );
 
@@ -198,9 +214,28 @@ function ServiceDetails({ serviceId, onUpdated }) {
         }
     }
 
-    async function handleDeliver(deliveredDate) {
+    async function handleDeliverWithPayment({ amount, method, deliveredDate }) {
         setDelivering(true);
         setError("");
+
+        const amountToRecord = Math.min(Number(amount) || 0, balanceDue ?? 0);
+
+        try {
+            if (amountToRecord > 0) {
+                const paymentResponse = await api.post(`/services/${serviceId}/payments`, {
+                    amount: amountToRecord,
+                    method,
+                    paid_at: deliveredDate,
+                    note: "Collected at delivery",
+                });
+
+                setPayments((prev) => [paymentResponse.data.payment, ...prev]);
+            }
+        } catch (err) {
+            setError(getErrorMessage(err, "Unable to record payment."));
+            setDelivering(false);
+            return;
+        }
 
         try {
             const response = await api.post(`/services/${serviceId}/deliver`, {
@@ -397,7 +432,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
                     </svg>
-                    <span>Work Log</span>
+                    <span>Line Items</span>
                     {workEntries.length > 0 && (
                         <span className="sd-tab-indicator">
                             {workEntries.length}
@@ -686,6 +721,67 @@ function ServiceDetails({ serviceId, onUpdated }) {
                                     </svg>
                                     <h5>No work entries recorded</h5>
                                     <p>Technicians have not logged tasks or spare parts for this service yet.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="sd-work-card">
+                            <div className="sd-work-head">
+                                <div>
+                                    <h4 className="sd-pane-title">Products Added</h4>
+                                    <p className="sd-pane-desc">Catalog items sold as part of this service</p>
+                                </div>
+
+                                <div className="sd-work-total-badge">
+                                    <span>Total Products Cost:</span>
+                                    <strong>Rs. {productsTotal.toFixed(2)}</strong>
+                                </div>
+                            </div>
+
+                            {serviceProducts.length > 0 ? (
+                                <div className="sd-table-wrap">
+                                    <table className="sd-table">
+                                        <thead>
+                                            <tr>
+                                                <th style={{ width: 48 }}>#</th>
+                                                <th>Product</th>
+                                                <th style={{ textAlign: "right", width: 80 }}>Qty</th>
+                                                <th style={{ textAlign: "right", width: 140 }}>Unit Price (Rs.)</th>
+                                                <th style={{ textAlign: "right", width: 140 }}>Line Total (Rs.)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {serviceProducts.map((entry, idx) => (
+                                                <tr key={entry.id || idx}>
+                                                    <td className="sd-table__cell-index">{idx + 1}</td>
+                                                    <td className="sd-table__cell-desc">{entry.product?.name || "—"}</td>
+                                                    <td style={{ textAlign: "right" }}>{entry.quantity}</td>
+                                                    <td className="sd-table__cell-cost">
+                                                        Rs. {Number(entry.unit_price || 0).toFixed(2)}
+                                                    </td>
+                                                    <td className="sd-table__cell-cost">
+                                                        Rs. {Number(entry.line_total ?? entry.quantity * entry.unit_price).toFixed(2)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colSpan={4}>Total Products Cost</td>
+                                                <td style={{ textAlign: "right", fontWeight: 700 }}>
+                                                    Rs. {productsTotal.toFixed(2)}
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="sd-empty-state">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M20.5 7.3 12 3 3.5 7.3 12 11.6l8.5-4.3ZM3.5 7.3v9.4L12 21l8.5-4.3V7.3M12 11.6V21" />
+                                    </svg>
+                                    <h5>No products added</h5>
+                                    <p>No catalog products have been added to this service yet.</p>
                                 </div>
                             )}
                         </div>
@@ -995,12 +1091,11 @@ function ServiceDetails({ serviceId, onUpdated }) {
             {/* DELIVERY MODAL */}
             {deliverModalOpen && (
                 <Modal title="Mark as delivered" onClose={() => setDeliverModalOpen(false)}>
-                    <DateActionForm
-                        label="Delivered date"
-                        submitLabel="Mark as delivered"
+                    <DeliverPaymentForm
+                        balanceDue={balanceDue}
                         submitting={delivering}
                         error={error}
-                        onSubmit={handleDeliver}
+                        onSubmit={handleDeliverWithPayment}
                         onCancel={() => setDeliverModalOpen(false)}
                     />
                 </Modal>

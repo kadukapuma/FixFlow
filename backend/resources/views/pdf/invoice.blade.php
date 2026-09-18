@@ -388,10 +388,41 @@
         </tfoot>
     </table>
 
+    <table class="works" style="margin-top: 14px;">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th style="width: 60px; text-align: center;">Qty</th>
+                <th class="amount">Unit Price</th>
+                <th class="amount">Line Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($service->serviceProducts as $entry)
+                <tr>
+                    <td>{{ $entry->product->name ?? '—' }}</td>
+                    <td style="text-align: center;">{{ $entry->quantity }}</td>
+                    <td class="amount">{{ number_format((float) $entry->unit_price, 2) }}</td>
+                    <td class="amount">{{ number_format($entry->line_total, 2) }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="4">No products added.</td>
+                </tr>
+            @endforelse
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3">Products total</td>
+                <td class="amount">{{ number_format($productsTotal, 2) }}</td>
+            </tr>
+        </tfoot>
+    </table>
+
     <div class="summary-wrap">
         <div class="note">
-            @if((float) $service->price !== $workTotal)
-                Final price adjusted from the logged work total.
+            @if((float) $service->price !== $combinedTotal)
+                Final price adjusted from the logged work and product totals.
             @endif
         </div>
         <div class="summary-cell">

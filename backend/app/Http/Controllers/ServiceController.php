@@ -183,12 +183,14 @@ class ServiceController extends Controller
 
     public function invoice(int $id)
     {
-        $service = Service::with(['customer', 'item', 'employee', 'work', 'receivedItems', 'payments'])->findOrFail($id);
+        $service = Service::with(['customer', 'item', 'employee', 'work', 'serviceProducts.product', 'receivedItems', 'payments'])->findOrFail($id);
 
         // No manually-set final price yet — default it to the sum of the
-        // logged work costs rather than blocking invoice generation.
+        // logged work costs and product line items rather than blocking
+        // invoice generation.
         if ($service->price === null) {
-            $service->price = $service->work->sum('cost');
+            $productsTotal = (float) $service->serviceProducts->sum(fn ($entry) => $entry->line_total);
+            $service->price = (float) $service->work->sum('cost') + $productsTotal;
             $service->save();
         }
 

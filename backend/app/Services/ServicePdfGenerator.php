@@ -37,11 +37,13 @@ class ServicePdfGenerator
 
     /**
      * Render a service invoice (work performed + final price) and return the
-     * raw PDF bytes. $service must have its `work` relation loaded.
+     * raw PDF bytes. $service must have its `work` and `serviceProducts.product`
+     * relations loaded.
      */
     public static function renderInvoice(Service $service, Company $company, ?string $logoDataOverride = null): string
     {
         $workTotal = (float) $service->work->sum('cost');
+        $productsTotal = (float) $service->serviceProducts->sum(fn ($entry) => $entry->line_total);
         $paidTotal = (float) $service->payments->sum('amount');
 
         return Pdf::loadView('pdf.invoice', [
@@ -49,6 +51,8 @@ class ServicePdfGenerator
             'company' => $company,
             'logoData' => self::resolveLogoData($company, $logoDataOverride),
             'workTotal' => $workTotal,
+            'productsTotal' => $productsTotal,
+            'combinedTotal' => $workTotal + $productsTotal,
             'paidTotal' => $paidTotal,
         ])->output();
     }

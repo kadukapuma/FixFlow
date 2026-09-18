@@ -1,8 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import BrandMark from "../BrandMark/BrandMark";
 import "./Sidebar.css";
 
 const MOBILE_BREAKPOINT = 640;
+
+// Every page view mounts its own <Sidebar>, so navigating between tabs
+// unmounts the old one and mounts a fresh instance — which would otherwise
+// reset the nav list's scroll position back to the start on every click.
+// Stashing it in module scope (survives across those remounts, resets on a
+// full page reload) lets the new instance restore exactly where the last
+// one left off.
+let savedNavScroll = { top: 0, left: 0 };
 
 function readStoredExpanded() {
     try {
@@ -61,6 +69,20 @@ function Sidebar({ items = [], footerLabel, onLogout, mobilePrimaryKeys }) {
     const isMobile = useIsMobile(MOBILE_BREAKPOINT);
     const initial = (footerLabel || "?").trim().charAt(0).toUpperCase();
     const compact = isMobile && Array.isArray(mobilePrimaryKeys) && mobilePrimaryKeys.length > 0;
+    const navRef = useRef(null);
+
+    useLayoutEffect(() => {
+        const el = navRef.current;
+        if (!el) return;
+        el.scrollTop = savedNavScroll.top;
+        el.scrollLeft = savedNavScroll.left;
+    }, []);
+
+    function handleNavScroll() {
+        const el = navRef.current;
+        if (!el) return;
+        savedNavScroll = { top: el.scrollTop, left: el.scrollLeft };
+    }
 
     function isGroupOpen(item) {
         if (item.key in openGroups) return openGroups[item.key];
@@ -170,7 +192,7 @@ function Sidebar({ items = [], footerLabel, onLogout, mobilePrimaryKeys }) {
                 {expanded && <span className="sidebar__brand-name">FixFlow</span>}
             </div>
 
-            <nav className="sidebar__nav">
+            <nav className="sidebar__nav" ref={navRef} onScroll={handleNavScroll}>
                 {items.map((item) =>
                     item.children ? (
                         <div key={item.key} className="sidebar__group">

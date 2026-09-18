@@ -60,6 +60,11 @@ class Service extends Model
         return $this->hasMany(Work::class);
     }
 
+    public function serviceProducts()
+    {
+        return $this->hasMany(ServiceProduct::class);
+    }
+
     public function payments()
     {
         return $this->hasMany(ServicePayment::class);

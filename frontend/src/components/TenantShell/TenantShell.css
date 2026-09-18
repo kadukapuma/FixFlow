@@ -243,6 +243,13 @@
     grid-column: 1 / -1;
 }
 
+.tenant-form__hint {
+    grid-column: 1 / -1;
+    margin: -6px 0 0;
+    font-size: 12px;
+    color: #9b9a8f;
+}
+
 .tenant-form__actions {
     grid-column: 1 / -1;
     display: flex;

@@ -3,21 +3,26 @@ import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
 import Modal from "../../components/Modal/Modal";
 import WorkForm from "../../components/WorkForm/WorkForm";
+import ServiceProductForm from "../../components/ServiceProductForm/ServiceProductForm";
 import DateActionForm from "../../components/DateActionForm/DateActionForm";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import { SERVICE_STATUS_META } from "../../components/StatusBadge/serviceStatusMeta";
 import { showToast } from "../../lib/toast";
+import { confirmAction } from "../../lib/confirm";
 import "./StartWork.css";
 
 function StartWork({ shellProps }) {
     const [query, setQuery] = useState("");
     const [service, setService] = useState(null);
     const [workEntries, setWorkEntries] = useState([]);
+    const [serviceProducts, setServiceProducts] = useState([]);
+    const [editingServiceProduct, setEditingServiceProduct] = useState(null);
     const [error, setError] = useState("");
     const [searching, setSearching] = useState(false);
     const [modalMode, setModalMode] = useState(null);
     const [formError, setFormError] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [busyId, setBusyId] = useState(null);
 
     async function loadWork(serviceId) {
         try {
@@ -25,6 +30,15 @@ function StartWork({ shellProps }) {
             setWorkEntries(response.data);
         } catch (err) {
             setError(getErrorMessage(err, "Unable to load work log."));
+        }
+    }
+
+    async function loadServiceProducts(serviceId) {
+        try {
+            const response = await api.get("/service-products", { params: { service_id: serviceId } });
+            setServiceProducts(response.data);
+        } catch (err) {
+            setError(getErrorMessage(err, "Unable to load products added."));
         }
     }
 
@@ -38,11 +52,13 @@ function StartWork({ shellProps }) {
         setError("");
         setService(null);
         setWorkEntries([]);
+        setServiceProducts([]);
 
         try {
             const response = await api.get("/services/search", { params: { q } });
             setService(response.data);
             loadWork(response.data.id);
+            loadServiceProducts(response.data.id);
         } catch (err) {
             setError(getErrorMessage(err, "Service not found."));
         } finally {
@@ -53,6 +69,7 @@ function StartWork({ shellProps }) {
     function closeModal() {
         setModalMode(null);
         setFormError("");
+        setEditingServiceProduct(null);
     }
 
     async function handleStart(startedDate) {
@@ -100,6 +117,53 @@ function StartWork({ shellProps }) {
             setFormError(getErrorMessage(err, "Unable to save work entry."));
         } finally {
             setSubmitting(false);
+        }
+    }
+
+    async function handleServiceProductSubmit(values) {
+        setSubmitting(true);
+        setFormError("");
+
+        try {
+            if (editingServiceProduct) {
+                await api.put(`/service-products/${editingServiceProduct.id}`, values);
+                showToast("Product updated.");
+            } else {
+                await api.post("/service-products", { service_id: service.id, ...values });
+                showToast("Product added.");
+            }
+            closeModal();
+            loadServiceProducts(service.id);
+        } catch (err) {
+            setFormError(getErrorMessage(err, "Unable to save product."));
+        } finally {
+            setSubmitting(false);
+        }
+    }
+
+    async function handleServiceProductDelete(row) {
+        const confirmed = await confirmAction({
+            title: "Remove product?",
+            message: `Remove ${row.product?.name || "this product"} from this service?`,
+            confirmLabel: "Remove",
+            danger: true,
+        });
+
+        if (!confirmed) return;
+
+        setBusyId(row.id);
+        setError("");
+
+        try {
+            await api.delete(`/service-products/${row.id}`);
+            showToast("Product removed.");
+            loadServiceProducts(service.id);
+        } catch (err) {
+            const message = getErrorMessage(err, "Unable to remove product.");
+            setError(message);
+            showToast(message, "error");
+        } finally {
+            setBusyId(null);
         }
     }
 
@@ -185,6 +249,16 @@ function StartWork({ shellProps }) {
                                     Update
                                 </button>
                                 <button
+                                    className="tenant-btn tenant-btn--ghost"
+                                    type="button"
+                                    onClick={() => {
+                                        setEditingServiceProduct(null);
+                                        setModalMode("product");
+                                    }}
+                                >
+                                    Add product
+                                </button>
+                                <button
                                     className="tenant-btn tenant-btn--primary"
                                     type="button"
                                     onClick={() => setModalMode("complete")}
@@ -234,6 +308,70 @@ function StartWork({ shellProps }) {
                 </section>
             )}
 
+            {service && service.status !== "pending" && (
+                <section className="tenant-card">
+                    <div className="tenant-card__head">
+                        <h2>Products added</h2>
+                    </div>
+
+                    <div className="tenant-table-scroll">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Qty</th>
+                                    <th>Unit price</th>
+                                    <th>Line total</th>
+                                    {service.status === "in_progress" && <th>Actions</th>}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {serviceProducts.map((row) => (
+                                    <tr key={row.id}>
+                                        <td data-label="Product">{row.product?.name || "—"}</td>
+                                        <td data-label="Qty">{row.quantity}</td>
+                                        <td data-label="Unit price">Rs. {row.unit_price}</td>
+                                        <td data-label="Line total">Rs. {row.line_total}</td>
+                                        {service.status === "in_progress" && (
+                                            <td data-label="Actions">
+                                                <div className="tenant-table-actions">
+                                                    <button
+                                                        className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setEditingServiceProduct(row);
+                                                            setModalMode("product");
+                                                        }}
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                                                        type="button"
+                                                        disabled={busyId === row.id}
+                                                        onClick={() => handleServiceProductDelete(row)}
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))}
+
+                                {serviceProducts.length === 0 && (
+                                    <tr>
+                                        <td colSpan={service.status === "in_progress" ? 5 : 4} className="tenant-table-empty">
+                                            No products added yet.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            )}
+
             {modalMode === "work" && (
                 <Modal title="Log work" onClose={closeModal}>
                     <WorkForm
@@ -241,6 +379,19 @@ function StartWork({ shellProps }) {
                         error={formError}
                         onSubmit={handleWorkSubmit}
                         onCancel={closeModal}
+                    />
+                </Modal>
+            )}
+
+            {modalMode === "product" && (
+                <Modal title={editingServiceProduct ? "Edit product" : "Add product"} onClose={closeModal}>
+                    <ServiceProductForm
+                        initialValues={editingServiceProduct}
+                        submitting={submitting}
+                        error={formError}
+                        onSubmit={handleServiceProductSubmit}
+                        onCancel={closeModal}
+                        submitLabel={editingServiceProduct ? "Save changes" : "Add product"}
                     />
                 </Modal>
             )}
