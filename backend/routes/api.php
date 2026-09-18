@@ -10,6 +10,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CompanySettingsController;
+use App\Http\Controllers\CustomerBalanceController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
@@ -161,6 +162,9 @@ Route::middleware('company')->group(function () {
 
         Route::get('/ledger-accounts', [LedgerAccountController::class, 'index']);
         Route::get('/ledger-accounts/{id}', [LedgerAccountController::class, 'show']);
+
+        Route::get('/customer-balances', [CustomerBalanceController::class, 'index']);
+        Route::get('/customer-balances/{customerId}', [CustomerBalanceController::class, 'show']);
 
         Route::get('/work', [WorkController::class, 'index']);
         Route::post('/work', [WorkController::class, 'store']);

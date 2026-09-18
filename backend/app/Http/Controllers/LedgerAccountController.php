@@ -60,7 +60,7 @@ class LedgerAccountController extends Controller
 
             return [
                 'id' => $line->id,
-                'entry_date' => $line->journalEntry->entry_date,
+                'entry_date' => $line->journalEntry->entry_date->format('Y-m-d'),
                 'description' => $line->journalEntry->description,
                 'source_type' => $line->journalEntry->source_type,
                 'debit' => $debit,

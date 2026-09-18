@@ -49,12 +49,14 @@
 
 .modal-card--service-details,
 .modal-card--commission-details,
+.modal-card--account-details,
 .modal-card--service-wizard {
     padding: 16px 20px;
 }
 
 .modal-card--service-details .modal-card__head,
 .modal-card--commission-details .modal-card__head,
+.modal-card--account-details .modal-card__head,
 .modal-card--service-wizard .modal-card__head {
     margin-bottom: 10px;
     padding-bottom: 10px;
@@ -64,12 +66,14 @@
 @media (min-width: 900px) and (min-height: 600px) {
     .modal-card--service-details,
     .modal-card--commission-details,
+    .modal-card--account-details,
     .modal-card--service-wizard {
         height: min(670px, calc(100svh - 48px));
     }
 
     .modal-card--service-details .modal-card__body,
     .modal-card--commission-details .modal-card__body,
+    .modal-card--account-details .modal-card__body,
     .modal-card--service-wizard .modal-card__body {
         overflow: hidden;
         display: flex;
@@ -90,6 +94,7 @@
 
     .modal-card--service-details,
     .modal-card--commission-details,
+    .modal-card--account-details,
     .modal-card--service-wizard {
         padding: 12px 10px;
         height: calc(100svh - 12px);
@@ -99,6 +104,7 @@
 
     .modal-card--service-details .modal-card__head,
     .modal-card--commission-details .modal-card__head,
+    .modal-card--account-details .modal-card__head,
     .modal-card--service-wizard .modal-card__head {
         margin-bottom: 8px;
         padding-bottom: 8px;
@@ -107,6 +113,7 @@
 
     .modal-card--service-details .modal-card__body,
     .modal-card--commission-details .modal-card__body,
+    .modal-card--account-details .modal-card__body,
     .modal-card--service-wizard .modal-card__body {
         flex: 1 1 auto;
         min-height: 0;

@@ -654,6 +654,18 @@
     box-sizing: border-box;
 }
 
+/* The Work Log pane stacks two sd-work-card panels (Work + Products) —
+   give them breathing room and let each size to its own content instead
+   of both fighting over height: 100%. */
+.sd-tab-pane--work {
+    gap: 12px;
+}
+
+.sd-tab-pane--work .sd-work-card {
+    height: auto;
+    flex: none;
+}
+
 .sd-work-head {
     display: flex;
     align-items: center;

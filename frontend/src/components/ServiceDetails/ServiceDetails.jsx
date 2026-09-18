@@ -922,7 +922,10 @@ function ServiceDetails({ serviceId, onUpdated }) {
                                             </svg>
                                             <div>
                                                 <strong>Service is {service.status === "in_progress" ? "In Progress" : "Pending"}</strong>
-                                                <p>Final price setup and customer handover are enabled once the technician completes work.</p>
+                                                <p>
+                                                    Final price setup and customer handover are enabled once the technician completes work.
+                                                    {service.status === "in_progress" && " You can still record any advance payments from the right."}
+                                                </p>
                                             </div>
                                         </div>
                                     )}
@@ -989,8 +992,9 @@ function ServiceDetails({ serviceId, onUpdated }) {
                                     )}
                                 </div>
 
-                                {/* RECORD PAYMENT FORM */}
-                                {service.price != null && service.status !== "delivered" && (
+                                {/* RECORD PAYMENT FORM — available from in_progress onward, including
+                                    after delivery so a customer can settle a remaining balance later. */}
+                                {service.status !== "pending" && (
                                     <div className="sd-panel">
                                         <div className="sd-panel__head">
                                             <h4 className="sd-panel__title">Record Payment</h4>

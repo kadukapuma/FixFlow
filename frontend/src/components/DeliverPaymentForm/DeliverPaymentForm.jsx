@@ -20,49 +20,62 @@ function DeliverPaymentForm({ balanceDue, submitting, error, onSubmit, onCancel 
     }
 
     return (
-        <form className="tenant-form tenant-form--1col" onSubmit={handleSubmit}>
+        <form className="sd-panel-compact-form" onSubmit={handleSubmit}>
             {hasBalance ? (
                 <>
-                    <label>
-                        Amount received from customer
-                        <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                        />
-                    </label>
+                    <div className="sd-form-row">
+                        <label>
+                            Amount received (Rs.)
+                            <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                            />
+                        </label>
 
-                    <label>
-                        Payment method
-                        <select value={method} onChange={(e) => setMethod(e.target.value)}>
-                            <option value="cash">Cash</option>
-                            <option value="bank">Bank</option>
-                            <option value="upi">UPI</option>
-                            <option value="card">Card</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </label>
+                        <label>
+                            Method
+                            <select value={method} onChange={(e) => setMethod(e.target.value)}>
+                                <option value="cash">Cash</option>
+                                <option value="bank">Bank</option>
+                                <option value="upi">UPI</option>
+                                <option value="card">Card</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </label>
+                    </div>
 
                     {changeToGive > 0 && (
-                        <p className="tenant-form__hint">
-                            Change to give: Rs. {changeToGive.toFixed(2)} (only Rs. {Number(balanceDue).toFixed(2)} will be recorded as payment)
-                        </p>
+                        <div className="sd-form-calc-note">
+                            Change to give: <strong>Rs. {changeToGive.toFixed(2)}</strong> — only Rs.{" "}
+                            {Number(balanceDue).toFixed(2)} will be recorded as payment.
+                        </div>
                     )}
 
                     {changeToGive === 0 && remainingAfter > 0 && (
-                        <p className="tenant-form__hint">
-                            Remaining balance after delivery: Rs. {remainingAfter.toFixed(2)}
-                        </p>
+                        <div className="sd-form-calc-note">
+                            Remaining balance after delivery: <strong>Rs. {remainingAfter.toFixed(2)}</strong>
+                        </div>
                     )}
 
                     {changeToGive === 0 && remainingAfter === 0 && enteredAmount > 0 && (
-                        <p className="tenant-form__hint">Balance will be fully settled.</p>
+                        <div className="sd-form-calc-note">
+                            Balance will be <strong>fully settled</strong>.
+                        </div>
                     )}
                 </>
             ) : (
-                <p className="tenant-form__hint">Balance already settled — nothing left to collect.</p>
+                <div className="sd-notice-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                    <div>
+                        <strong>Balance already settled</strong>
+                        <p>Nothing left to collect — this will just record the delivery date.</p>
+                    </div>
+                </div>
             )}
 
             <label>
@@ -76,16 +89,16 @@ function DeliverPaymentForm({ balanceDue, submitting, error, onSubmit, onCancel 
             </label>
 
             {error && (
-                <p className="tenant-alert tenant-form__error" role="alert">
+                <p className="tenant-alert" role="alert">
                     {error}
                 </p>
             )}
 
-            <div className="tenant-form__actions">
-                <button type="button" className="tenant-btn tenant-btn--ghost" onClick={onCancel}>
+            <div className="sd-form-actions">
+                <button type="button" className="tenant-btn tenant-btn--ghost tenant-btn--sm" onClick={onCancel}>
                     Cancel
                 </button>
-                <button type="submit" className="tenant-btn tenant-btn--primary" disabled={submitting}>
+                <button type="submit" className="tenant-btn tenant-btn--primary tenant-btn--sm" disabled={submitting}>
                     {submitting ? "Saving..." : "Mark as delivered"}
                 </button>
             </div>
