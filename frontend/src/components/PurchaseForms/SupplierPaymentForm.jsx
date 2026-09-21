@@ -1,8 +1,25 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../../api";
+import Picker from "../Picker/Picker";
+import { PurchasePicker } from "../Picker/presets";
+import { PAYMENT_METHODS } from "../../lib/options";
+
+const PAYMENT_KINDS = [
+    { id: "payment", name: "Payment to Supplier" },
+    { id: "refund", name: "Refund from Supplier" },
+];
 
 function getTodayString() {
     return new Date().toISOString().slice(0, 10);
+}
+
+// A balance owed to the supplier defaults to a payment of that amount; a credit
+// balance defaults to a refund. Settled purchases leave the form as it is.
+function defaultsFor(purchase) {
+    const balance = Number(purchase.balance);
+    if (balance < -0.005) return { kind: "refund", amount: Math.abs(balance).toFixed(2) };
+    if (balance > 0.005) return { kind: "payment", amount: balance.toFixed(2) };
+    return null;
 }
 
 function SupplierPaymentForm({
@@ -12,10 +29,10 @@ function SupplierPaymentForm({
     onSubmit,
     onCancel,
 }) {
-    const [purchases, setPurchases] = useState([]);
     const [selectedPurchaseId, setSelectedPurchaseId] = useState(() =>
         initialPurchaseId ? String(initialPurchaseId) : ""
     );
+    const [activePurchase, setActivePurchase] = useState(null);
     const [kind, setKind] = useState("payment");
     const [amount, setAmount] = useState("");
     const [method, setMethod] = useState("cash");
@@ -23,25 +40,20 @@ function SupplierPaymentForm({
     const [note, setNote] = useState("");
 
     useEffect(() => {
+        if (!initialPurchaseId) return;
+
         let cancelled = false;
 
-        api.get("/purchases", { params: { all: 1, payable: 1 } })
+        api.get("/purchases", { params: { all: 1, payable: 1, ids: initialPurchaseId } })
             .then((res) => {
-                if (cancelled) return;
-                setPurchases(res.data);
+                const match = res.data[0];
+                if (cancelled || !match) return;
 
-                if (initialPurchaseId) {
-                    const match = res.data.find((p) => p.id === Number(initialPurchaseId));
-                    if (match) {
-                        const bal = Number(match.balance);
-                        if (bal < -0.005) {
-                            setKind("refund");
-                            setAmount(Math.abs(bal).toFixed(2));
-                        } else if (bal > 0.005) {
-                            setKind("payment");
-                            setAmount(bal.toFixed(2));
-                        }
-                    }
+                setActivePurchase(match);
+                const defaults = defaultsFor(match);
+                if (defaults) {
+                    setKind(defaults.kind);
+                    setAmount(defaults.amount);
                 }
             })
             .catch(() => {});
@@ -51,22 +63,14 @@ function SupplierPaymentForm({
         };
     }, [initialPurchaseId]);
 
-    const activePurchase = useMemo(() => {
-        return purchases.find((p) => p.id === Number(selectedPurchaseId)) || null;
-    }, [purchases, selectedPurchaseId]);
-
-    function handlePurchaseSelect(id) {
+    function handlePurchaseSelect(id, purchase) {
         setSelectedPurchaseId(id);
-        const p = purchases.find((row) => row.id === Number(id));
-        if (p) {
-            const bal = Number(p.balance);
-            if (bal < -0.005) {
-                setKind("refund");
-                setAmount(Math.abs(bal).toFixed(2));
-            } else if (bal > 0.005) {
-                setKind("payment");
-                setAmount(bal.toFixed(2));
-            }
+        setActivePurchase(purchase);
+
+        const defaults = purchase && defaultsFor(purchase);
+        if (defaults) {
+            setKind(defaults.kind);
+            setAmount(defaults.amount);
         }
     }
 
@@ -92,24 +96,12 @@ function SupplierPaymentForm({
         <form className="tenant-form tenant-form--2col" onSubmit={handleSubmit}>
             <label className="pf-field-full">
                 Select Purchase *
-                <select
+                <PurchasePicker
+                    mode="payable"
                     value={selectedPurchaseId}
-                    onChange={(e) => handlePurchaseSelect(e.target.value)}
+                    onChange={handlePurchaseSelect}
                     required
-                >
-                    <option value="" disabled>
-                        Choose purchase with balance...
-                    </option>
-                    {purchases.map((p) => {
-                        const bal = Number(p.balance);
-                        return (
-                            <option key={p.id} value={p.id}>
-                                {p.ref_no || `#${p.id}`} — {p.supplier_name} ({p.purchase_date}) —{" "}
-                                {bal < 0 ? `Credit: Rs. ${Math.abs(bal).toFixed(2)}` : `Due: Rs. ${bal.toFixed(2)}`}
-                            </option>
-                        );
-                    })}
-                </select>
+                />
             </label>
 
             {activePurchase && (
@@ -145,14 +137,7 @@ function SupplierPaymentForm({
 
             <label>
                 Transaction Kind *
-                <select
-                    value={kind}
-                    onChange={(e) => setKind(e.target.value)}
-                    required
-                >
-                    <option value="payment">Payment to Supplier</option>
-                    <option value="refund">Refund from Supplier</option>
-                </select>
+                <Picker options={PAYMENT_KINDS} value={kind} onChange={setKind} />
             </label>
 
             <label>
@@ -170,17 +155,7 @@ function SupplierPaymentForm({
 
             <label>
                 Payment Method *
-                <select
-                    value={method}
-                    onChange={(e) => setMethod(e.target.value)}
-                    required
-                >
-                    <option value="cash">Cash</option>
-                    <option value="bank">Bank Transfer</option>
-                    <option value="upi">UPI</option>
-                    <option value="card">Card</option>
-                    <option value="other">Other</option>
-                </select>
+                <Picker options={PAYMENT_METHODS} value={method} onChange={setMethod} />
             </label>
 
             <label>

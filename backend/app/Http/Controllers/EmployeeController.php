@@ -12,6 +12,7 @@ class EmployeeController extends Controller
     public function index(Request $request)
     {
         $query = Employee::latest();
+        $this->applyPickerFilters($request, $query, ['name', 'nic', 'phone']);
 
         // Pickers (e.g. the technician dropdown on the service form) need
         // every employee at once, not one page of the table view.

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import Picker from "../Picker/Picker";
+import { PAYMENT_METHODS } from "../../lib/options";
 import "./ReturnUnrepairableForm.css";
 
 function todayIsoDate() {
@@ -137,13 +139,7 @@ function ReturnUnrepairableForm({ service, payments = [], submitting, error, onS
 
                         <label>
                             <span>Payment Method</span>
-                            <select value={method} onChange={(e) => setMethod(e.target.value)}>
-                                <option value="cash">Cash</option>
-                                <option value="bank">Bank Transfer</option>
-                                <option value="upi">UPI</option>
-                                <option value="card">Card</option>
-                                <option value="other">Other</option>
-                            </select>
+                            <Picker options={PAYMENT_METHODS} value={method} onChange={setMethod} />
                         </label>
                     </div>
 

@@ -16,6 +16,8 @@ class ProductController extends Controller
     {
         $query = Product::with(['category:id,name', 'brand:id,name'])->latest();
 
+        $this->applyPickerFilters($request, $query, ['name'], ['category' => 'name', 'brand' => 'name']);
+
         // Pickers need every product at once, not one page of the table view.
         if ($request->boolean('all')) {
             return response()->json($query->get());

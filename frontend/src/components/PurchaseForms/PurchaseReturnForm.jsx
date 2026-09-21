@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../../api";
+import { PurchasePicker } from "../Picker/presets";
 import "./PurchaseForms.css";
 
 function getTodayString() {
@@ -13,7 +14,6 @@ function PurchaseReturnForm({
     onSubmit,
     onCancel,
 }) {
-    const [purchases, setPurchases] = useState([]);
     const [selectedPurchaseId, setSelectedPurchaseId] = useState(() =>
         initialPurchaseId ? String(initialPurchaseId) : ""
     );
@@ -23,20 +23,6 @@ function PurchaseReturnForm({
     const [reason, setReason] = useState("");
     const [returnQuantities, setReturnQuantities] = useState({});
     const [loadingDetails, setLoadingDetails] = useState(false);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        api.get("/purchases", { params: { all: 1, returnable: 1 } })
-            .then((res) => {
-                if (!cancelled) setPurchases(res.data);
-            })
-            .catch(() => {});
-
-        return () => {
-            cancelled = true;
-        };
-    }, []);
 
     function handlePurchaseSelect(id) {
         setSelectedPurchaseId(id);
@@ -153,21 +139,12 @@ function PurchaseReturnForm({
         <form className="tenant-form tenant-form--2col" onSubmit={handleSubmit}>
             <label className="pf-field-full">
                 Select Purchase to Return *
-                <select
+                <PurchasePicker
+                    mode="returnable"
                     value={selectedPurchaseId}
-                    onChange={(e) => handlePurchaseSelect(e.target.value)}
+                    onChange={handlePurchaseSelect}
                     required
-                >
-                    <option value="" disabled>
-                        Choose eligible purchase...
-                    </option>
-                    {purchases.map((p) => (
-                        <option key={p.id} value={p.id}>
-                            {p.ref_no || `#${p.id}`} — {p.supplier_name} ({p.purchase_date}) — Total: Rs.{" "}
-                            {Number(p.total).toFixed(2)}
-                        </option>
-                    ))}
-                </select>
+                />
             </label>
 
             <label>

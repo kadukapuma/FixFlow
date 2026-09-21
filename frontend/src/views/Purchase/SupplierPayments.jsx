@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
 import Modal from "../../components/Modal/Modal";
+import Picker from "../../components/Picker/Picker";
+import { SupplierPicker } from "../../components/Picker/presets";
 import Pagination from "../../components/Pagination/Pagination";
 import TableSkeleton from "../../components/TableSkeleton/TableSkeleton";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
@@ -11,10 +13,14 @@ import { usePressedRow } from "../../lib/usePressedRow";
 import { usePaginatedResource } from "../../lib/usePaginatedResource";
 import SupplierPaymentForm from "../../components/PurchaseForms/SupplierPaymentForm";
 
+const KIND_OPTIONS = [
+    { id: "payment", name: "Payments" },
+    { id: "refund", name: "Refunds" },
+];
+
 function SupplierPayments({ shellProps }) {
     const [supplierFilter, setSupplierFilter] = useState("");
     const [kindFilter, setKindFilter] = useState("");
-    const [suppliers, setSuppliers] = useState([]);
 
     const extraParams = {};
     if (supplierFilter) extraParams.supplier_id = supplierFilter;
@@ -33,20 +39,6 @@ function SupplierPayments({ shellProps }) {
     const [formError, setFormError] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const { pressedId, pressHandlers } = usePressedRow();
-
-    useEffect(() => {
-        let cancelled = false;
-
-        api.get("/suppliers", { params: { all: 1 } })
-            .then((res) => {
-                if (!cancelled) setSuppliers(res.data.filter((s) => s.is_active));
-            })
-            .catch(() => {});
-
-        return () => {
-            cancelled = true;
-        };
-    }, []);
 
     function openModal() {
         setFormError("");
@@ -89,28 +81,20 @@ function SupplierPayments({ shellProps }) {
                     </div>
 
                     <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                        <select
-                            className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                        <SupplierPicker
+                            variant="filter"
                             value={supplierFilter}
-                            onChange={(e) => setSupplierFilter(e.target.value)}
-                        >
-                            <option value="">All Suppliers</option>
-                            {suppliers.map((s) => (
-                                <option key={s.id} value={s.id}>
-                                    {s.name}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={setSupplierFilter}
+                            emptyLabel="All Suppliers"
+                        />
 
-                        <select
-                            className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                        <Picker
+                            variant="filter"
+                            options={KIND_OPTIONS}
                             value={kindFilter}
-                            onChange={(e) => setKindFilter(e.target.value)}
-                        >
-                            <option value="">All Transactions</option>
-                            <option value="payment">Payments</option>
-                            <option value="refund">Refunds</option>
-                        </select>
+                            onChange={setKindFilter}
+                            emptyLabel="All Transactions"
+                        />
 
                         <button
                             className="tenant-btn tenant-btn--primary"

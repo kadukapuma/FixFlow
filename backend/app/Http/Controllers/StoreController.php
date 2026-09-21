@@ -12,6 +12,7 @@ class StoreController extends Controller
     public function index(Request $request)
     {
         $query = Store::latest();
+        $this->applyPickerFilters($request, $query, ['name', 'contact_person', 'phone']);
 
         // Pickers (e.g. a store dropdown on the item form) need every
         // store at once, not one page of the table view.

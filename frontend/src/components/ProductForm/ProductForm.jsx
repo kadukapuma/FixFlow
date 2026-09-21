@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import api from "../../api";
+import { useState } from "react";
+import { BrandPicker, CategoryPicker } from "../Picker/presets";
 
 const EMPTY_FORM = {
     name: "",
@@ -17,17 +17,6 @@ function ProductForm({ initialValues, submitting, error, onSubmit, onCancel, sub
         category_id: initialValues?.category_id ?? "",
         brand_id: initialValues?.brand_id ?? "",
     });
-    const [categories, setCategories] = useState([]);
-    const [brands, setBrands] = useState([]);
-
-    useEffect(() => {
-        api.get("/categories", { params: { all: 1 } }).then((response) => {
-            setCategories(response.data.filter((category) => category.is_active));
-        });
-        api.get("/brands", { params: { all: 1 } }).then((response) => {
-            setBrands(response.data.filter((brand) => brand.is_active));
-        });
-    }, []);
 
     function updateField(field, value) {
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -52,26 +41,22 @@ function ProductForm({ initialValues, submitting, error, onSubmit, onCancel, sub
 
             <label>
                 Category
-                <select value={form.category_id} onChange={(e) => updateField("category_id", e.target.value)}>
-                    <option value="">No category</option>
-                    {categories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                            {category.name}
-                        </option>
-                    ))}
-                </select>
+                <CategoryPicker
+                    value={form.category_id}
+                    selected={initialValues?.category}
+                    onChange={(id) => updateField("category_id", id)}
+                    emptyLabel="No category"
+                />
             </label>
 
             <label>
                 Brand
-                <select value={form.brand_id} onChange={(e) => updateField("brand_id", e.target.value)}>
-                    <option value="">No brand</option>
-                    {brands.map((brand) => (
-                        <option key={brand.id} value={brand.id}>
-                            {brand.name}
-                        </option>
-                    ))}
-                </select>
+                <BrandPicker
+                    value={form.brand_id}
+                    selected={initialValues?.brand}
+                    onChange={(id) => updateField("brand_id", id)}
+                    emptyLabel="No brand"
+                />
             </label>
 
             <label>

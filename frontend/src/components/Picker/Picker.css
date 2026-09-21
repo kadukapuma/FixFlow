@@ -1,0 +1,204 @@
+/* The trigger's look comes from custom properties so each screen can match its
+   own inputs (see the --picker-* blocks in those screens' stylesheets). */
+.picker {
+    position: relative;
+    width: 100%;
+}
+
+.picker__trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font: inherit;
+    font-size: var(--picker-font, 13px);
+    text-align: left;
+    padding: var(--picker-pad, 10px 13px);
+    border-radius: var(--picker-radius, 10px);
+    border: 1px solid var(--picker-border, #e6e4da);
+    background: var(--picker-bg, #fbfaf6);
+    color: #14151a;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.picker__trigger svg {
+    flex-shrink: 0;
+    color: #9b9a8f;
+}
+
+.picker__trigger:focus-visible,
+.picker__trigger[aria-expanded="true"] {
+    outline: none;
+    border-color: var(--picker-focus-border, #ddfb5e);
+    box-shadow: var(--picker-focus-ring, 0 0 0 3px rgba(221, 251, 94, 0.35));
+}
+
+.picker__trigger:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.picker__value,
+.picker__placeholder {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.picker__placeholder {
+    color: #9b9a8f;
+    font-weight: 400;
+}
+
+/* Inside a table row (line-item editors). */
+.picker--compact {
+    --picker-pad: 6px 8px;
+    --picker-radius: 6px;
+    --picker-border: #d5d3cb;
+    --picker-bg: #fff;
+    --picker-focus-border: #aa3bff;
+    --picker-focus-ring: none;
+}
+
+/* Toolbar filter, sized like a small ghost button. */
+.picker--filter {
+    width: auto;
+    --picker-pad: 7px 12px;
+    --picker-font: 12px;
+    --picker-bg: #ffffff;
+}
+
+.picker--filter .picker__trigger {
+    width: auto;
+    font-weight: 600;
+}
+
+/* Invisible but still focusable by the browser, so a missing selection
+   surfaces the native validation bubble next to the trigger. */
+.picker .picker__native {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.picker__panel {
+    position: fixed;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    box-sizing: border-box;
+    background: #fff;
+    border: 1px solid #e6e4da;
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(20, 21, 26, 0.16);
+    font-size: 13px;
+    color: #14151a;
+}
+
+.picker__search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    border-radius: 10px;
+    border: 1px solid #e6e4da;
+    background: #fbfaf6;
+    color: #9b9a8f;
+}
+
+.picker__search:focus-within {
+    border-color: #ddfb5e;
+    box-shadow: 0 0 0 3px rgba(221, 251, 94, 0.35);
+}
+
+.picker__search input {
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    padding: 9px 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #14151a;
+}
+
+.picker__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: opacity 0.12s;
+}
+
+.picker__list.is-loading {
+    opacity: 0.55;
+}
+
+.picker__option {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font: inherit;
+    text-align: left;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #14151a;
+    cursor: pointer;
+}
+
+.picker__option:hover:not(:disabled),
+.picker__option:focus-visible {
+    outline: none;
+    background: #f4f3ec;
+}
+
+.picker__option.is-selected {
+    background: rgba(221, 251, 94, 0.4);
+}
+
+.picker__option:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.picker__option-name {
+    font-weight: 600;
+}
+
+.picker__option-meta {
+    font-size: 12px;
+    color: #6b6b63;
+}
+
+.picker__message {
+    margin: 0;
+    padding: 14px 10px;
+    text-align: center;
+    color: #6b6b63;
+}
+
+.picker__message--error {
+    color: #c22b3a;
+}
+
+.picker__panel .pagination {
+    margin-top: 0;
+    padding-top: 8px;
+    gap: 8px;
+}

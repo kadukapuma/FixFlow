@@ -3,11 +3,13 @@ import api, { getErrorMessage } from "../../api";
 import StatusBadge from "../StatusBadge/StatusBadge";
 import { SERVICE_STATUS_META } from "../StatusBadge/serviceStatusMeta";
 import Modal from "../Modal/Modal";
+import Picker from "../Picker/Picker";
 import DeliverPaymentForm from "../DeliverPaymentForm/DeliverPaymentForm";
 import UnrepairableForm from "../UnrepairableForm/UnrepairableForm";
 import ReturnUnrepairableForm from "../ReturnUnrepairableForm/ReturnUnrepairableForm";
 import PdfViewerModal from "../PdfViewerModal/PdfViewerModal";
 import { showToast } from "../../lib/toast";
+import { PAYMENT_METHODS } from "../../lib/options";
 import { confirmAction } from "../../lib/confirm";
 import "./ServiceDetails.css";
 
@@ -1192,21 +1194,13 @@ function ServiceDetails({ serviceId, onUpdated }) {
 
                                                 <label>
                                                     Method
-                                                    <select
+                                                    <Picker
+                                                        options={PAYMENT_METHODS}
                                                         value={paymentForm.method}
-                                                        onChange={(e) =>
-                                                            setPaymentForm((prev) => ({
-                                                                ...prev,
-                                                                method: e.target.value,
-                                                            }))
+                                                        onChange={(method) =>
+                                                            setPaymentForm((prev) => ({ ...prev, method }))
                                                         }
-                                                    >
-                                                        <option value="cash">Cash</option>
-                                                        <option value="bank">Bank</option>
-                                                        <option value="upi">UPI</option>
-                                                        <option value="card">Card</option>
-                                                        <option value="other">Other</option>
-                                                    </select>
+                                                    />
                                                 </label>
 
                                                 <label>

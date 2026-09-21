@@ -1,4 +1,6 @@
 import { useState } from "react";
+import Picker from "../Picker/Picker";
+import { PAYMENT_METHODS } from "../../lib/options";
 
 function todayIsoDate() {
     return new Date().toISOString().slice(0, 10);
@@ -37,13 +39,7 @@ function DeliverPaymentForm({ balanceDue, submitting, error, onSubmit, onCancel 
 
                         <label>
                             Method
-                            <select value={method} onChange={(e) => setMethod(e.target.value)}>
-                                <option value="cash">Cash</option>
-                                <option value="bank">Bank</option>
-                                <option value="upi">UPI</option>
-                                <option value="card">Card</option>
-                                <option value="other">Other</option>
-                            </select>
+                            <Picker options={PAYMENT_METHODS} value={method} onChange={setMethod} />
                         </label>
                     </div>
 

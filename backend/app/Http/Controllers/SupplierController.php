@@ -12,6 +12,7 @@ class SupplierController extends Controller
     public function index(Request $request)
     {
         $query = Supplier::latest();
+        $this->applyPickerFilters($request, $query, ['name', 'contact_person', 'phone']);
 
         // Pickers (e.g. a supplier dropdown on the item form) need every
         // supplier at once, not one page of the table view.

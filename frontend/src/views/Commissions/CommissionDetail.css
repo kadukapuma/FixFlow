@@ -647,6 +647,14 @@
     color: #14151a;
 }
 
+.cd-payout-form {
+    --picker-font: 12px;
+    --picker-pad: 7px 10px;
+    --picker-radius: 8px;
+    --picker-focus-border: #14151a;
+    --picker-focus-ring: none;
+}
+
 .cd-payout-form input,
 .cd-payout-form select {
     font: inherit;

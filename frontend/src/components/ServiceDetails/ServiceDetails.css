@@ -922,6 +922,14 @@
     color: #14151a;
 }
 
+.sd-panel-compact-form {
+    --picker-font: 12px;
+    --picker-pad: 6px 9px;
+    --picker-radius: 7px;
+    --picker-focus-border: #14151a;
+    --picker-focus-ring: none;
+}
+
 .sd-panel-compact-form input,
 .sd-panel-compact-form select {
     font: inherit;

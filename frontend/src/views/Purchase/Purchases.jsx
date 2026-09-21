@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
 import Modal from "../../components/Modal/Modal";
+import Picker from "../../components/Picker/Picker";
+import { SupplierPicker } from "../../components/Picker/presets";
 import Pagination from "../../components/Pagination/Pagination";
 import TableSkeleton from "../../components/TableSkeleton/TableSkeleton";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
@@ -15,10 +17,14 @@ import { usePaginatedResource } from "../../lib/usePaginatedResource";
 import PurchaseForm from "../../components/PurchaseForms/PurchaseForm";
 import PurchaseDetail from "./PurchaseDetail";
 
+const STATUS_OPTIONS = [
+    { id: "received", name: "Received" },
+    { id: "cancelled", name: "Cancelled" },
+];
+
 function Purchases({ shellProps, prefilledPo, onClearPrefilledPo }) {
     const [supplierFilter, setSupplierFilter] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
-    const [suppliers, setSuppliers] = useState([]);
 
     const extraParams = {};
     if (supplierFilter) extraParams.supplier_id = supplierFilter;
@@ -40,20 +46,6 @@ function Purchases({ shellProps, prefilledPo, onClearPrefilledPo }) {
     const { pressedId, pressHandlers } = usePressedRow();
 
     const isAddModalOpen = modalOpen || Boolean(prefilledPo);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        api.get("/suppliers", { params: { all: 1 } })
-            .then((res) => {
-                if (!cancelled) setSuppliers(res.data.filter((s) => s.is_active));
-            })
-            .catch(() => {});
-
-        return () => {
-            cancelled = true;
-        };
-    }, []);
 
     function openAddModal() {
         setFormError("");
@@ -97,28 +89,20 @@ function Purchases({ shellProps, prefilledPo, onClearPrefilledPo }) {
                     </div>
 
                     <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                        <select
-                            className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                        <SupplierPicker
+                            variant="filter"
                             value={supplierFilter}
-                            onChange={(e) => setSupplierFilter(e.target.value)}
-                        >
-                            <option value="">All Suppliers</option>
-                            {suppliers.map((s) => (
-                                <option key={s.id} value={s.id}>
-                                    {s.name}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={setSupplierFilter}
+                            emptyLabel="All Suppliers"
+                        />
 
-                        <select
-                            className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                        <Picker
+                            variant="filter"
+                            options={STATUS_OPTIONS}
                             value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                        >
-                            <option value="">All Statuses</option>
-                            <option value="received">Received</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
+                            onChange={setStatusFilter}
+                            emptyLabel="All Statuses"
+                        />
 
                         <button
                             className="tenant-btn tenant-btn--primary"

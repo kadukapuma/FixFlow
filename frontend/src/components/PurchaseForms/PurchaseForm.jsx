@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import api from "../../api";
+import { PurchaseOrderPicker, StorePicker, SupplierPicker } from "../Picker/presets";
 import LineItemsEditor from "./LineItemsEditor";
 import { computeLineTotal } from "./purchaseFormUtils";
 
@@ -8,11 +9,6 @@ function getTodayString() {
 }
 
 function PurchaseForm({ prefilledPo, submitting, error, onSubmit, onCancel }) {
-    const [suppliers, setSuppliers] = useState([]);
-    const [stores, setStores] = useState([]);
-    const [products, setProducts] = useState([]);
-    const [openOrders, setOpenOrders] = useState([]);
-
     const [purchaseOrderId, setPurchaseOrderId] = useState(() => prefilledPo?.id || "");
     const [supplierId, setSupplierId] = useState(() => prefilledPo?.supplier_id || "");
     const [storeId, setStoreId] = useState(() => prefilledPo?.store_id || "");
@@ -24,6 +20,7 @@ function PurchaseForm({ prefilledPo, submitting, error, onSubmit, onCancel }) {
         if (prefilledPo?.items && prefilledPo.items.length > 0) {
             return prefilledPo.items.map((i) => ({
                 product_id: i.product_id,
+                product: i.product,
                 quantity: i.quantity,
                 unit_cost: i.unit_cost,
                 discount_type: i.discount_type || "percent",
@@ -43,38 +40,6 @@ function PurchaseForm({ prefilledPo, submitting, error, onSubmit, onCancel }) {
         ];
     });
 
-    useEffect(() => {
-        let cancelled = false;
-
-        api.get("/suppliers", { params: { all: 1 } })
-            .then((res) => {
-                if (!cancelled) setSuppliers(res.data.filter((s) => s.is_active));
-            })
-            .catch(() => {});
-
-        api.get("/stores", { params: { all: 1 } })
-            .then((res) => {
-                if (!cancelled) setStores(res.data.filter((s) => s.is_active));
-            })
-            .catch(() => {});
-
-        api.get("/products", { params: { all: 1 } })
-            .then((res) => {
-                if (!cancelled) setProducts(res.data.filter((p) => p.is_active));
-            })
-            .catch(() => {});
-
-        api.get("/purchase-orders", { params: { all: 1, status: "ordered" } })
-            .then((res) => {
-                if (!cancelled) setOpenOrders(res.data);
-            })
-            .catch(() => {});
-
-        return () => {
-            cancelled = true;
-        };
-    }, []);
-
     async function handlePoSelect(poId) {
         setPurchaseOrderId(poId);
         if (!poId) return;
@@ -89,6 +54,7 @@ function PurchaseForm({ prefilledPo, submitting, error, onSubmit, onCancel }) {
                 setItems(
                     po.items.map((i) => ({
                         product_id: i.product_id,
+                        product: i.product,
                         quantity: i.quantity,
                         unit_cost: i.unit_cost,
                         discount_type: i.discount_type || "percent",
@@ -134,53 +100,26 @@ function PurchaseForm({ prefilledPo, submitting, error, onSubmit, onCancel }) {
         <form className="tenant-form tenant-form--2col" onSubmit={handleSubmit}>
             <label className="pf-field-full">
                 Receive from Purchase Order (Optional)
-                <select
+                <PurchaseOrderPicker
                     value={purchaseOrderId}
-                    onChange={(e) => handlePoSelect(e.target.value)}
-                >
-                    <option value="">Direct purchase (no purchase order)</option>
-                    {openOrders.map((po) => (
-                        <option key={po.id} value={po.id}>
-                            {po.ref_no || `PO #${po.id}`} — {po.supplier?.name || "Supplier"} ({po.order_date})
-                        </option>
-                    ))}
-                </select>
+                    onChange={handlePoSelect}
+                    emptyLabel="Direct purchase (no purchase order)"
+                />
             </label>
 
             <label>
                 Supplier *
-                <select
-                    value={supplierId}
-                    onChange={(e) => setSupplierId(e.target.value)}
-                    required
-                >
-                    <option value="" disabled>
-                        Select supplier...
-                    </option>
-                    {suppliers.map((s) => (
-                        <option key={s.id} value={s.id}>
-                            {s.name}
-                        </option>
-                    ))}
-                </select>
+                <SupplierPicker value={supplierId} onChange={setSupplierId} required />
             </label>
 
             <label>
                 Receiving Store *
-                <select
+                <StorePicker
                     value={storeId}
-                    onChange={(e) => setStoreId(e.target.value)}
+                    onChange={setStoreId}
+                    placeholder="Select receiving store..."
                     required
-                >
-                    <option value="" disabled>
-                        Select receiving store...
-                    </option>
-                    {stores.map((st) => (
-                        <option key={st.id} value={st.id}>
-                            {st.name}
-                        </option>
-                    ))}
-                </select>
+                />
             </label>
 
             <label>
@@ -215,11 +154,7 @@ function PurchaseForm({ prefilledPo, submitting, error, onSubmit, onCancel }) {
                 />
             </label>
 
-            <LineItemsEditor
-                items={items}
-                onChange={setItems}
-                products={products}
-            />
+            <LineItemsEditor items={items} onChange={setItems} />
 
             {error && (
                 <p className="tenant-alert tenant-form__error pf-field-full" role="alert">

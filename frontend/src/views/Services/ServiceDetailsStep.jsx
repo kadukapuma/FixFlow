@@ -1,5 +1,11 @@
-import { useEffect, useState } from "react";
-import api from "../../api";
+import { useState } from "react";
+import Picker from "../../components/Picker/Picker";
+import { EmployeePicker } from "../../components/Picker/presets";
+
+const COMMISSION_TYPES = [
+    { id: "flat", name: "Flat Amount (Rs.)" },
+    { id: "percentage", name: "Percentage (%)" },
+];
 
 function todayIsoDate() {
     return new Date().toISOString().slice(0, 10);
@@ -19,13 +25,6 @@ const EMPTY_FORM = {
 
 function ServiceDetailsStep({ customer, item, initialValues, submitting, error, onSubmit, onBack }) {
     const [form, setForm] = useState(initialValues || EMPTY_FORM);
-    const [employees, setEmployees] = useState([]);
-
-    useEffect(() => {
-        api.get("/employees", { params: { all: 1 } }).then((response) => {
-            setEmployees(response.data.filter((employee) => employee.is_active));
-        });
-    }, []);
 
     function updateField(field, value) {
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -107,20 +106,12 @@ function ServiceDetailsStep({ customer, item, initialValues, submitting, error, 
 
                         <label>
                             Assigned Technician *
-                            <select
+                            <EmployeePicker
                                 value={form.employee_id}
-                                onChange={(e) => updateField("employee_id", e.target.value)}
+                                selected={initialValues?.employee}
+                                onChange={(id) => updateField("employee_id", id)}
                                 required
-                            >
-                                <option value="" disabled>
-                                    Select technician
-                                </option>
-                                {employees.map((employee) => (
-                                    <option key={employee.id} value={employee.id}>
-                                        {employee.name}
-                                    </option>
-                                ))}
-                            </select>
+                            />
                         </label>
 
                         <label>
@@ -196,14 +187,12 @@ function ServiceDetailsStep({ customer, item, initialValues, submitting, error, 
                         <div className="wizard-field-row" style={{ marginTop: 2 }}>
                             <label>
                                 Commission Type
-                                <select
+                                <Picker
+                                    options={COMMISSION_TYPES}
                                     value={form.commission_type}
-                                    onChange={(e) => updateField("commission_type", e.target.value)}
-                                >
-                                    <option value="">No commission</option>
-                                    <option value="flat">Flat Amount (Rs.)</option>
-                                    <option value="percentage">Percentage (%)</option>
-                                </select>
+                                    onChange={(type) => updateField("commission_type", type)}
+                                    emptyLabel="No commission"
+                                />
                             </label>
 
                             {form.commission_type ? (

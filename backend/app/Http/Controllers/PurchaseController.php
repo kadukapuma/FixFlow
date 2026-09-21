@@ -30,6 +30,8 @@ class PurchaseController extends Controller
             ->latest('purchase_date')
             ->latest('id');
 
+        $this->applyPickerFilters($request, $query, ['ref_no', 'supplier_invoice_no'], ['supplier' => 'name']);
+
         if ($request->filled('supplier_id')) {
             $query->where('supplier_id', $request->query('supplier_id'));
         }
@@ -98,6 +100,8 @@ class PurchaseController extends Controller
             'per_page' => $perPage,
             'total' => $total,
             'last_page' => (int) ceil($total / $perPage),
+            'from' => $total ? ($page - 1) * $perPage + 1 : null,
+            'to' => $total ? min($page * $perPage, $total) : null,
         ]);
     }
 

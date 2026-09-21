@@ -1,26 +1,18 @@
 import { useEffect, useState } from "react";
 import api from "../../api";
+import { ProductPicker, StorePicker } from "../Picker/presets";
 
 function ServiceProductForm({ initialValues, submitting, error, onSubmit, onCancel, submitLabel = "Add product" }) {
     const isEditing = Boolean(initialValues?.id);
-    const [products, setProducts] = useState([]);
-    const [stores, setStores] = useState([]);
     const [productId, setProductId] = useState(initialValues?.product_id ? String(initialValues.product_id) : "");
+    const [pickedProduct, setPickedProduct] = useState(null);
+    const [pickedStore, setPickedStore] = useState(null);
     const [storeId, setStoreId] = useState(initialValues?.store_id ? String(initialValues.store_id) : "");
     const [quantity, setQuantity] = useState(String(initialValues?.quantity ?? 1));
     const [unitPrice, setUnitPrice] = useState(
         initialValues?.unit_price != null ? String(initialValues.unit_price) : ""
     );
     const [stockResult, setStockResult] = useState({ key: null, stock: null });
-
-    useEffect(() => {
-        api.get("/products", { params: { all: 1 } }).then((response) => {
-            setProducts(response.data.filter((product) => product.is_active));
-        });
-        api.get("/stores", { params: { all: 1 } }).then((response) => {
-            setStores(response.data.filter((store) => store.is_active));
-        });
-    }, []);
 
     const stockKey = productId && storeId ? `${productId}-${storeId}` : null;
 
@@ -42,18 +34,19 @@ function ServiceProductForm({ initialValues, submitting, error, onSubmit, onCanc
 
     const availableStock = stockKey && stockResult.key === stockKey ? stockResult.stock : null;
 
-    const selectedProduct =
-        (isEditing ? initialValues?.product : null) ||
-        products.find((product) => String(product.id) === String(productId));
+    const selectedProduct = (isEditing ? initialValues?.product : null) || pickedProduct;
 
-    const selectedStore =
-        (isEditing ? initialValues?.store : null) ||
-        stores.find((store) => String(store.id) === String(storeId));
+    const selectedStore = (isEditing ? initialValues?.store : null) || pickedStore;
 
-    function handleProductChange(id) {
+    function handleStoreChange(id, store) {
+        setStoreId(id);
+        setPickedStore(store);
+    }
+
+    function handleProductChange(id, product) {
         setProductId(id);
-        const product = products.find((p) => String(p.id) === String(id));
-        setUnitPrice(product?.sale_price != null ? String(product.sale_price) : "");
+        setPickedProduct(product);
+        setUnitPrice(product.sale_price != null ? String(product.sale_price) : "");
     }
 
     const floor = selectedProduct?.border_price != null ? Number(selectedProduct.border_price) : null;
@@ -84,16 +77,7 @@ function ServiceProductForm({ initialValues, submitting, error, onSubmit, onCanc
                 {isEditing ? (
                     <input value={selectedProduct?.name || ""} disabled />
                 ) : (
-                    <select value={productId} onChange={(e) => handleProductChange(e.target.value)} required>
-                        <option value="" disabled>
-                            Select a product
-                        </option>
-                        {products.map((product) => (
-                            <option key={product.id} value={product.id}>
-                                {product.name}
-                            </option>
-                        ))}
-                    </select>
+                    <ProductPicker value={productId} onChange={handleProductChange} required />
                 )}
             </label>
 
@@ -102,16 +86,7 @@ function ServiceProductForm({ initialValues, submitting, error, onSubmit, onCanc
                 {isEditing ? (
                     <input value={selectedStore?.name || ""} disabled />
                 ) : (
-                    <select value={storeId} onChange={(e) => setStoreId(e.target.value)} required>
-                        <option value="" disabled>
-                            Select a store
-                        </option>
-                        {stores.map((store) => (
-                            <option key={store.id} value={store.id}>
-                                {store.name}
-                            </option>
-                        ))}
-                    </select>
+                    <StorePicker value={storeId} onChange={handleStoreChange} required />
                 )}
             </label>
 

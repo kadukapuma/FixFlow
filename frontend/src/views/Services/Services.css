@@ -120,6 +120,16 @@
     color: #14151a;
 }
 
+.wizard-container,
+.wizard-form-container {
+    --picker-pad: 8px 11px;
+    --picker-radius: 9px;
+    --picker-border: #e0ddd3;
+    --picker-bg: #ffffff;
+    --picker-focus-border: #10b981;
+    --picker-focus-ring: 0 0 0 3px rgba(16, 185, 129, 0.18);
+}
+
 .wizard-container input,
 .wizard-container select,
 .wizard-container textarea,

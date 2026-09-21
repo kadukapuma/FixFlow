@@ -1,31 +1,24 @@
 import { useMemo } from "react";
+import { ProductPicker } from "../Picker/presets";
 import { computeLineTotal } from "./purchaseFormUtils";
 import "./PurchaseForms.css";
 
-function LineItemsEditor({ items, onChange, products = [] }) {
+function defaultCostFor(product) {
+    if (Number(product.purchase_price) > 0) return Number(product.purchase_price);
+    if (Number(product.average_cost) > 0) return Number(product.average_cost);
+    return 0;
+}
+
+function LineItemsEditor({ items, onChange }) {
     const selectedProductIds = useMemo(() => {
         return new Set(items.map((i) => Number(i.product_id)).filter(Boolean));
     }, [items]);
 
-    function handleItemChange(index, field, value) {
+    function updateItem(index, changes) {
         const next = items.map((item, idx) => {
             if (idx !== index) return item;
 
-            const updated = { ...item, [field]: value };
-
-            if (field === "product_id") {
-                const prod = products.find((p) => p.id === Number(value));
-                if (prod) {
-                    const defaultCost =
-                        prod.purchase_price != null && Number(prod.purchase_price) > 0
-                            ? Number(prod.purchase_price)
-                            : prod.average_cost != null && Number(prod.average_cost) > 0
-                            ? Number(prod.average_cost)
-                            : 0;
-                    updated.unit_cost = defaultCost;
-                }
-            }
-
+            const updated = { ...item, ...changes };
             updated.line_total = computeLineTotal(updated);
             return updated;
         });
@@ -33,21 +26,26 @@ function LineItemsEditor({ items, onChange, products = [] }) {
         onChange(next);
     }
 
-    function addLine() {
-        // Pick first available product that isn't already selected
-        const available = products.find((p) => !selectedProductIds.has(p.id));
-        const defaultProdId = available ? available.id : "";
-        const defaultCost = available
-            ? Number(available.purchase_price || available.average_cost || 0)
-            : 0;
+    function handleItemChange(index, field, value) {
+        updateItem(index, { [field]: value });
+    }
 
+    function handleProductChange(index, product) {
+        updateItem(index, {
+            product_id: product.id,
+            product,
+            unit_cost: defaultCostFor(product),
+        });
+    }
+
+    function addLine() {
         const newItem = {
-            product_id: defaultProdId,
+            product_id: "",
             quantity: 1,
-            unit_cost: defaultCost,
+            unit_cost: 0,
             discount_type: "percent",
             discount_value: 0,
-            line_total: defaultCost,
+            line_total: 0,
         };
 
         onChange([...items, newItem]);
@@ -102,7 +100,7 @@ function LineItemsEditor({ items, onChange, products = [] }) {
                 <table className="pf-lines-table">
                     <thead>
                         <tr>
-                            <th style={{ minWidth: 190 }}>Product</th>
+                            <th style={{ minWidth: 220 }}>Product</th>
                             <th style={{ width: 85 }}>Quantity</th>
                             <th style={{ width: 110 }}>Unit Cost (Rs.)</th>
                             <th style={{ width: 140 }}>Discount</th>
@@ -112,38 +110,18 @@ function LineItemsEditor({ items, onChange, products = [] }) {
                     </thead>
                     <tbody>
                         {items.map((item, index) => {
-                            const currentProdId = Number(item.product_id);
-
                             return (
                                 <tr key={index}>
                                     <td>
-                                        <select
-                                            className="pf-input-compact"
-                                            value={item.product_id}
-                                            onChange={(e) =>
-                                                handleItemChange(index, "product_id", e.target.value)
-                                            }
+                                        <ProductPicker
+                                            variant="compact"
                                             required
-                                        >
-                                            <option value="" disabled>
-                                                Select product...
-                                            </option>
-                                            {products.map((prod) => {
-                                                const disabled =
-                                                    selectedProductIds.has(prod.id) &&
-                                                    prod.id !== currentProdId;
-                                                return (
-                                                    <option
-                                                        key={prod.id}
-                                                        value={prod.id}
-                                                        disabled={disabled}
-                                                    >
-                                                        {prod.name}
-                                                        {disabled ? " (already added)" : ""}
-                                                    </option>
-                                                );
-                                            })}
-                                        </select>
+                                            value={item.product_id}
+                                            selected={item.product}
+                                            excludeIds={selectedProductIds}
+                                            placeholder="Select product..."
+                                            onChange={(_, product) => handleProductChange(index, product)}
+                                        />
                                     </td>
                                     <td>
                                         <input

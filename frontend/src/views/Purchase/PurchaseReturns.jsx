@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
 import Modal from "../../components/Modal/Modal";
+import { StorePicker, SupplierPicker } from "../../components/Picker/presets";
 import Pagination from "../../components/Pagination/Pagination";
 import TableSkeleton from "../../components/TableSkeleton/TableSkeleton";
 import { showToast } from "../../lib/toast";
@@ -151,8 +152,6 @@ function ReturnDetailModal({ returnId, onClose }) {
 function PurchaseReturns({ shellProps }) {
     const [supplierFilter, setSupplierFilter] = useState("");
     const [storeFilter, setStoreFilter] = useState("");
-    const [suppliers, setSuppliers] = useState([]);
-    const [stores, setStores] = useState([]);
 
     const extraParams = {};
     if (supplierFilter) extraParams.supplier_id = supplierFilter;
@@ -172,26 +171,6 @@ function PurchaseReturns({ shellProps }) {
     const [formError, setFormError] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const { pressedId, pressHandlers } = usePressedRow();
-
-    useEffect(() => {
-        let cancelled = false;
-
-        api.get("/suppliers", { params: { all: 1 } })
-            .then((res) => {
-                if (!cancelled) setSuppliers(res.data.filter((s) => s.is_active));
-            })
-            .catch(() => {});
-
-        api.get("/stores", { params: { all: 1 } })
-            .then((res) => {
-                if (!cancelled) setStores(res.data.filter((s) => s.is_active));
-            })
-            .catch(() => {});
-
-        return () => {
-            cancelled = true;
-        };
-    }, []);
 
     function openModal() {
         setFormError("");
@@ -234,31 +213,19 @@ function PurchaseReturns({ shellProps }) {
                     </div>
 
                     <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                        <select
-                            className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                        <SupplierPicker
+                            variant="filter"
                             value={supplierFilter}
-                            onChange={(e) => setSupplierFilter(e.target.value)}
-                        >
-                            <option value="">All Suppliers</option>
-                            {suppliers.map((s) => (
-                                <option key={s.id} value={s.id}>
-                                    {s.name}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={setSupplierFilter}
+                            emptyLabel="All Suppliers"
+                        />
 
-                        <select
-                            className="tenant-btn tenant-btn--ghost tenant-btn--sm"
+                        <StorePicker
+                            variant="filter"
                             value={storeFilter}
-                            onChange={(e) => setStoreFilter(e.target.value)}
-                        >
-                            <option value="">All Stores</option>
-                            {stores.map((st) => (
-                                <option key={st.id} value={st.id}>
-                                    {st.name}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={setStoreFilter}
+                            emptyLabel="All Stores"
+                        />
 
                         <button
                             className="tenant-btn tenant-btn--primary"

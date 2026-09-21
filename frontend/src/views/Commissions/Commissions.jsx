@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import TenantShell from "../../components/TenantShell/TenantShell";
 import Modal from "../../components/Modal/Modal";
+import Picker from "../../components/Picker/Picker";
 import TableSkeleton from "../../components/TableSkeleton/TableSkeleton";
 import { showToast } from "../../lib/toast";
+import { PAYMENT_METHODS } from "../../lib/options";
 import { usePressedRow } from "../../lib/usePressedRow";
 
 import "./CommissionDetail.css";
@@ -430,21 +432,13 @@ function CommissionDetail({ employeeId, onUpdated }) {
 
                                             <label>
                                                 Payment Method
-                                                <select
+                                                <Picker
+                                                    options={PAYMENT_METHODS}
                                                     value={payoutForm.method}
-                                                    onChange={(e) =>
-                                                        setPayoutForm((prev) => ({
-                                                            ...prev,
-                                                            method: e.target.value,
-                                                        }))
+                                                    onChange={(method) =>
+                                                        setPayoutForm((prev) => ({ ...prev, method }))
                                                     }
-                                                >
-                                                    <option value="cash">Cash</option>
-                                                    <option value="bank">Bank Transfer</option>
-                                                    <option value="upi">UPI</option>
-                                                    <option value="card">Debit / Credit Card</option>
-                                                    <option value="other">Other</option>
-                                                </select>
+                                                />
                                             </label>
 
                                             <label>

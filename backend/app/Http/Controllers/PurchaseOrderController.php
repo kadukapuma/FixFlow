@@ -22,6 +22,8 @@ class PurchaseOrderController extends Controller
             ->latest('order_date')
             ->latest('id');
 
+        $this->applyPickerFilters($request, $query, ['ref_no'], ['supplier' => 'name']);
+
         if ($request->filled('supplier_id')) {
             $query->where('supplier_id', $request->query('supplier_id'));
         }

@@ -12,6 +12,7 @@ class BrandController extends Controller
     public function index(Request $request)
     {
         $query = Brand::latest();
+        $this->applyPickerFilters($request, $query);
 
         // Pickers (e.g. a brand dropdown on the item form) need every
         // brand at once, not one page of the table view.

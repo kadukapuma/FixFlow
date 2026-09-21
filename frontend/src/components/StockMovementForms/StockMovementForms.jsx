@@ -1,21 +1,12 @@
 import { useEffect, useState } from "react";
 import api from "../../api";
+import Picker from "../Picker/Picker";
+import { ProductPicker, StorePicker } from "../Picker/presets";
 
-function useProductsAndStores() {
-    const [products, setProducts] = useState([]);
-    const [stores, setStores] = useState([]);
-
-    useEffect(() => {
-        api.get("/products", { params: { all: 1 } }).then((response) => {
-            setProducts(response.data.filter((product) => product.is_active));
-        });
-        api.get("/stores", { params: { all: 1 } }).then((response) => {
-            setStores(response.data.filter((store) => store.is_active));
-        });
-    }, []);
-
-    return { products, stores };
-}
+const ADJUSTMENT_DIRECTIONS = [
+    { id: "increase", name: "Increase stock (+)" },
+    { id: "decrease", name: "Decrease stock (−)" },
+];
 
 function useCurrentStock(productId, storeId) {
     const [result, setResult] = useState({ key: null, stock: null });
@@ -63,46 +54,31 @@ function ErrorMessage({ error }) {
     );
 }
 
-function ProductSelect({ products, value, onChange }) {
+function ProductSelect({ value, onChange }) {
     return (
         <label>
             Product
-            <select value={value} onChange={(e) => onChange(e.target.value)} required>
-                <option value="" disabled>
-                    Select a product
-                </option>
-                {products.map((product) => (
-                    <option key={product.id} value={product.id}>
-                        {product.name}
-                    </option>
-                ))}
-            </select>
+            <ProductPicker value={value} onChange={onChange} required />
         </label>
     );
 }
 
-function StoreSelect({ label = "Store", stores, value, onChange, excludeId }) {
+function StoreSelect({ label = "Store", value, onChange, excludeId }) {
     return (
         <label>
             {label}
-            <select value={value} onChange={(e) => onChange(e.target.value)} required>
-                <option value="" disabled>
-                    Select a store
-                </option>
-                {stores
-                    .filter((store) => String(store.id) !== String(excludeId))
-                    .map((store) => (
-                        <option key={store.id} value={store.id}>
-                            {store.name}
-                        </option>
-                    ))}
-            </select>
+            <StorePicker
+                value={value}
+                onChange={onChange}
+                excludeIds={excludeId ? [excludeId] : undefined}
+                excludedLabel="Same as source store"
+                required
+            />
         </label>
     );
 }
 
 export function OpeningStockForm({ submitting, error, onSubmit, onCancel }) {
-    const { products, stores } = useProductsAndStores();
     const [productId, setProductId] = useState("");
     const [storeId, setStoreId] = useState("");
     const [quantity, setQuantity] = useState("");
@@ -115,8 +91,8 @@ export function OpeningStockForm({ submitting, error, onSubmit, onCancel }) {
 
     return (
         <form className="tenant-form tenant-form--1col" onSubmit={handleSubmit}>
-            <ProductSelect products={products} value={productId} onChange={setProductId} />
-            <StoreSelect stores={stores} value={storeId} onChange={setStoreId} />
+            <ProductSelect value={productId} onChange={setProductId} />
+            <StoreSelect value={storeId} onChange={setStoreId} />
 
             <label>
                 Opening quantity
@@ -142,7 +118,6 @@ export function OpeningStockForm({ submitting, error, onSubmit, onCancel }) {
 }
 
 export function StockAdjustmentForm({ submitting, error, onSubmit, onCancel }) {
-    const { products, stores } = useProductsAndStores();
     const [productId, setProductId] = useState("");
     const [storeId, setStoreId] = useState("");
     const [direction, setDirection] = useState("increase");
@@ -166,15 +141,12 @@ export function StockAdjustmentForm({ submitting, error, onSubmit, onCancel }) {
 
     return (
         <form className="tenant-form tenant-form--1col" onSubmit={handleSubmit}>
-            <ProductSelect products={products} value={productId} onChange={setProductId} />
-            <StoreSelect stores={stores} value={storeId} onChange={setStoreId} />
+            <ProductSelect value={productId} onChange={setProductId} />
+            <StoreSelect value={storeId} onChange={setStoreId} />
 
             <label>
                 Adjustment
-                <select value={direction} onChange={(e) => setDirection(e.target.value)}>
-                    <option value="increase">Increase stock (+)</option>
-                    <option value="decrease">Decrease stock (−)</option>
-                </select>
+                <Picker options={ADJUSTMENT_DIRECTIONS} value={direction} onChange={setDirection} />
             </label>
 
             <label>
@@ -213,7 +185,6 @@ export function StockAdjustmentForm({ submitting, error, onSubmit, onCancel }) {
 }
 
 export function DamageStockForm({ submitting, error, onSubmit, onCancel }) {
-    const { products, stores } = useProductsAndStores();
     const [productId, setProductId] = useState("");
     const [storeId, setStoreId] = useState("");
     const [quantity, setQuantity] = useState("");
@@ -230,8 +201,8 @@ export function DamageStockForm({ submitting, error, onSubmit, onCancel }) {
 
     return (
         <form className="tenant-form tenant-form--1col" onSubmit={handleSubmit}>
-            <ProductSelect products={products} value={productId} onChange={setProductId} />
-            <StoreSelect stores={stores} value={storeId} onChange={setStoreId} />
+            <ProductSelect value={productId} onChange={setProductId} />
+            <StoreSelect value={storeId} onChange={setStoreId} />
 
             <label>
                 Damaged quantity
@@ -274,7 +245,6 @@ export function DamageStockForm({ submitting, error, onSubmit, onCancel }) {
 }
 
 export function StockTransferForm({ submitting, error, onSubmit, onCancel }) {
-    const { products, stores } = useProductsAndStores();
     const [productId, setProductId] = useState("");
     const [fromStoreId, setFromStoreId] = useState("");
     const [toStoreId, setToStoreId] = useState("");
@@ -303,11 +273,10 @@ export function StockTransferForm({ submitting, error, onSubmit, onCancel }) {
 
     return (
         <form className="tenant-form tenant-form--1col" onSubmit={handleSubmit}>
-            <ProductSelect products={products} value={productId} onChange={setProductId} />
-            <StoreSelect label="From store" stores={stores} value={fromStoreId} onChange={handleFromChange} />
+            <ProductSelect value={productId} onChange={setProductId} />
+            <StoreSelect label="From store" value={fromStoreId} onChange={handleFromChange} />
             <StoreSelect
                 label="To store"
-                stores={stores}
                 value={toStoreId}
                 onChange={setToStoreId}
                 excludeId={fromStoreId}

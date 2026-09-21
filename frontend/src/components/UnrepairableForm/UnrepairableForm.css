@@ -107,28 +107,39 @@
 }
 
 .uf-select-disposition {
-    padding: 5px 9px !important;
-    border-radius: 8px !important;
-    border: 1px solid #cbd5e1 !important;
-    font-size: 12px !important;
-    font-weight: 600 !important;
-    background: #ffffff !important;
-    cursor: pointer;
+    --picker-pad: 5px 9px;
+    --picker-radius: 8px;
+    --picker-border: #cbd5e1;
+    --picker-bg: #ffffff;
+    --picker-font: 12px;
+}
+
+.uf-select-disposition .picker__trigger {
+    font-weight: 600;
 }
 
 .uf-select-disposition--restock {
-    border-color: #3b82f6 !important;
-    color: #1d4ed8 !important;
+    --picker-border: #3b82f6;
+}
+
+.uf-select-disposition--restock .picker__trigger {
+    color: #1d4ed8;
 }
 
 .uf-select-disposition--write_off {
-    border-color: #f97316 !important;
-    color: #c2410c !important;
+    --picker-border: #f97316;
+}
+
+.uf-select-disposition--write_off .picker__trigger {
+    color: #c2410c;
 }
 
 .uf-select-disposition--charge {
-    border-color: #10b981 !important;
-    color: #047857 !important;
+    --picker-border: #10b981;
+}
+
+.uf-select-disposition--charge .picker__trigger {
+    color: #047857;
 }
 
 .uf-summary-card {

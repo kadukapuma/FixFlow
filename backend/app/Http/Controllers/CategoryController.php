@@ -12,6 +12,7 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         $query = Category::latest();
+        $this->applyPickerFilters($request, $query);
 
         // Pickers (e.g. a category dropdown on the item form) need every
         // category at once, not one page of the table view.

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import api from "../../api";
+import { useState } from "react";
+import { StorePicker, SupplierPicker } from "../Picker/presets";
 import LineItemsEditor from "./LineItemsEditor";
 import { computeLineTotal } from "./purchaseFormUtils";
 
@@ -8,10 +8,6 @@ function getTodayString() {
 }
 
 function PurchaseOrderForm({ initialValues, submitting, error, onSubmit, onCancel }) {
-    const [suppliers, setSuppliers] = useState([]);
-    const [stores, setStores] = useState([]);
-    const [products, setProducts] = useState([]);
-
     const [supplierId, setSupplierId] = useState(() => initialValues?.supplier_id || "");
     const [storeId, setStoreId] = useState(() => initialValues?.store_id || "");
     const [orderDate, setOrderDate] = useState(() => initialValues?.order_date || getTodayString());
@@ -22,6 +18,7 @@ function PurchaseOrderForm({ initialValues, submitting, error, onSubmit, onCance
         if (initialValues?.items && initialValues.items.length > 0) {
             return initialValues.items.map((i) => ({
                 product_id: i.product_id,
+                product: i.product,
                 quantity: i.quantity,
                 unit_cost: i.unit_cost,
                 discount_type: i.discount_type || "percent",
@@ -40,32 +37,6 @@ function PurchaseOrderForm({ initialValues, submitting, error, onSubmit, onCance
             },
         ];
     });
-
-    useEffect(() => {
-        let cancelled = false;
-
-        api.get("/suppliers", { params: { all: 1 } })
-            .then((res) => {
-                if (!cancelled) setSuppliers(res.data.filter((s) => s.is_active));
-            })
-            .catch(() => {});
-
-        api.get("/stores", { params: { all: 1 } })
-            .then((res) => {
-                if (!cancelled) setStores(res.data.filter((s) => s.is_active));
-            })
-            .catch(() => {});
-
-        api.get("/products", { params: { all: 1 } })
-            .then((res) => {
-                if (!cancelled) setProducts(res.data.filter((p) => p.is_active));
-            })
-            .catch(() => {});
-
-        return () => {
-            cancelled = true;
-        };
-    }, []);
 
     function handleSubmit(e) {
         e.preventDefault();
@@ -97,35 +68,16 @@ function PurchaseOrderForm({ initialValues, submitting, error, onSubmit, onCance
         <form className="tenant-form tenant-form--2col" onSubmit={handleSubmit}>
             <label>
                 Supplier *
-                <select
-                    value={supplierId}
-                    onChange={(e) => setSupplierId(e.target.value)}
-                    required
-                >
-                    <option value="" disabled>
-                        Select supplier...
-                    </option>
-                    {suppliers.map((s) => (
-                        <option key={s.id} value={s.id}>
-                            {s.name}
-                        </option>
-                    ))}
-                </select>
+                <SupplierPicker value={supplierId} onChange={setSupplierId} required />
             </label>
 
             <label>
                 Destination Store
-                <select
+                <StorePicker
                     value={storeId}
-                    onChange={(e) => setStoreId(e.target.value)}
-                >
-                    <option value="">Any / Not assigned</option>
-                    {stores.map((st) => (
-                        <option key={st.id} value={st.id}>
-                            {st.name}
-                        </option>
-                    ))}
-                </select>
+                    onChange={setStoreId}
+                    emptyLabel="Any / Not assigned"
+                />
             </label>
 
             <label>
@@ -159,11 +111,7 @@ function PurchaseOrderForm({ initialValues, submitting, error, onSubmit, onCance
                 />
             </label>
 
-            <LineItemsEditor
-                items={items}
-                onChange={setItems}
-                products={products}
-            />
+            <LineItemsEditor items={items} onChange={setItems} />
 
             {error && (
                 <p className="tenant-alert tenant-form__error pf-field-full" role="alert">

@@ -1,5 +1,12 @@
 import { useState } from "react";
+import Picker from "../Picker/Picker";
 import "./UnrepairableForm.css";
+
+const DISPOSITIONS = [
+    { id: "restock", name: "🔄 Restock (Return to Store shelf)" },
+    { id: "write_off", name: "⚠️ Cannot Restock (Shop Write-off / Loss)" },
+    { id: "charge", name: "💵 Cannot Restock (Charge Customer)" },
+];
 
 function todayIsoDate() {
     return new Date().toISOString().slice(0, 10);
@@ -116,23 +123,14 @@ function UnrepairableForm({ serviceProducts = [], submitting, error, onSubmit, o
                                             <td>{sp.quantity}</td>
                                             <td>Rs. {Number(sp.line_total ?? (sp.quantity * sp.unit_price)).toFixed(2)}</td>
                                             <td>
-                                                <select
+                                                <Picker
                                                     className={`uf-select-disposition uf-select-disposition--${currentDisp}`}
+                                                    options={DISPOSITIONS}
                                                     value={currentDisp}
-                                                    onChange={(e) =>
-                                                        handleDispositionChange(sp.id, e.target.value)
+                                                    onChange={(disposition) =>
+                                                        handleDispositionChange(sp.id, disposition)
                                                     }
-                                                >
-                                                    <option value="restock">
-                                                        🔄 Restock (Return to Store shelf)
-                                                    </option>
-                                                    <option value="write_off">
-                                                        ⚠️ Cannot Restock (Shop Write-off / Loss)
-                                                    </option>
-                                                    <option value="charge">
-                                                        💵 Cannot Restock (Charge Customer)
-                                                    </option>
-                                                </select>
+                                                />
                                             </td>
                                         </tr>
                                     );
