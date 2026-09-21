@@ -1,6 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import "./Modal.css";
 
+const activeModalStack = [];
 
 function Modal({
     title,
@@ -10,18 +12,39 @@ function Modal({
     className = "",
     closeOnBackdrop = false,
 }) {
+    const [depth, setDepth] = useState(0);
+    const onCloseRef = useRef(onClose);
+    onCloseRef.current = onClose;
+
     useEffect(() => {
+        activeModalStack.push(onCloseRef);
+        setDepth(activeModalStack.length - 1);
+
         function handleKeyDown(event) {
-            if (event.key === "Escape") onClose?.();
+            if (event.key === "Escape") {
+                const topRef = activeModalStack[activeModalStack.length - 1];
+                if (topRef === onCloseRef) {
+                    onCloseRef.current?.();
+                }
+            }
         }
 
         document.addEventListener("keydown", handleKeyDown);
-        return () => document.removeEventListener("keydown", handleKeyDown);
-    }, [onClose]);
+        return () => {
+            document.removeEventListener("keydown", handleKeyDown);
+            const idx = activeModalStack.lastIndexOf(onCloseRef);
+            if (idx !== -1) {
+                activeModalStack.splice(idx, 1);
+            }
+        };
+    }, []);
 
-    return (
+    const zIndex = 100 + depth * 10;
+
+    const modalContent = (
         <div
             className="modal-overlay"
+            style={{ zIndex }}
             onClick={closeOnBackdrop ? onClose : undefined}
         >
             <div
@@ -42,6 +65,9 @@ function Modal({
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }
 
 export default Modal;
+

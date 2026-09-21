@@ -77,6 +77,8 @@ class DashboardController extends Controller
                 'in_progress' => (int) ($statusCounts['in_progress'] ?? 0),
                 'completed' => (int) ($statusCounts['completed'] ?? 0),
                 'delivered' => (int) ($statusCounts['delivered'] ?? 0),
+                'unrepairable' => (int) ($statusCounts['unrepairable'] ?? 0),
+                'returned_unrepairable' => (int) ($statusCounts['returned_unrepairable'] ?? 0),
             ],
             'revenue_by_range' => $this->revenueByRange($from, $to),
             'top_employees' => $topEmployees->map(fn ($employee) => [

@@ -13,7 +13,6 @@
 .modal-card {
     width: 100%;
     max-height: calc(100svh - 40px);
-    overflow-y: auto;
     background: #ffffff;
     border-radius: 20px;
     padding: 22px 24px;
@@ -29,7 +28,6 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 18px;
     margin-bottom: 16px;
     flex-shrink: 0;
 }
@@ -44,8 +42,26 @@
     min-height: 0;
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: #e6e4da transparent;
+    scrollbar-color: #cbd5e1 transparent;
 }
+
+.modal-card__body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-card__body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-card__body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.modal-card__body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
 
 .modal-card--service-details,
 .modal-card--commission-details,
@@ -54,10 +70,10 @@
     padding: 16px 20px;
 }
 
-.modal-card--service-details .modal-card__head,
-.modal-card--commission-details .modal-card__head,
-.modal-card--account-details .modal-card__head,
-.modal-card--service-wizard .modal-card__head {
+.modal-card--service-details > .modal-card__head,
+.modal-card--commission-details > .modal-card__head,
+.modal-card--account-details > .modal-card__head,
+.modal-card--service-wizard > .modal-card__head {
     margin-bottom: 10px;
     padding-bottom: 10px;
     border-bottom: 1px solid #eeece3;
@@ -71,10 +87,10 @@
         height: min(670px, calc(100svh - 48px));
     }
 
-    .modal-card--service-details .modal-card__body,
-    .modal-card--commission-details .modal-card__body,
-    .modal-card--account-details .modal-card__body,
-    .modal-card--service-wizard .modal-card__body {
+    .modal-card--service-details > .modal-card__body,
+    .modal-card--commission-details > .modal-card__body,
+    .modal-card--account-details > .modal-card__body,
+    .modal-card--service-wizard > .modal-card__body {
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -102,19 +118,19 @@
         flex-direction: column;
     }
 
-    .modal-card--service-details .modal-card__head,
-    .modal-card--commission-details .modal-card__head,
-    .modal-card--account-details .modal-card__head,
-    .modal-card--service-wizard .modal-card__head {
+    .modal-card--service-details > .modal-card__head,
+    .modal-card--commission-details > .modal-card__head,
+    .modal-card--account-details > .modal-card__head,
+    .modal-card--service-wizard > .modal-card__head {
         margin-bottom: 8px;
         padding-bottom: 8px;
         flex-shrink: 0;
     }
 
-    .modal-card--service-details .modal-card__body,
-    .modal-card--commission-details .modal-card__body,
-    .modal-card--account-details .modal-card__body,
-    .modal-card--service-wizard .modal-card__body {
+    .modal-card--service-details > .modal-card__body,
+    .modal-card--commission-details > .modal-card__body,
+    .modal-card--account-details > .modal-card__body,
+    .modal-card--service-wizard > .modal-card__body {
         flex: 1 1 auto;
         min-height: 0;
         overflow: hidden;

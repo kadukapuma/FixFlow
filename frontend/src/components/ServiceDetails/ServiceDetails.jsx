@@ -4,6 +4,8 @@ import StatusBadge from "../StatusBadge/StatusBadge";
 import { SERVICE_STATUS_META } from "../StatusBadge/serviceStatusMeta";
 import Modal from "../Modal/Modal";
 import DeliverPaymentForm from "../DeliverPaymentForm/DeliverPaymentForm";
+import UnrepairableForm from "../UnrepairableForm/UnrepairableForm";
+import ReturnUnrepairableForm from "../ReturnUnrepairableForm/ReturnUnrepairableForm";
 import PdfViewerModal from "../PdfViewerModal/PdfViewerModal";
 import { showToast } from "../../lib/toast";
 import { confirmAction } from "../../lib/confirm";
@@ -21,6 +23,8 @@ const STATUS_LEVELS = {
     in_progress: 2,
     completed: 3,
     delivered: 4,
+    unrepairable: 3,
+    returned_unrepairable: 4,
 };
 
 function commissionLabel(service) {
@@ -47,9 +51,11 @@ function ServiceDetails({ serviceId, onUpdated }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [saving, setSaving] = useState(false);
-    const [delivering, setDelivering] = useState(false);
-
     const [deliverModalOpen, setDeliverModalOpen] = useState(false);
+    const [unrepairableModalOpen, setUnrepairableModalOpen] = useState(false);
+    const [returnModalOpen, setReturnModalOpen] = useState(false);
+    const [markingUnrepairable, setMarkingUnrepairable] = useState(false);
+    const [returning, setReturning] = useState(false);
     const [invoiceOpen, setInvoiceOpen] = useState(false);
 
     const [paymentForm, setPaymentForm] = useState(EMPTY_PAYMENT_FORM);
@@ -140,10 +146,10 @@ function ServiceDetails({ serviceId, onUpdated }) {
         0
     );
 
-    const paidTotal = payments.reduce(
-        (sum, entry) => sum + Number(entry.amount || 0),
-        0
-    );
+    const paidTotal = payments.reduce((sum, entry) => {
+        const amt = Number(entry.amount || 0);
+        return entry.kind === "refund" ? sum - amt : sum + amt;
+    }, 0);
 
     const balanceDue =
         service?.price != null
@@ -256,6 +262,71 @@ function ServiceDetails({ serviceId, onUpdated }) {
         }
     }
 
+    async function handleMarkUnrepairable({ reason, date, inspectionFee, partsDisposition }) {
+        setMarkingUnrepairable(true);
+        setError("");
+
+        try {
+            const response = await api.post(`/services/${serviceId}/unrepairable`, {
+                unrepairable_reason: reason,
+                unrepairable_date: date,
+                inspection_fee: inspectionFee,
+                parts_disposition: partsDisposition,
+            });
+
+            setService(response.data.service);
+            setPrice(String(response.data.service.price ?? "0.00"));
+            showToast("Service marked as unrepairable.");
+            setUnrepairableModalOpen(false);
+
+            // Reload products
+            const spRes = await api.get("/service-products", { params: { service_id: serviceId } });
+            setServiceProducts(spRes.data || []);
+
+            if (onUpdated) {
+                onUpdated(response.data.service);
+            }
+        } catch (err) {
+            setError(getErrorMessage(err, "Unable to mark service as unrepairable."));
+        } finally {
+            setMarkingUnrepairable(false);
+        }
+    }
+
+    async function handleReturnUnrepairable({ returnedDate, action, amount, method, note }) {
+        setReturning(true);
+        setError("");
+
+        try {
+            const response = await api.post(`/services/${serviceId}/return-unrepairable`, {
+                returned_date: returnedDate,
+                action,
+                refund_amount: action === "refund" ? amount : undefined,
+                refund_method: action === "refund" ? method : undefined,
+                refund_note: action === "refund" ? note : undefined,
+                collect_amount: action === "collect" ? amount : undefined,
+                collect_method: action === "collect" ? method : undefined,
+                collect_note: action === "collect" ? note : undefined,
+            });
+
+            setService(response.data.service);
+            showToast("Item returned to customer.");
+            setReturnModalOpen(false);
+
+            // Reload payments
+            const paymentsRes = await api.get(`/services/${serviceId}/payments`);
+            setPayments(paymentsRes.data || []);
+
+            if (onUpdated) {
+                onUpdated(response.data.service);
+            }
+        } catch (err) {
+            setError(getErrorMessage(err, "Unable to process customer return."));
+        } finally {
+            setReturning(false);
+        }
+    }
+
     if (loading) {
         return (
             <div className="sd-loading-state">
@@ -273,7 +344,10 @@ function ServiceDetails({ serviceId, onUpdated }) {
         );
     }
 
-    const currentLevel = STATUS_LEVELS[service.status] || 1;
+    const isUnrepairableFlow = service.status === "unrepairable" || service.status === "returned_unrepairable";
+    const currentLevel = isUnrepairableFlow
+        ? service.status === "returned_unrepairable" ? 4 : 3
+        : STATUS_LEVELS[service.status] || 1;
 
     const timelineSteps = [
         {
@@ -294,24 +368,44 @@ function ServiceDetails({ serviceId, onUpdated }) {
             isCurrent: currentLevel === 2,
             description: service.employee?.name ? `Assigned to ${service.employee.name}` : "Work in progress",
         },
-        {
-            key: "completed",
-            level: 3,
-            label: "Completed",
-            date: service.completed_date || (currentLevel >= 3 ? "Completed" : "Pending"),
-            isDone: currentLevel >= 3,
-            isCurrent: currentLevel === 3,
-            description: "Repairs finished & ready for billing",
-        },
-        {
-            key: "delivered",
-            level: 4,
-            label: "Delivered",
-            date: service.delivered_date || (currentLevel >= 4 ? "Delivered" : "Pending"),
-            isDone: currentLevel >= 4,
-            isCurrent: currentLevel === 4,
-            description: "Handed over to customer",
-        },
+        isUnrepairableFlow
+            ? {
+                key: "unrepairable",
+                level: 3,
+                label: "Unrepairable",
+                date: service.unrepairable_date || "Declared unrepairable",
+                isDone: currentLevel >= 3,
+                isCurrent: currentLevel === 3,
+                description: service.unrepairable_reason ? `Reason: ${service.unrepairable_reason}` : "Item cannot be repaired",
+            }
+            : {
+                key: "completed",
+                level: 3,
+                label: "Completed",
+                date: service.completed_date || (currentLevel >= 3 ? "Completed" : "Pending"),
+                isDone: currentLevel >= 3,
+                isCurrent: currentLevel === 3,
+                description: "Repairs finished & ready for billing",
+            },
+        isUnrepairableFlow
+            ? {
+                key: "returned",
+                level: 4,
+                label: "Returned",
+                date: service.returned_date || (currentLevel >= 4 ? "Returned" : "Awaiting customer pickup"),
+                isDone: currentLevel >= 4,
+                isCurrent: currentLevel === 4,
+                description: "Handed over to customer unrepaired",
+            }
+            : {
+                key: "delivered",
+                level: 4,
+                label: "Delivered",
+                date: service.delivered_date || (currentLevel >= 4 ? "Delivered" : "Pending"),
+                isDone: currentLevel >= 4,
+                isCurrent: currentLevel === 4,
+                description: "Handed over to customer",
+            },
     ];
 
     return (
@@ -754,7 +848,24 @@ function ServiceDetails({ serviceId, onUpdated }) {
                                             {serviceProducts.map((entry, idx) => (
                                                 <tr key={entry.id || idx}>
                                                     <td className="sd-table__cell-index">{idx + 1}</td>
-                                                    <td className="sd-table__cell-desc">{entry.product?.name || "—"}</td>
+                                                    <td className="sd-table__cell-desc">
+                                                        {entry.product?.name || "—"}
+                                                        {entry.disposition === "restocked" && (
+                                                            <span style={{ marginLeft: 8, fontSize: "0.72rem", padding: "2px 6px", borderRadius: 4, background: "#e0f2fe", color: "#0369a1", fontWeight: 600 }}>
+                                                                Restocked
+                                                            </span>
+                                                        )}
+                                                        {entry.disposition === "written_off" && (
+                                                            <span style={{ marginLeft: 8, fontSize: "0.72rem", padding: "2px 6px", borderRadius: 4, background: "#ffedd5", color: "#c2410c", fontWeight: 600 }}>
+                                                                Shop Write-off
+                                                            </span>
+                                                        )}
+                                                        {entry.disposition === "charged" && (
+                                                            <span style={{ marginLeft: 8, fontSize: "0.72rem", padding: "2px 6px", borderRadius: 4, background: "#dcfce7", color: "#15803d", fontWeight: 600 }}>
+                                                                Billed to Customer
+                                                            </span>
+                                                        )}
+                                                    </td>
                                                     <td style={{ textAlign: "right" }}>{entry.quantity}</td>
                                                     <td className="sd-table__cell-cost">
                                                         Rs. {Number(entry.unit_price || 0).toFixed(2)}
@@ -913,6 +1024,43 @@ function ServiceDetails({ serviceId, onUpdated }) {
                                                 View Invoice (PDF)
                                             </button>
                                         </div>
+                                    ) : service.status === "unrepairable" ? (
+                                        <div style={{ background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: 8, padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                                            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                                                <div style={{ background: "#e11d48", color: "#fff", width: 24, height: 24, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 13, flexShrink: 0 }}>✕</div>
+                                                <div style={{ flex: 1 }}>
+                                                    <strong style={{ color: "#9f1239", fontSize: "0.92rem" }}>Item Declared Unrepairable</strong>
+                                                    <p style={{ margin: "3px 0 0", color: "#881337", fontSize: "0.84rem" }}>
+                                                        {service.unrepairable_reason ? `Reason: ${service.unrepairable_reason}` : "Item cannot be repaired."}
+                                                        {service.unrepairable_date ? ` (Diagnosed: ${service.unrepairable_date})` : ""}
+                                                    </p>
+                                                    <div style={{ marginTop: 6, fontSize: "0.84rem", color: "#9f1239" }}>
+                                                        Fee / Price: <strong>Rs. {Number(service.price || 0).toFixed(2)}</strong>
+                                                        {paidTotal > 0 && <span> · Net Paid: <strong>Rs. {paidTotal.toFixed(2)}</strong></span>}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", borderTop: "1px dashed #fecdd3", paddingTop: 8 }}>
+                                                <button
+                                                    type="button"
+                                                    className="tenant-btn tenant-btn--primary tenant-btn--sm"
+                                                    onClick={() => setReturnModalOpen(true)}
+                                                >
+                                                    Return to Customer
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : service.status === "returned_unrepairable" ? (
+                                        <div className="sd-delivered-banner" style={{ borderLeftColor: "#64748b" }}>
+                                            <div className="sd-delivered-banner__icon" style={{ background: "#64748b" }}>✓</div>
+                                            <div className="sd-delivered-banner__text">
+                                                <strong>Returned to Customer on {service.returned_date || "record"}</strong>
+                                                <p>
+                                                    This unrepaired item has been returned and settled.
+                                                    {service.unrepairable_reason && ` Reason: ${service.unrepairable_reason}`}
+                                                </p>
+                                            </div>
+                                        </div>
                                     ) : (
                                         <div className="sd-notice-box">
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -920,12 +1068,21 @@ function ServiceDetails({ serviceId, onUpdated }) {
                                                 <line x1="12" y1="8" x2="12" y2="12" />
                                                 <line x1="12" y1="16" x2="12.01" y2="16" />
                                             </svg>
-                                            <div>
+                                            <div style={{ flex: 1 }}>
                                                 <strong>Service is {service.status === "in_progress" ? "In Progress" : "Pending"}</strong>
                                                 <p>
                                                     Final price setup and customer handover are enabled once the technician completes work.
                                                     {service.status === "in_progress" && " You can still record any advance payments from the right."}
                                                 </p>
+                                                <div style={{ marginTop: 8 }}>
+                                                    <button
+                                                        type="button"
+                                                        className="tenant-btn tenant-btn--danger tenant-btn--sm"
+                                                        onClick={() => setUnrepairableModalOpen(true)}
+                                                    >
+                                                        Mark Unrepairable
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
@@ -974,13 +1131,26 @@ function ServiceDetails({ serviceId, onUpdated }) {
                                                         <tr key={entry.id}>
                                                             <td>{entry.paid_at || "—"}</td>
                                                             <td>
-                                                                <span className="sd-method-badge">
+                                                                <span
+                                                                    className="sd-method-badge"
+                                                                    style={{
+                                                                        background: entry.kind === "refund" ? "#ffe4e6" : undefined,
+                                                                        color: entry.kind === "refund" ? "#be123c" : undefined,
+                                                                    }}
+                                                                >
+                                                                    {entry.kind === "refund" ? "Refund · " : ""}
                                                                     {entry.method}
                                                                 </span>
                                                             </td>
                                                             <td className="sd-payment-note">{entry.note || "—"}</td>
-                                                            <td className="sd-payment-amount">
-                                                                Rs. {Number(entry.amount || 0).toFixed(2)}
+                                                            <td
+                                                                className="sd-payment-amount"
+                                                                style={{
+                                                                    color: entry.kind === "refund" ? "#e11d48" : undefined,
+                                                                }}
+                                                            >
+                                                                {entry.kind === "refund" ? "- " : ""}Rs.{" "}
+                                                                {Number(entry.amount || 0).toFixed(2)}
                                                             </td>
                                                         </tr>
                                                     ))}
@@ -1112,6 +1282,41 @@ function ServiceDetails({ serviceId, onUpdated }) {
                     pdfUrl={`/services/${serviceId}/invoice`}
                     onClose={() => setInvoiceOpen(false)}
                 />
+            )}
+
+            {/* UNREPAIRABLE MODAL */}
+            {unrepairableModalOpen && (
+                <Modal
+                    title={`Mark Service #${serviceId} as Unrepairable`}
+                    onClose={() => setUnrepairableModalOpen(false)}
+                    maxWidth={680}
+                >
+                    <UnrepairableForm
+                        serviceProducts={serviceProducts}
+                        submitting={markingUnrepairable}
+                        error={error}
+                        onSubmit={handleMarkUnrepairable}
+                        onCancel={() => setUnrepairableModalOpen(false)}
+                    />
+                </Modal>
+            )}
+
+            {/* RETURN UNREPAIRABLE MODAL */}
+            {returnModalOpen && (
+                <Modal
+                    title={`Return Unrepaired Item — Service #${serviceId}`}
+                    onClose={() => setReturnModalOpen(false)}
+                    maxWidth={640}
+                >
+                    <ReturnUnrepairableForm
+                        service={service}
+                        payments={payments}
+                        submitting={returning}
+                        error={error}
+                        onSubmit={handleReturnUnrepairable}
+                        onCancel={() => setReturnModalOpen(false)}
+                    />
+                </Modal>
             )}
         </div>
     );

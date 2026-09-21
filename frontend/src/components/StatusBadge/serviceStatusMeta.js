@@ -3,6 +3,8 @@ export const SERVICE_STATUS_META = {
     in_progress: { label: "In Progress", color: "#3159c9", bg: "#e2e9fc" },
     completed: { label: "Completed", color: "#1c8a53", bg: "#dcf3e6" },
     delivered: { label: "Delivered", color: "#6b21a8", bg: "#f1e4fb" },
+    unrepairable: { label: "Unrepairable", color: "#e11d48", bg: "#ffe4e6" },
+    returned_unrepairable: { label: "Returned (Unrepaired)", color: "#475569", bg: "#f1f5f9" },
 };
 
 export const SERVICE_STATUS_OPTIONS = Object.entries(SERVICE_STATUS_META).map(([value, meta]) => ({

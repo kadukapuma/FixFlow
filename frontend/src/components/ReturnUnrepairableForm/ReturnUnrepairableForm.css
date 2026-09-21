@@ -1,0 +1,129 @@
+.ruf-root {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.ruf-root label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #14151a;
+    width: 100%;
+}
+
+.ruf-root input,
+.ruf-root select {
+    font: inherit;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1px solid #e6e4da;
+    background: #fbfaf6;
+    font-size: 13px;
+    color: #14151a;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.ruf-root input:focus,
+.ruf-root select:focus {
+    outline: none;
+    border-color: #ddfb5e;
+    box-shadow: 0 0 0 3px rgba(221, 251, 94, 0.35);
+}
+
+.ruf-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+@media (max-width: 600px) {
+    .ruf-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ruf-card {
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.ruf-card--refund {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    color: #9f1239;
+}
+
+.ruf-card--collect {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+}
+
+.ruf-card--settled {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+}
+
+.ruf-fin-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 8px;
+    padding: 8px 10px;
+}
+
+.ruf-fin-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ruf-fin-item span {
+    font-size: 11px;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+
+.ruf-fin-item strong {
+    font-size: 14px;
+}
+
+.ruf-net-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 6px;
+    border-top: 1px dashed rgba(0, 0, 0, 0.15);
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.ruf-net-banner strong {
+    font-size: 15px;
+}
+
+.ruf-actions {
+    position: sticky;
+    bottom: 0;
+    background: #ffffff;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 12px 0 2px;
+    border-top: 1px solid #eeece3;
+    z-index: 10;
+}
+

@@ -27,6 +27,9 @@ class Service extends Model
         'started_date',
         'completed_date',
         'delivered_date',
+        'unrepairable_reason',
+        'unrepairable_date',
+        'returned_date',
     ];
 
     protected $casts = [
@@ -38,6 +41,8 @@ class Service extends Model
         'started_date' => 'date:Y-m-d',
         'completed_date' => 'date:Y-m-d',
         'delivered_date' => 'date:Y-m-d',
+        'unrepairable_date' => 'date:Y-m-d',
+        'returned_date' => 'date:Y-m-d',
     ];
 
     public function item()

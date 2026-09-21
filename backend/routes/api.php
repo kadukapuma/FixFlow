@@ -166,6 +166,8 @@ Route::middleware('company')->group(function () {
         Route::post('/services/{id}/start', [ServiceController::class, 'start']);
         Route::post('/services/{id}/complete', [ServiceController::class, 'complete']);
         Route::post('/services/{id}/deliver', [ServiceController::class, 'deliver']);
+        Route::post('/services/{id}/unrepairable', [ServiceController::class, 'markUnrepairable']);
+        Route::post('/services/{id}/return-unrepairable', [ServiceController::class, 'returnToCustomer']);
         Route::put('/services/{id}/price', [ServiceController::class, 'updatePrice']);
         Route::get('/services/{id}/payments', [ServicePaymentController::class, 'index']);
         Route::post('/services/{id}/payments', [ServicePaymentController::class, 'store']);

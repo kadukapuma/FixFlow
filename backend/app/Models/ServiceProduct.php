@@ -17,6 +17,7 @@ class ServiceProduct extends Model
         'quantity',
         'unit_price',
         'unit_cost',
+        'disposition',
     ];
 
     protected $casts = [

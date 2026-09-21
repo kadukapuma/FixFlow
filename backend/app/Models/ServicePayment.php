@@ -14,6 +14,7 @@ class ServicePayment extends Model
         'service_id',
         'journal_entry_id',
         'amount',
+        'kind',
         'method',
         'paid_at',
         'note',

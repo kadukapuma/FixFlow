@@ -14,13 +14,18 @@ class CustomerBalanceController extends Controller
     public function index()
     {
         $customers = Customer::with(['services' => function ($query) {
-            $query->select('id', 'customer_id', 'price')->with('payments:id,service_id,amount');
+            $query->select('id', 'customer_id', 'price')->with('payments:id,service_id,amount,kind');
         }])->get();
 
         $result = $customers
             ->map(function (Customer $customer) {
                 $totalBilled = (float) $customer->services->sum(fn ($service) => (float) ($service->price ?? 0));
-                $totalPaid = (float) $customer->services->sum(fn ($service) => (float) $service->payments->sum('amount'));
+                $totalPaid = (float) $customer->services->sum(function ($service) {
+                    $paid = (float) $service->payments->where('kind', '!=', 'refund')->sum('amount');
+                    $refunded = (float) $service->payments->where('kind', 'refund')->sum('amount');
+
+                    return $paid - $refunded;
+                });
 
                 return [
                     'customer_id' => $customer->id,
@@ -51,7 +56,9 @@ class CustomerBalanceController extends Controller
             ->get()
             ->map(function (Service $service) {
                 $price = $service->price !== null ? (float) $service->price : null;
-                $paid = round((float) $service->payments->sum('amount'), 2);
+                $paid = (float) $service->payments->where('kind', '!=', 'refund')->sum('amount');
+                $refunded = (float) $service->payments->where('kind', 'refund')->sum('amount');
+                $netPaid = round($paid - $refunded, 2);
 
                 return [
                     'id' => $service->id,
@@ -59,8 +66,8 @@ class CustomerBalanceController extends Controller
                     'status' => $service->status,
                     'service_date' => $service->service_date?->format('Y-m-d'),
                     'price' => $price,
-                    'paid' => $paid,
-                    'balance' => $price !== null ? round($price - $paid, 2) : null,
+                    'paid' => $netPaid,
+                    'balance' => $price !== null ? round($price - $netPaid, 2) : null,
                 ];
             });
 

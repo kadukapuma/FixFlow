@@ -5,6 +5,7 @@ import Modal from "../../components/Modal/Modal";
 import WorkForm from "../../components/WorkForm/WorkForm";
 import ServiceProductForm from "../../components/ServiceProductForm/ServiceProductForm";
 import DateActionForm from "../../components/DateActionForm/DateActionForm";
+import UnrepairableForm from "../../components/UnrepairableForm/UnrepairableForm";
 import StatusBadge from "../../components/StatusBadge/StatusBadge";
 import { SERVICE_STATUS_META } from "../../components/StatusBadge/serviceStatusMeta";
 import { showToast } from "../../lib/toast";
@@ -99,6 +100,28 @@ function StartWork({ shellProps }) {
             closeModal();
         } catch (err) {
             setFormError(getErrorMessage(err, "Unable to complete service."));
+        } finally {
+            setSubmitting(false);
+        }
+    }
+
+    async function handleUnrepairable({ reason, date, inspectionFee, partsDisposition }) {
+        setSubmitting(true);
+        setFormError("");
+
+        try {
+            const response = await api.post(`/services/${service.id}/unrepairable`, {
+                unrepairable_reason: reason,
+                unrepairable_date: date,
+                inspection_fee: inspectionFee,
+                parts_disposition: partsDisposition,
+            });
+            setService(response.data.service);
+            showToast("Service marked as unrepairable.");
+            closeModal();
+            loadServiceProducts(service.id);
+        } catch (err) {
+            setFormError(getErrorMessage(err, "Unable to mark service as unrepairable."));
         } finally {
             setSubmitting(false);
         }
@@ -230,13 +253,22 @@ function StartWork({ shellProps }) {
 
                     <div className="tenant-form__actions">
                         {service.status === "pending" && (
-                            <button
-                                className="tenant-btn tenant-btn--primary"
-                                type="button"
-                                onClick={() => setModalMode("start")}
-                            >
-                                Start
-                            </button>
+                            <>
+                                <button
+                                    className="tenant-btn tenant-btn--primary"
+                                    type="button"
+                                    onClick={() => setModalMode("start")}
+                                >
+                                    Start
+                                </button>
+                                <button
+                                    className="tenant-btn tenant-btn--danger"
+                                    type="button"
+                                    onClick={() => setModalMode("unrepairable")}
+                                >
+                                    Mark Unrepairable
+                                </button>
+                            </>
                         )}
 
                         {service.status === "in_progress" && (
@@ -264,6 +296,13 @@ function StartWork({ shellProps }) {
                                     onClick={() => setModalMode("complete")}
                                 >
                                     Complete
+                                </button>
+                                <button
+                                    className="tenant-btn tenant-btn--danger"
+                                    type="button"
+                                    onClick={() => setModalMode("unrepairable")}
+                                >
+                                    Mark Unrepairable
                                 </button>
                             </>
                         )}
@@ -419,6 +458,22 @@ function StartWork({ shellProps }) {
                         submitting={submitting}
                         error={formError}
                         onSubmit={handleComplete}
+                        onCancel={closeModal}
+                    />
+                </Modal>
+            )}
+
+            {modalMode === "unrepairable" && (
+                <Modal
+                    title={`Mark Service #${service.id} as Unrepairable`}
+                    onClose={closeModal}
+                    maxWidth={680}
+                >
+                    <UnrepairableForm
+                        serviceProducts={serviceProducts}
+                        submitting={submitting}
+                        error={formError}
+                        onSubmit={handleUnrepairable}
                         onCancel={closeModal}
                     />
                 </Modal>

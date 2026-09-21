@@ -6,7 +6,7 @@ import Modal from "../../components/Modal/Modal";
 import { SERVICE_STATUS_META } from "../../components/StatusBadge/serviceStatusMeta";
 import "./TenantDashboard.css";
 
-const STATUS_ORDER = ["pending", "in_progress", "completed", "delivered"];
+const STATUS_ORDER = ["pending", "in_progress", "completed", "delivered", "unrepairable", "returned_unrepairable"];
 
 const CALENDAR_ICON = (
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none">

@@ -57,6 +57,32 @@ class LedgerService
     }
 
     /**
+     * Customer refund against a service (e.g. advance refunded on unrepairable return):
+     * Dr 4000 Service Revenue, Cr Cash/Bank.
+     */
+    public function postServiceRefund(ServicePayment $payment): JournalEntry
+    {
+        return DB::connection('company')->transaction(function () use ($payment) {
+            $entry = JournalEntry::create([
+                'entry_date' => $payment->paid_at,
+                'description' => 'Customer refund for Service #'.$payment->service_id,
+                'source_type' => 'service_refund',
+                'source_id' => $payment->id,
+                'service_id' => $payment->service_id,
+            ]);
+
+            $entry->lines()->createMany([
+                ['account_id' => $this->account('4000')->id, 'debit' => $payment->amount, 'credit' => 0],
+                ['account_id' => $this->cashOrBankAccount($payment->method)->id, 'debit' => 0, 'credit' => $payment->amount],
+            ]);
+
+            $payment->update(['journal_entry_id' => $entry->id]);
+
+            return $entry;
+        });
+    }
+
+    /**
      * Technician commission accrued on service completion: Dr Commission
      * Expense, Cr Commission Payable. This is what makes "how much do we
      * currently owe this technician" answerable before any cash moves.
@@ -296,6 +322,39 @@ class LedgerService
 
             $entry->lines()->createMany([
                 ['account_id' => $this->account('1200')->id, 'debit' => $amount, 'credit' => 0],
+                ['account_id' => $this->account('5100')->id, 'debit' => 0, 'credit' => $amount],
+            ]);
+
+            return $entry;
+        });
+    }
+
+    /**
+     * Service part write-off / scrap when an item cannot be repaired and the part
+     * cannot be restocked: Dr 5200 Inventory Adjustments & Write-offs, Cr 5100 COGS.
+     */
+    public function postServicePartWriteOff(\App\Models\ServiceProduct $serviceProduct, int $quantity): ?JournalEntry
+    {
+        if ($serviceProduct->unit_cost === null || (float) $serviceProduct->unit_cost <= 0) {
+            return null;
+        }
+
+        $amount = round($quantity * (float) $serviceProduct->unit_cost, 2);
+        if ($amount <= 0) {
+            return null;
+        }
+
+        return DB::connection('company')->transaction(function () use ($serviceProduct, $quantity, $amount) {
+            $entry = JournalEntry::create([
+                'entry_date' => now()->toDateString(),
+                'description' => "Write-off for {$quantity} unit(s) of product #{$serviceProduct->product_id} from unrepairable Service #{$serviceProduct->service_id}",
+                'source_type' => 'service_part_write_off',
+                'source_id' => $serviceProduct->id,
+                'service_id' => $serviceProduct->service_id,
+            ]);
+
+            $entry->lines()->createMany([
+                ['account_id' => $this->account('5200')->id, 'debit' => $amount, 'credit' => 0],
                 ['account_id' => $this->account('5100')->id, 'debit' => 0, 'credit' => $amount],
             ]);
 

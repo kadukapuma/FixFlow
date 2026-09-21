@@ -10,13 +10,17 @@ use App\Models\Service;
 use App\Models\ServicePayment;
 use App\Services\LedgerService;
 use App\Services\ServicePdfGenerator;
+use App\Services\StockService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class ServiceController extends Controller
 {
-    public function __construct(private LedgerService $ledger)
-    {
+    public function __construct(
+        private LedgerService $ledger,
+        private StockService $stock
+    ) {
     }
 
     public function index(Request $request)
@@ -52,9 +56,9 @@ class ServiceController extends Controller
 
         $response = $query->paginate((int) $request->query('per_page', 15))->toArray();
 
-        // Services.jsx shows an "open" count across every status except
-        // delivered — an aggregate the current page alone can't answer.
-        $response['open_count'] = Service::where('status', '!=', 'delivered')->count();
+        // Services.jsx shows an "open" count across every active status —
+        // delivered and returned_unrepairable are closed.
+        $response['open_count'] = Service::whereNotIn('status', ['delivered', 'returned_unrepairable'])->count();
 
         return response()->json($response);
     }
@@ -108,7 +112,7 @@ class ServiceController extends Controller
             'customer_id' => ['required', 'integer', Rule::exists(Customer::class, 'id')],
             'fault' => ['nullable', 'string'],
             'note' => ['nullable', 'string'],
-            'status' => ['required', 'string', Rule::in(['pending', 'in_progress', 'completed', 'delivered'])],
+            'status' => ['required', 'string', Rule::in(['pending', 'in_progress', 'completed', 'delivered', 'unrepairable', 'returned_unrepairable'])],
             'price' => ['nullable', 'numeric', 'min:0'],
             'advance_amount' => ['nullable', 'numeric', 'min:0'],
             'commission_type' => ['nullable', 'string', Rule::in(['flat', 'percentage'])],
@@ -307,6 +311,135 @@ class ServiceController extends Controller
         return response()->json([
             'message' => 'Service marked as delivered.',
             'service' => $service->load(['customer', 'item', 'employee']),
+        ]);
+    }
+
+    public function markUnrepairable(Request $request, int $id)
+    {
+        $service = Service::with('serviceProducts.product')->findOrFail($id);
+
+        if (!in_array($service->status, ['pending', 'in_progress'], true)) {
+            return response()->json([
+                'message' => 'Only pending or in-progress services can be marked unrepairable.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'unrepairable_reason' => ['nullable', 'string', 'max:1000'],
+            'unrepairable_date' => ['nullable', 'date'],
+            'inspection_fee' => ['nullable', 'numeric', 'min:0'],
+            'parts_disposition' => ['nullable', 'array'],
+            'parts_disposition.*' => ['string', Rule::in(['restock', 'write_off', 'charge'])],
+        ]);
+
+        $unrepairableDate = $validated['unrepairable_date'] ?? now()->toDateString();
+        $partsDisposition = $validated['parts_disposition'] ?? [];
+        $inspectionFee = (float) ($validated['inspection_fee'] ?? 0);
+
+        DB::connection('company')->transaction(function () use ($service, $validated, $unrepairableDate, $partsDisposition, $inspectionFee) {
+            $chargedPartsTotal = 0.0;
+
+            foreach ($service->serviceProducts as $sp) {
+                $disposition = $partsDisposition[$sp->id] ?? 'restock';
+
+                if ($disposition === 'restock') {
+                    if ($sp->store_id !== null) {
+                        $this->stock->recordServiceRestock($sp, $sp->quantity);
+                    }
+                    if ($sp->unit_cost !== null) {
+                        $this->ledger->postCogsReversal($sp, $sp->quantity);
+                    }
+                    $sp->update(['disposition' => 'restocked']);
+                } elseif ($disposition === 'write_off') {
+                    // Physical part was ruined or consumed and cannot be returned to shelf.
+                    // Stock remains deducted. Reclassify cost from COGS to Write-Offs.
+                    if ($sp->unit_cost !== null) {
+                        $this->ledger->postServicePartWriteOff($sp, $sp->quantity);
+                    }
+                    $sp->update(['disposition' => 'written_off']);
+                } elseif ($disposition === 'charge') {
+                    // Part stays with customer / customer agreed to pay.
+                    // COGS stays in 5100. Sale price is added to customer invoice.
+                    $sp->update(['disposition' => 'charged']);
+                    $chargedPartsTotal += (float) $sp->line_total;
+                }
+            }
+
+            $finalPrice = round($inspectionFee + $chargedPartsTotal, 2);
+
+            $service->update([
+                'status' => 'unrepairable',
+                'unrepairable_reason' => $validated['unrepairable_reason'] ?? null,
+                'unrepairable_date' => $unrepairableDate,
+                'price' => $finalPrice,
+                'commission_amount' => null,
+            ]);
+        });
+
+        return response()->json([
+            'message' => 'Service marked as unrepairable.',
+            'service' => $service->fresh(['customer', 'item', 'employee', 'serviceProducts.product', 'serviceProducts.store']),
+        ]);
+    }
+
+    public function returnToCustomer(Request $request, int $id)
+    {
+        $service = Service::with(['payments', 'serviceProducts'])->findOrFail($id);
+
+        if ($service->status !== 'unrepairable') {
+            return response()->json([
+                'message' => 'Only unrepairable services can be returned via this action.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'returned_date' => ['nullable', 'date'],
+            'action' => ['nullable', 'string', Rule::in(['refund', 'collect', 'none'])],
+            'refund_amount' => ['nullable', 'numeric', 'min:0.01'],
+            'refund_method' => ['nullable', 'string', Rule::in(['cash', 'bank', 'upi', 'card', 'other'])],
+            'refund_note' => ['nullable', 'string', 'max:255'],
+            'collect_amount' => ['nullable', 'numeric', 'min:0.01'],
+            'collect_method' => ['nullable', 'string', Rule::in(['cash', 'bank', 'upi', 'card', 'other'])],
+            'collect_note' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $returnedDate = $validated['returned_date'] ?? now()->toDateString();
+        $action = $validated['action'] ?? 'none';
+
+        DB::connection('company')->transaction(function () use ($service, $validated, $returnedDate, $action) {
+            if ($action === 'refund' && !empty($validated['refund_amount'])) {
+                $payment = ServicePayment::create([
+                    'service_id' => $service->id,
+                    'amount' => $validated['refund_amount'],
+                    'kind' => 'refund',
+                    'method' => $validated['refund_method'] ?? 'cash',
+                    'paid_at' => $returnedDate,
+                    'note' => $validated['refund_note'] ?? 'Refund on unrepairable item return',
+                ]);
+
+                $this->ledger->postServiceRefund($payment);
+            } elseif ($action === 'collect' && !empty($validated['collect_amount'])) {
+                $payment = ServicePayment::create([
+                    'service_id' => $service->id,
+                    'amount' => $validated['collect_amount'],
+                    'kind' => 'payment',
+                    'method' => $validated['collect_method'] ?? 'cash',
+                    'paid_at' => $returnedDate,
+                    'note' => $validated['collect_note'] ?? 'Settled on unrepairable item return',
+                ]);
+
+                $this->ledger->postServicePayment($payment);
+            }
+
+            $service->update([
+                'status' => 'returned_unrepairable',
+                'returned_date' => $returnedDate,
+            ]);
+        });
+
+        return response()->json([
+            'message' => 'Item returned to customer.',
+            'service' => $service->fresh(['customer', 'item', 'employee', 'payments']),
         ]);
     }
 
