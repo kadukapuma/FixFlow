@@ -13,6 +13,7 @@ class ServiceProduct extends Model
     protected $fillable = [
         'service_id',
         'product_id',
+        'store_id',
         'quantity',
         'unit_price',
     ];
@@ -34,6 +35,11 @@ class ServiceProduct extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
     }
 
     public function getLineTotalAttribute(): float

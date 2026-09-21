@@ -319,6 +319,7 @@ function StartWork({ shellProps }) {
                             <thead>
                                 <tr>
                                     <th>Product</th>
+                                    <th>Store</th>
                                     <th>Qty</th>
                                     <th>Unit price</th>
                                     <th>Line total</th>
@@ -329,6 +330,7 @@ function StartWork({ shellProps }) {
                                 {serviceProducts.map((row) => (
                                     <tr key={row.id}>
                                         <td data-label="Product">{row.product?.name || "—"}</td>
+                                        <td data-label="Store">{row.store?.name || "—"}</td>
                                         <td data-label="Qty">{row.quantity}</td>
                                         <td data-label="Unit price">Rs. {row.unit_price}</td>
                                         <td data-label="Line total">Rs. {row.line_total}</td>
@@ -361,7 +363,7 @@ function StartWork({ shellProps }) {
 
                                 {serviceProducts.length === 0 && (
                                     <tr>
-                                        <td colSpan={service.status === "in_progress" ? 5 : 4} className="tenant-table-empty">
+                                        <td colSpan={service.status === "in_progress" ? 6 : 5} className="tenant-table-empty">
                                             No products added yet.
                                         </td>
                                     </tr>

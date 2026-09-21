@@ -5,12 +5,19 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Service;
 use App\Models\ServiceProduct;
-use Illuminate\Http\Request;
+use App\Models\Store;
+use App\Services\StockService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class ServiceProductController extends Controller
 {
+    public function __construct(private StockService $stock)
+    {
+    }
+
     public function index(Request $request)
     {
         $validated = $request->validate([
@@ -18,7 +25,7 @@ class ServiceProductController extends Controller
         ]);
 
         $serviceProducts = ServiceProduct::where('service_id', $validated['service_id'])
-            ->with('product:id,name,sale_price,border_price')
+            ->with(['product:id,name,sale_price,border_price', 'store:id,name'])
             ->latest()
             ->get();
 
@@ -30,27 +37,40 @@ class ServiceProductController extends Controller
         $validated = $request->validate([
             'service_id' => ['required', 'integer', Rule::exists(Service::class, 'id')],
             'product_id' => ['required', 'integer', Rule::exists(Product::class, 'id')],
+            'store_id' => ['required', 'integer', Rule::exists(Store::class, 'id')],
             'quantity' => ['nullable', 'integer', 'min:1'],
             'unit_price' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $product = Product::findOrFail($validated['product_id']);
         $unitPrice = $validated['unit_price'] ?? (float) ($product->sale_price ?? 0);
+        $quantity = $validated['quantity'] ?? 1;
 
         if ($response = $this->floorPriceViolation($product, $unitPrice)) {
             return $response;
         }
 
-        $serviceProduct = ServiceProduct::create([
-            'service_id' => $validated['service_id'],
-            'product_id' => $validated['product_id'],
-            'quantity' => $validated['quantity'] ?? 1,
-            'unit_price' => $unitPrice,
-        ]);
+        if ($response = $this->insufficientStockViolation($validated['product_id'], $validated['store_id'], $quantity)) {
+            return $response;
+        }
+
+        $serviceProduct = DB::connection('company')->transaction(function () use ($validated, $unitPrice, $quantity) {
+            $serviceProduct = ServiceProduct::create([
+                'service_id' => $validated['service_id'],
+                'product_id' => $validated['product_id'],
+                'store_id' => $validated['store_id'],
+                'quantity' => $quantity,
+                'unit_price' => $unitPrice,
+            ]);
+
+            $this->stock->recordServiceConsumption($serviceProduct, $quantity);
+
+            return $serviceProduct;
+        });
 
         return response()->json([
             'message' => 'Product added to service.',
-            'service_product' => $serviceProduct->load('product:id,name,sale_price,border_price'),
+            'service_product' => $serviceProduct->load(['product:id,name,sale_price,border_price', 'store:id,name']),
         ], 201);
     }
 
@@ -65,26 +85,51 @@ class ServiceProductController extends Controller
 
         $product = $serviceProduct->product;
         $unitPrice = $validated['unit_price'] ?? (float) $serviceProduct->unit_price;
+        $newQuantity = $validated['quantity'] ?? $serviceProduct->quantity;
+        $delta = $newQuantity - $serviceProduct->quantity;
 
         if ($response = $this->floorPriceViolation($product, $unitPrice)) {
             return $response;
         }
 
-        $serviceProduct->update([
-            'quantity' => $validated['quantity'] ?? $serviceProduct->quantity,
-            'unit_price' => $unitPrice,
-        ]);
+        if ($delta > 0 && $serviceProduct->store_id !== null) {
+            if ($response = $this->insufficientStockViolation($serviceProduct->product_id, $serviceProduct->store_id, $delta)) {
+                return $response;
+            }
+        }
+
+        DB::connection('company')->transaction(function () use ($serviceProduct, $newQuantity, $unitPrice, $delta) {
+            $serviceProduct->update([
+                'quantity' => $newQuantity,
+                'unit_price' => $unitPrice,
+            ]);
+
+            if ($serviceProduct->store_id !== null && $delta !== 0) {
+                if ($delta > 0) {
+                    $this->stock->recordServiceConsumption($serviceProduct, $delta);
+                } else {
+                    $this->stock->recordServiceRestock($serviceProduct, abs($delta));
+                }
+            }
+        });
 
         return response()->json([
             'message' => 'Service product updated.',
-            'service_product' => $serviceProduct->load('product:id,name,sale_price,border_price'),
+            'service_product' => $serviceProduct->load(['product:id,name,sale_price,border_price', 'store:id,name']),
         ]);
     }
 
     public function destroy(int $id)
     {
         $serviceProduct = ServiceProduct::findOrFail($id);
-        $serviceProduct->delete();
+
+        DB::connection('company')->transaction(function () use ($serviceProduct) {
+            if ($serviceProduct->store_id !== null) {
+                $this->stock->recordServiceRestock($serviceProduct, $serviceProduct->quantity);
+            }
+
+            $serviceProduct->delete();
+        });
 
         return response()->json([
             'message' => 'Product removed from service.',
@@ -100,6 +145,22 @@ class ServiceProductController extends Controller
                 'message' => "Unit price can't be less than the border price (Rs. {$floor}) for this product.",
                 'errors' => [
                     'unit_price' => ["Unit price can't be less than the border price (Rs. {$floor})."],
+                ],
+            ], 422);
+        }
+
+        return null;
+    }
+
+    private function insufficientStockViolation(int $productId, int $storeId, int $requiredQuantity): ?JsonResponse
+    {
+        $available = $this->stock->currentStock($productId, $storeId);
+
+        if ($requiredQuantity > $available) {
+            return response()->json([
+                'message' => "Not enough stock: only {$available} unit(s) available at this store.",
+                'errors' => [
+                    'quantity' => ["Not enough stock: only {$available} unit(s) available at this store."],
                 ],
             ], 422);
         }

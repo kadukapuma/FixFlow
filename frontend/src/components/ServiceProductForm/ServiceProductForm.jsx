@@ -4,21 +4,51 @@ import api from "../../api";
 function ServiceProductForm({ initialValues, submitting, error, onSubmit, onCancel, submitLabel = "Add product" }) {
     const isEditing = Boolean(initialValues?.id);
     const [products, setProducts] = useState([]);
+    const [stores, setStores] = useState([]);
     const [productId, setProductId] = useState(initialValues?.product_id ? String(initialValues.product_id) : "");
+    const [storeId, setStoreId] = useState(initialValues?.store_id ? String(initialValues.store_id) : "");
     const [quantity, setQuantity] = useState(String(initialValues?.quantity ?? 1));
     const [unitPrice, setUnitPrice] = useState(
         initialValues?.unit_price != null ? String(initialValues.unit_price) : ""
     );
+    const [stockResult, setStockResult] = useState({ key: null, stock: null });
 
     useEffect(() => {
         api.get("/products", { params: { all: 1 } }).then((response) => {
             setProducts(response.data.filter((product) => product.is_active));
         });
+        api.get("/stores", { params: { all: 1 } }).then((response) => {
+            setStores(response.data.filter((store) => store.is_active));
+        });
     }, []);
+
+    const stockKey = productId && storeId ? `${productId}-${storeId}` : null;
+
+    useEffect(() => {
+        if (!stockKey) return;
+
+        let cancelled = false;
+
+        api.get("/stock/levels", { params: { product_id: productId, store_id: storeId } }).then((response) => {
+            if (cancelled) return;
+            const row = response.data[0];
+            setStockResult({ key: stockKey, stock: row ? row.current_stock : 0 });
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [stockKey, productId, storeId]);
+
+    const availableStock = stockKey && stockResult.key === stockKey ? stockResult.stock : null;
 
     const selectedProduct =
         (isEditing ? initialValues?.product : null) ||
         products.find((product) => String(product.id) === String(productId));
+
+    const selectedStore =
+        (isEditing ? initialValues?.store : null) ||
+        stores.find((store) => String(store.id) === String(storeId));
 
     function handleProductChange(id) {
         setProductId(id);
@@ -30,11 +60,18 @@ function ServiceProductForm({ initialValues, submitting, error, onSubmit, onCanc
     const belowFloor = floor !== null && unitPrice !== "" && Number(unitPrice) < floor;
     const lineTotal = (Number(quantity || 0) * Number(unitPrice || 0)).toFixed(2);
 
+    // The backend only re-validates the *delta* on an update, so when editing,
+    // this line's own already-consumed quantity counts as available too.
+    const effectiveAvailable =
+        availableStock !== null ? availableStock + (isEditing ? Number(initialValues?.quantity ?? 0) : 0) : null;
+    const insufficientStock = effectiveAvailable !== null && Number(quantity || 0) > effectiveAvailable;
+
     function handleSubmit(event) {
         event.preventDefault();
-        if (belowFloor) return;
+        if (belowFloor || insufficientStock) return;
         onSubmit({
             product_id: productId,
+            store_id: storeId,
             quantity: quantity || 1,
             unit_price: unitPrice,
         });
@@ -54,6 +91,24 @@ function ServiceProductForm({ initialValues, submitting, error, onSubmit, onCanc
                         {products.map((product) => (
                             <option key={product.id} value={product.id}>
                                 {product.name}
+                            </option>
+                        ))}
+                    </select>
+                )}
+            </label>
+
+            <label>
+                Store
+                {isEditing ? (
+                    <input value={selectedStore?.name || ""} disabled />
+                ) : (
+                    <select value={storeId} onChange={(e) => setStoreId(e.target.value)} required>
+                        <option value="" disabled>
+                            Select a store
+                        </option>
+                        {stores.map((store) => (
+                            <option key={store.id} value={store.id}>
+                                {store.name}
                             </option>
                         ))}
                     </select>
@@ -84,6 +139,18 @@ function ServiceProductForm({ initialValues, submitting, error, onSubmit, onCanc
                 />
             </label>
 
+            {effectiveAvailable !== null && (
+                <p className="tenant-form__hint">
+                    {effectiveAvailable} in stock at {selectedStore?.name}
+                </p>
+            )}
+
+            {insufficientStock && (
+                <p className="tenant-alert tenant-form__error" role="alert">
+                    Only {effectiveAvailable} unit(s) available at this store.
+                </p>
+            )}
+
             {floor !== null && <p className="tenant-form__hint">Minimum allowed: Rs. {floor.toFixed(2)}</p>}
 
             {belowFloor && (
@@ -104,7 +171,11 @@ function ServiceProductForm({ initialValues, submitting, error, onSubmit, onCanc
                 <button type="button" className="tenant-btn tenant-btn--ghost" onClick={onCancel}>
                     Cancel
                 </button>
-                <button type="submit" className="tenant-btn tenant-btn--primary" disabled={submitting || belowFloor}>
+                <button
+                    type="submit"
+                    className="tenant-btn tenant-btn--primary"
+                    disabled={submitting || belowFloor || insufficientStock}
+                >
                     {submitting ? "Saving..." : submitLabel}
                 </button>
             </div>

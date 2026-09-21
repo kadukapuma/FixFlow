@@ -6,6 +6,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ServiceProduct;
+use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -72,6 +73,12 @@ class ProductController extends Controller
         if (ServiceProduct::where('product_id', $product->id)->exists()) {
             return response()->json([
                 'message' => 'Cannot delete this product: it is linked to existing service line items.',
+            ], 409);
+        }
+
+        if (StockMovement::where('product_id', $product->id)->exists()) {
+            return response()->json([
+                'message' => 'Cannot delete this product: it has stock movement history.',
             ], 409);
         }
 

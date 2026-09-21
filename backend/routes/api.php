@@ -21,6 +21,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServicePaymentController;
 use App\Http\Controllers\ServiceProductController;
+use App\Http\Controllers\StockController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\SupplierController;
@@ -142,6 +143,14 @@ Route::middleware('company')->group(function () {
         Route::delete('/products/{id}', [ProductController::class, 'destroy']);
         Route::post('/products/{id}/activate', [ProductController::class, 'activate']);
         Route::post('/products/{id}/deactivate', [ProductController::class, 'deactivate']);
+
+        Route::get('/stock/levels', [StockController::class, 'levels']);
+        Route::get('/stock/movements', [StockController::class, 'movements']);
+        Route::get('/stock/records', [StockController::class, 'records']);
+        Route::post('/stock/opening', [StockController::class, 'storeOpening']);
+        Route::post('/stock/adjustments', [StockController::class, 'adjust']);
+        Route::post('/stock/damage', [StockController::class, 'damage']);
+        Route::post('/stock/transfers', [StockController::class, 'transfer']);
 
         Route::get('/services', [ServiceController::class, 'index']);
         Route::post('/services', [ServiceController::class, 'store']);

@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Item;
+use App\Models\ServiceProduct;
+use App\Models\StockMovement;
 use App\Models\Store;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
 
 class StoreController extends Controller
 {
@@ -62,10 +62,15 @@ class StoreController extends Controller
     {
         $store = Store::findOrFail($id);
 
-        if (Schema::connection('company')->hasColumn('items', 'store_id')
-            && Item::where('store_id', $store->id)->exists()) {
+        if (StockMovement::where('store_id', $store->id)->exists()) {
             return response()->json([
-                'message' => 'Cannot delete this store: it is linked to existing items.',
+                'message' => 'Cannot delete this store: it has stock movement history.',
+            ], 409);
+        }
+
+        if (ServiceProduct::where('store_id', $store->id)->exists()) {
+            return response()->json([
+                'message' => 'Cannot delete this store: it is linked to existing service line items.',
             ], 409);
         }
 

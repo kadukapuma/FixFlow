@@ -18,6 +18,8 @@ import Completed from "../views/Completed/Completed";
 import Delivered from "../views/Delivered/Delivered";
 import Commissions from "../views/Commissions/Commissions";
 import Accounts from "../views/Accounts/Accounts";
+import Stock from "../views/Stock/Stock";
+import StockRecords from "../views/Stock/StockRecords";
 import CompanySettings from "../views/CompanySettings/CompanySettings";
 import Subscription from "../views/Subscription/Subscription";
 
@@ -221,6 +223,30 @@ const DELIVERED_ICON = (
     </svg>
 );
 
+const STOCK_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M3 9l9-5 9 5v10l-9 5-9-5V9ZM3 9l9 5 9-5M12 14v10M7.5 6.5l9 5"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const FINANCE_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M3 7.5A2.5 2.5 0 0 1 5.5 5H19a2 2 0 0 1 2 2v2M3 7.5V17a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3M3 7.5A2.5 2.5 0 0 0 5.5 10H21v4h-3.5a2 2 0 1 1 0-4"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
 const ACCOUNTS_ICON = (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
         <path
@@ -244,6 +270,14 @@ const COMMISSIONS_ICON = (
         />
     </svg>
 );
+
+const STOCK_PAGES = [
+    { key: "stock-levels", title: "Stock Levels" },
+    { key: "stock-opening", title: "Opening Stock", type: "opening" },
+    { key: "stock-adjustment", title: "Stock Adjustment", type: "adjustment" },
+    { key: "stock-damage", title: "Damaged Stock", type: "damage" },
+    { key: "stock-transfer", title: "Stock Transfer", type: "transfer" },
+];
 
 function TenantApp() {
     const [token, setToken] = useState(() => localStorage.getItem("tenant_token"));
@@ -364,6 +398,19 @@ function TenantApp() {
                 ],
             },
             {
+                key: "stock",
+                title: "Stock",
+                active: STOCK_PAGES.some((item) => item.key === page),
+                icon: STOCK_ICON,
+                children: STOCK_PAGES.map((item) => ({
+                    key: item.key,
+                    title: item.title,
+                    active: page === item.key,
+                    onClick: () => setPage(item.key),
+                    icon: STOCK_ICON,
+                })),
+            },
+            {
                 key: "services",
                 title: "Services",
                 active: page === "services",
@@ -392,18 +439,33 @@ function TenantApp() {
                 icon: DELIVERED_ICON,
             },
             {
-                key: "commissions",
-                title: "Commissions",
-                active: page === "commissions",
-                onClick: () => setPage("commissions"),
-                icon: COMMISSIONS_ICON,
-            },
-            {
-                key: "accounts",
-                title: "Accounts",
-                active: page === "accounts",
-                onClick: () => setPage("accounts"),
-                icon: ACCOUNTS_ICON,
+                key: "finance",
+                title: "Finance",
+                active: ["commissions", "accounts", "subscription"].includes(page),
+                icon: FINANCE_ICON,
+                children: [
+                    {
+                        key: "commissions",
+                        title: "Commissions",
+                        active: page === "commissions",
+                        onClick: () => setPage("commissions"),
+                        icon: COMMISSIONS_ICON,
+                    },
+                    {
+                        key: "accounts",
+                        title: "Accounts",
+                        active: page === "accounts",
+                        onClick: () => setPage("accounts"),
+                        icon: ACCOUNTS_ICON,
+                    },
+                    {
+                        key: "subscription",
+                        title: "Subscription",
+                        active: page === "subscription",
+                        onClick: () => setPage("subscription"),
+                        icon: SUBSCRIPTION_ICON,
+                    },
+                ],
             },
             {
                 key: "settings",
@@ -411,13 +473,6 @@ function TenantApp() {
                 active: page === "settings",
                 onClick: () => setPage("settings"),
                 icon: SETTINGS_ICON,
-            },
-            {
-                key: "subscription",
-                title: "Subscription",
-                active: page === "subscription",
-                onClick: () => setPage("subscription"),
-                icon: SUBSCRIPTION_ICON,
             },
         ],
         footerLabel: company?.company,
@@ -475,6 +530,15 @@ function TenantApp() {
 
     if (page === "commissions") {
         return <Commissions shellProps={shellProps} />;
+    }
+
+    if (page === "stock-levels") {
+        return <Stock shellProps={shellProps} />;
+    }
+
+    const stockRecordType = STOCK_PAGES.find((item) => item.key === page)?.type;
+    if (stockRecordType) {
+        return <StockRecords key={stockRecordType} shellProps={shellProps} type={stockRecordType} />;
     }
 
     if (page === "accounts") {
