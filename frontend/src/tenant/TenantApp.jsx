@@ -275,12 +275,72 @@ const COMMISSIONS_ICON = (
     </svg>
 );
 
+const STOCK_LEVELS_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M5 20v-8M12 20V4M19 20v-5M3 20h18"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const STOCK_OPENING_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M3 4h18v4H3V4ZM5 8v12h14V8M10 12h4"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const STOCK_ADJUSTMENT_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M4 7h9M17 7h3M4 17h3M11 17h9M13 5v4h4V5h-4ZM7 15v4h4v-4H7Z"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const STOCK_DAMAGE_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M12 4 2.5 20h19L12 4ZM12 10v4M12 17h.01"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const STOCK_TRANSFER_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
 const STOCK_PAGES = [
-    { key: "stock-levels", title: "Stock Levels" },
-    { key: "stock-opening", title: "Opening Stock", type: "opening" },
-    { key: "stock-adjustment", title: "Stock Adjustment", type: "adjustment" },
-    { key: "stock-damage", title: "Damaged Stock", type: "damage" },
-    { key: "stock-transfer", title: "Stock Transfer", type: "transfer" },
+    { key: "stock-levels", title: "Stock Levels", icon: STOCK_LEVELS_ICON },
+    { key: "stock-opening", title: "Opening Stock", type: "opening", icon: STOCK_OPENING_ICON },
+    { key: "stock-adjustment", title: "Stock Adjustment", type: "adjustment", icon: STOCK_ADJUSTMENT_ICON },
+    { key: "stock-damage", title: "Damaged Stock", type: "damage", icon: STOCK_DAMAGE_ICON },
+    { key: "stock-transfer", title: "Stock Transfer", type: "transfer", icon: STOCK_TRANSFER_ICON },
 ];
 
 const PURCHASE_ICON = (
@@ -295,11 +355,59 @@ const PURCHASE_ICON = (
     </svg>
 );
 
+const PURCHASE_ORDERS_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M9 4h6v3H9V4ZM15 5.5h2.5A1.5 1.5 0 0 1 19 7v13a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20V7a1.5 1.5 0 0 1 1.5-1.5H9M8.5 12h7M8.5 16h4"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const PURCHASES_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M3 4h2.5l2 11h10.5l2-8H6.5M10 20h.01M17 20h.01"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const SUPPLIER_PAYMENTS_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M3 6h18v12H3V6ZM3 10h18M7 15h3"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const PURCHASE_RETURNS_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
 const PURCHASE_PAGES = [
-    { key: "purchase-orders", title: "Purchase Orders" },
-    { key: "purchases", title: "Purchases" },
-    { key: "supplier-payments", title: "Supplier Payments" },
-    { key: "purchase-returns", title: "Purchase Returns" },
+    { key: "purchase-orders", title: "Purchase Orders", icon: PURCHASE_ORDERS_ICON },
+    { key: "purchases", title: "Purchases", icon: PURCHASES_ICON },
+    { key: "supplier-payments", title: "Supplier Payments", icon: SUPPLIER_PAYMENTS_ICON },
+    { key: "purchase-returns", title: "Purchase Returns", icon: PURCHASE_RETURNS_ICON },
 ];
 
 function TenantApp() {
@@ -431,7 +539,7 @@ function TenantApp() {
                     title: item.title,
                     active: page === item.key,
                     onClick: () => setPage(item.key),
-                    icon: STOCK_ICON,
+                    icon: item.icon,
                 })),
             },
             {
@@ -444,7 +552,7 @@ function TenantApp() {
                     title: item.title,
                     active: page === item.key,
                     onClick: () => setPage(item.key),
-                    icon: PURCHASE_ICON,
+                    icon: item.icon,
                 })),
             },
             {
