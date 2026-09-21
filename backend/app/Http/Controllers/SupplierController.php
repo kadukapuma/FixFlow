@@ -64,10 +64,15 @@ class SupplierController extends Controller
     {
         $supplier = Supplier::findOrFail($id);
 
-        if (Schema::connection('company')->hasColumn('items', 'supplier_id')
-            && Item::where('supplier_id', $supplier->id)->exists()) {
+        if (\App\Models\Purchase::where('supplier_id', $supplier->id)->exists()) {
             return response()->json([
-                'message' => 'Cannot delete this supplier: it is linked to existing items.',
+                'message' => 'Cannot delete this supplier: it is linked to existing purchases.',
+            ], 409);
+        }
+
+        if (\App\Models\PurchaseOrder::where('supplier_id', $supplier->id)->exists()) {
+            return response()->json([
+                'message' => 'Cannot delete this supplier: it is linked to existing purchase orders.',
             ], 409);
         }
 

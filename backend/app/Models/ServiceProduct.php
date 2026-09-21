@@ -16,11 +16,17 @@ class ServiceProduct extends Model
         'store_id',
         'quantity',
         'unit_price',
+        'unit_cost',
     ];
 
     protected $casts = [
         'unit_price' => 'decimal:2',
+        'unit_cost' => 'decimal:2',
         'quantity' => 'integer',
+    ];
+
+    protected $hidden = [
+        'unit_cost',
     ];
 
     protected $appends = [

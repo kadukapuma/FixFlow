@@ -15,6 +15,7 @@ class Product extends Model
         'category_id',
         'brand_id',
         'purchase_price',
+        'average_cost',
         'sale_price',
         'border_price',
         'is_active',
@@ -22,6 +23,7 @@ class Product extends Model
 
     protected $casts = [
         'purchase_price' => 'decimal:2',
+        'average_cost' => 'decimal:4',
         'sale_price' => 'decimal:2',
         'border_price' => 'decimal:2',
         'is_active' => 'boolean',

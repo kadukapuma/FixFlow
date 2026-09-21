@@ -144,4 +144,90 @@ class StockService
             'note' => 'Returned from service #'.$serviceProduct->service_id,
         ]);
     }
+
+    public function totalStock(int $productId): int
+    {
+        return (int) StockMovement::where('product_id', $productId)->sum('quantity');
+    }
+
+    public function recordPurchaseReceipt(\App\Models\Purchase $purchase, \App\Models\PurchaseItem $item): StockMovement
+    {
+        return StockMovement::create([
+            'product_id' => $item->product_id,
+            'store_id' => $purchase->store_id,
+            'type' => 'purchase',
+            'quantity' => abs((int) $item->quantity),
+            'purchase_item_id' => $item->id,
+            'note' => 'Purchase #'.($purchase->ref_no ?: $purchase->id),
+        ]);
+    }
+
+    public function recordPurchaseCancel(\App\Models\Purchase $purchase, \App\Models\PurchaseItem $item): StockMovement
+    {
+        return StockMovement::create([
+            'product_id' => $item->product_id,
+            'store_id' => $purchase->store_id,
+            'type' => 'purchase_cancel',
+            'quantity' => -abs((int) $item->quantity),
+            'purchase_item_id' => $item->id,
+            'note' => 'Cancelled purchase #'.($purchase->ref_no ?: $purchase->id),
+        ]);
+    }
+
+    public function recordPurchaseReturn(\App\Models\PurchaseReturn $return, \App\Models\PurchaseReturnItem $returnItem): StockMovement
+    {
+        return StockMovement::create([
+            'product_id' => $returnItem->purchaseItem->product_id,
+            'store_id' => $return->store_id,
+            'type' => 'purchase_return',
+            'quantity' => -abs((int) $returnItem->quantity),
+            'purchase_return_item_id' => $returnItem->id,
+            'note' => 'Return #'.($return->ref_no ?: $return->id).' for purchase #'.($return->purchase?->ref_no ?: $return->purchase_id),
+        ]);
+    }
+
+    /**
+     * Update product average_cost on receiving stock.
+     * Formula: (onhand * base + V) / (onhand + q), where base is current average or purchase_price.
+     * When nothing on hand (or base null): V / q.
+     */
+    public function recalculateAverageCostOnReceipt(int $productId, int $quantity, float $netLineTotal, int $onHandBefore): float
+    {
+        $product = \App\Models\Product::where('id', $productId)->lockForUpdate()->firstOrFail();
+
+        $base = $product->average_cost !== null && (float) $product->average_cost > 0
+            ? (float) $product->average_cost
+            : ($product->purchase_price !== null && (float) $product->purchase_price > 0 ? (float) $product->purchase_price : null);
+
+        if ($onHandBefore <= 0 || $base === null) {
+            $newAvg = round($netLineTotal / $quantity, 4);
+        } else {
+            $newAvg = round(($onHandBefore * $base + $netLineTotal) / ($onHandBefore + $quantity), 4);
+        }
+
+        $product->update(['average_cost' => $newAvg]);
+
+        return $newAvg;
+    }
+
+    /**
+     * Update product average_cost on removing stock via cancel or return.
+     * Formula: (onhand * avg - V) / (onhand - q), floored at 0, left unchanged if remaining <= 0.
+     */
+    public function recalculateAverageCostOnRemoval(int $productId, int $quantity, float $netLineTotal, int $onHandBefore): ?float
+    {
+        $product = \App\Models\Product::where('id', $productId)->lockForUpdate()->firstOrFail();
+
+        $remaining = $onHandBefore - $quantity;
+        if ($remaining <= 0) {
+            return $product->average_cost !== null ? (float) $product->average_cost : null;
+        }
+
+        $avg = $product->average_cost !== null ? (float) $product->average_cost : (float) ($product->purchase_price ?? 0);
+        $newAvg = round(max(0.0, ($onHandBefore * $avg - $netLineTotal) / $remaining), 4);
+
+        $product->update(['average_cost' => $newAvg]);
+
+        return $newAvg;
+    }
 }

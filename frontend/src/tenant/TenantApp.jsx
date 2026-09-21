@@ -20,6 +20,10 @@ import Commissions from "../views/Commissions/Commissions";
 import Accounts from "../views/Accounts/Accounts";
 import Stock from "../views/Stock/Stock";
 import StockRecords from "../views/Stock/StockRecords";
+import PurchaseOrders from "../views/Purchase/PurchaseOrders";
+import Purchases from "../views/Purchase/Purchases";
+import SupplierPayments from "../views/Purchase/SupplierPayments";
+import PurchaseReturns from "../views/Purchase/PurchaseReturns";
 import CompanySettings from "../views/CompanySettings/CompanySettings";
 import Subscription from "../views/Subscription/Subscription";
 
@@ -279,10 +283,30 @@ const STOCK_PAGES = [
     { key: "stock-transfer", title: "Stock Transfer", type: "transfer" },
 ];
 
+const PURCHASE_ICON = (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <path
+            d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4H6ZM3 6h18M16 10a4 4 0 0 1-8 0"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const PURCHASE_PAGES = [
+    { key: "purchase-orders", title: "Purchase Orders" },
+    { key: "purchases", title: "Purchases" },
+    { key: "supplier-payments", title: "Supplier Payments" },
+    { key: "purchase-returns", title: "Purchase Returns" },
+];
+
 function TenantApp() {
     const [token, setToken] = useState(() => localStorage.getItem("tenant_token"));
     const [page, setPage] = usePageParam("dashboard");
     const [company, setCompany] = useState(null);
+    const [prefilledPo, setPrefilledPo] = useState(null);
 
     useLayoutEffect(() => {
         setAuthToken(token);
@@ -408,6 +432,19 @@ function TenantApp() {
                     active: page === item.key,
                     onClick: () => setPage(item.key),
                     icon: STOCK_ICON,
+                })),
+            },
+            {
+                key: "purchases-group",
+                title: "Purchases",
+                active: PURCHASE_PAGES.some((item) => item.key === page),
+                icon: PURCHASE_ICON,
+                children: PURCHASE_PAGES.map((item) => ({
+                    key: item.key,
+                    title: item.title,
+                    active: page === item.key,
+                    onClick: () => setPage(item.key),
+                    icon: PURCHASE_ICON,
                 })),
             },
             {
@@ -539,6 +576,36 @@ function TenantApp() {
     const stockRecordType = STOCK_PAGES.find((item) => item.key === page)?.type;
     if (stockRecordType) {
         return <StockRecords key={stockRecordType} shellProps={shellProps} type={stockRecordType} />;
+    }
+
+    if (page === "purchase-orders") {
+        return (
+            <PurchaseOrders
+                shellProps={shellProps}
+                onReceiveToPurchase={(po) => {
+                    setPrefilledPo(po);
+                    setPage("purchases");
+                }}
+            />
+        );
+    }
+
+    if (page === "purchases") {
+        return (
+            <Purchases
+                shellProps={shellProps}
+                prefilledPo={prefilledPo}
+                onClearPrefilledPo={() => setPrefilledPo(null)}
+            />
+        );
+    }
+
+    if (page === "supplier-payments") {
+        return <SupplierPayments shellProps={shellProps} />;
+    }
+
+    if (page === "purchase-returns") {
+        return <PurchaseReturns shellProps={shellProps} />;
     }
 
     if (page === "accounts") {

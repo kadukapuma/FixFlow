@@ -17,6 +17,7 @@ class JournalEntry extends Model
         'source_id',
         'service_id',
         'employee_id',
+        'supplier_id',
     ];
 
     protected $casts = [
@@ -36,5 +37,10 @@ class JournalEntry extends Model
     public function employee()
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
     }
 }

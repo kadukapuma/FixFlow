@@ -82,6 +82,18 @@ class ProductController extends Controller
             ], 409);
         }
 
+        if (\App\Models\PurchaseOrderItem::where('product_id', $product->id)->exists()) {
+            return response()->json([
+                'message' => 'Cannot delete this product: it is linked to existing purchase orders.',
+            ], 409);
+        }
+
+        if (\App\Models\PurchaseItem::where('product_id', $product->id)->exists()) {
+            return response()->json([
+                'message' => 'Cannot delete this product: it is linked to existing purchases.',
+            ], 409);
+        }
+
         $product->delete();
 
         return response()->json([

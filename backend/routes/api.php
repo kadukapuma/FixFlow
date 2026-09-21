@@ -18,13 +18,18 @@ use App\Http\Controllers\GettingItemsFromCustomerController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\LedgerAccountController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\PurchaseReturnController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\ServicePaymentController;
 use App\Http\Controllers\ServiceProductController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\SupplierBalanceController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\SupplierPaymentController;
 use App\Http\Controllers\Tenant\AuthController as TenantAuthController;
 use App\Http\Controllers\WorkController;
 use Illuminate\Support\Facades\Route;
@@ -182,5 +187,26 @@ Route::middleware('company')->group(function () {
         Route::post('/service-products', [ServiceProductController::class, 'store']);
         Route::put('/service-products/{id}', [ServiceProductController::class, 'update']);
         Route::delete('/service-products/{id}', [ServiceProductController::class, 'destroy']);
+
+        Route::get('/purchase-orders', [PurchaseOrderController::class, 'index']);
+        Route::get('/purchase-orders/{id}', [PurchaseOrderController::class, 'show']);
+        Route::post('/purchase-orders', [PurchaseOrderController::class, 'store']);
+        Route::put('/purchase-orders/{id}', [PurchaseOrderController::class, 'update']);
+        Route::post('/purchase-orders/{id}/cancel', [PurchaseOrderController::class, 'cancel']);
+
+        Route::get('/purchases', [PurchaseController::class, 'index']);
+        Route::get('/purchases/{id}', [PurchaseController::class, 'show']);
+        Route::post('/purchases', [PurchaseController::class, 'store']);
+        Route::post('/purchases/{id}/cancel', [PurchaseController::class, 'cancel']);
+
+        Route::get('/supplier-payments', [SupplierPaymentController::class, 'index']);
+        Route::post('/supplier-payments', [SupplierPaymentController::class, 'store']);
+
+        Route::get('/purchase-returns', [PurchaseReturnController::class, 'index']);
+        Route::get('/purchase-returns/{id}', [PurchaseReturnController::class, 'show']);
+        Route::post('/purchase-returns', [PurchaseReturnController::class, 'store']);
+
+        Route::get('/supplier-balances', [SupplierBalanceController::class, 'index']);
+        Route::get('/supplier-balances/{supplierId}', [SupplierBalanceController::class, 'show']);
     });
 });

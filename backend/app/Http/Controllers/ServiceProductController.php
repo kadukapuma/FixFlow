@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ChecksStock;
 use App\Models\Product;
 use App\Models\Service;
 use App\Models\ServiceProduct;
 use App\Models\Store;
+use App\Services\LedgerService;
 use App\Services\StockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,8 +16,12 @@ use Illuminate\Validation\Rule;
 
 class ServiceProductController extends Controller
 {
-    public function __construct(private StockService $stock)
-    {
+    use ChecksStock;
+
+    public function __construct(
+        private StockService $stock,
+        private LedgerService $ledger
+    ) {
     }
 
     public function index(Request $request)
@@ -54,16 +60,25 @@ class ServiceProductController extends Controller
             return $response;
         }
 
-        $serviceProduct = DB::connection('company')->transaction(function () use ($validated, $unitPrice, $quantity) {
+        $unitCost = $product->average_cost !== null && (float) $product->average_cost > 0
+            ? (float) $product->average_cost
+            : ($product->purchase_price !== null && (float) $product->purchase_price > 0 ? (float) $product->purchase_price : null);
+
+        $serviceProduct = DB::connection('company')->transaction(function () use ($validated, $unitPrice, $unitCost, $quantity) {
             $serviceProduct = ServiceProduct::create([
                 'service_id' => $validated['service_id'],
                 'product_id' => $validated['product_id'],
                 'store_id' => $validated['store_id'],
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
+                'unit_cost' => $unitCost,
             ]);
 
             $this->stock->recordServiceConsumption($serviceProduct, $quantity);
+
+            if ($serviceProduct->unit_cost !== null) {
+                $this->ledger->postCogs($serviceProduct, $quantity);
+            }
 
             return $serviceProduct;
         });
@@ -107,8 +122,14 @@ class ServiceProductController extends Controller
             if ($serviceProduct->store_id !== null && $delta !== 0) {
                 if ($delta > 0) {
                     $this->stock->recordServiceConsumption($serviceProduct, $delta);
+                    if ($serviceProduct->unit_cost !== null) {
+                        $this->ledger->postCogs($serviceProduct, $delta);
+                    }
                 } else {
                     $this->stock->recordServiceRestock($serviceProduct, abs($delta));
+                    if ($serviceProduct->unit_cost !== null) {
+                        $this->ledger->postCogsReversal($serviceProduct, abs($delta));
+                    }
                 }
             }
         });
@@ -128,6 +149,10 @@ class ServiceProductController extends Controller
                 $this->stock->recordServiceRestock($serviceProduct, $serviceProduct->quantity);
             }
 
+            if ($serviceProduct->unit_cost !== null) {
+                $this->ledger->postCogsReversal($serviceProduct, $serviceProduct->quantity);
+            }
+
             $serviceProduct->delete();
         });
 
@@ -145,22 +170,6 @@ class ServiceProductController extends Controller
                 'message' => "Unit price can't be less than the border price (Rs. {$floor}) for this product.",
                 'errors' => [
                     'unit_price' => ["Unit price can't be less than the border price (Rs. {$floor})."],
-                ],
-            ], 422);
-        }
-
-        return null;
-    }
-
-    private function insufficientStockViolation(int $productId, int $storeId, int $requiredQuantity): ?JsonResponse
-    {
-        $available = $this->stock->currentStock($productId, $storeId);
-
-        if ($requiredQuantity > $available) {
-            return response()->json([
-                'message' => "Not enough stock: only {$available} unit(s) available at this store.",
-                'errors' => [
-                    'quantity' => ["Not enough stock: only {$available} unit(s) available at this store."],
                 ],
             ], 422);
         }

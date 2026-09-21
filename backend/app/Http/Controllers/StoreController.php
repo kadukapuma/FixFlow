@@ -74,6 +74,24 @@ class StoreController extends Controller
             ], 409);
         }
 
+        if (\App\Models\PurchaseOrder::where('store_id', $store->id)->exists()) {
+            return response()->json([
+                'message' => 'Cannot delete this store: it is linked to existing purchase orders.',
+            ], 409);
+        }
+
+        if (\App\Models\Purchase::where('store_id', $store->id)->exists()) {
+            return response()->json([
+                'message' => 'Cannot delete this store: it is linked to existing purchases.',
+            ], 409);
+        }
+
+        if (\App\Models\PurchaseReturn::where('store_id', $store->id)->exists()) {
+            return response()->json([
+                'message' => 'Cannot delete this store: it is linked to existing purchase returns.',
+            ], 409);
+        }
+
         $store->delete();
 
         return response()->json([

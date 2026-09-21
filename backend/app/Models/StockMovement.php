@@ -18,6 +18,9 @@ class StockMovement extends Model
         'transfer_in',
         'service_consumption',
         'service_restock',
+        'purchase',
+        'purchase_cancel',
+        'purchase_return',
     ];
 
     protected $fillable = [
@@ -26,6 +29,8 @@ class StockMovement extends Model
         'type',
         'quantity',
         'service_product_id',
+        'purchase_item_id',
+        'purchase_return_item_id',
         'related_movement_id',
         'note',
     ];
@@ -47,6 +52,16 @@ class StockMovement extends Model
     public function serviceProduct()
     {
         return $this->belongsTo(ServiceProduct::class);
+    }
+
+    public function purchaseItem()
+    {
+        return $this->belongsTo(PurchaseItem::class);
+    }
+
+    public function purchaseReturnItem()
+    {
+        return $this->belongsTo(PurchaseReturnItem::class);
     }
 
     public function relatedMovement()

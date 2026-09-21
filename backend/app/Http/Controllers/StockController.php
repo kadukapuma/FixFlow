@@ -2,18 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ChecksStock;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\Store;
+use App\Services\LedgerService;
 use App\Services\StockService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class StockController extends Controller
 {
-    public function __construct(private StockService $stock)
-    {
+    use ChecksStock;
+
+    public function __construct(
+        private StockService $stock,
+        private LedgerService $ledger
+    ) {
     }
 
     public function levels(Request $request)
@@ -92,7 +98,24 @@ class StockController extends Controller
             'note' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $this->stock->recordOpening($validated);
+        $product = Product::findOrFail($validated['product_id']);
+        $cost = $product->average_cost !== null && (float) $product->average_cost > 0
+            ? (float) $product->average_cost
+            : ($product->purchase_price !== null && (float) $product->purchase_price > 0 ? (float) $product->purchase_price : null);
+
+        DB::connection('company')->transaction(function () use ($validated, $cost) {
+            $this->stock->recordOpening($validated);
+
+            if ($cost !== null) {
+                $this->ledger->postInventoryOpening(
+                    $validated['product_id'],
+                    $validated['store_id'],
+                    (int) $validated['quantity'],
+                    $cost,
+                    $validated['note'] ?? null
+                );
+            }
+        });
 
         return response()->json([
             'message' => 'Opening stock recorded.',
@@ -115,7 +138,24 @@ class StockController extends Controller
             }
         }
 
-        $this->stock->recordAdjustment($validated);
+        $product = Product::findOrFail($validated['product_id']);
+        $cost = $product->average_cost !== null && (float) $product->average_cost > 0
+            ? (float) $product->average_cost
+            : ($product->purchase_price !== null && (float) $product->purchase_price > 0 ? (float) $product->purchase_price : null);
+
+        DB::connection('company')->transaction(function () use ($validated, $cost) {
+            $this->stock->recordAdjustment($validated);
+
+            if ($cost !== null) {
+                $this->ledger->postInventoryAdjustment(
+                    $validated['product_id'],
+                    $validated['store_id'],
+                    (int) $validated['quantity'],
+                    $cost,
+                    $validated['note'] ?? null
+                );
+            }
+        });
 
         return response()->json([
             'message' => 'Stock adjustment recorded.',
@@ -136,7 +176,24 @@ class StockController extends Controller
             return $response;
         }
 
-        $this->stock->recordDamage($validated);
+        $product = Product::findOrFail($validated['product_id']);
+        $cost = $product->average_cost !== null && (float) $product->average_cost > 0
+            ? (float) $product->average_cost
+            : ($product->purchase_price !== null && (float) $product->purchase_price > 0 ? (float) $product->purchase_price : null);
+
+        DB::connection('company')->transaction(function () use ($validated, $cost) {
+            $this->stock->recordDamage($validated);
+
+            if ($cost !== null) {
+                $this->ledger->postInventoryAdjustment(
+                    $validated['product_id'],
+                    $validated['store_id'],
+                    -abs((int) $validated['quantity']),
+                    $cost,
+                    $validated['note'] ?? null
+                );
+            }
+        });
 
         return response()->json([
             'message' => 'Damaged stock recorded.',
@@ -165,21 +222,5 @@ class StockController extends Controller
             'from_store_stock' => $this->stock->currentStock($validated['product_id'], $validated['from_store_id']),
             'to_store_stock' => $this->stock->currentStock($validated['product_id'], $validated['to_store_id']),
         ], 201);
-    }
-
-    private function insufficientStockViolation(int $productId, int $storeId, int $requiredQuantity): ?JsonResponse
-    {
-        $available = $this->stock->currentStock($productId, $storeId);
-
-        if ($requiredQuantity > $available) {
-            return response()->json([
-                'message' => "Not enough stock: only {$available} unit(s) available at this store.",
-                'errors' => [
-                    'quantity' => ["Not enough stock: only {$available} unit(s) available at this store."],
-                ],
-            ], 422);
-        }
-
-        return null;
     }
 }

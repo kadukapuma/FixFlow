@@ -13,6 +13,9 @@ const TYPE_LABELS = {
     transfer_in: "Transfer in",
     service_consumption: "Used on service",
     service_restock: "Returned from service",
+    purchase: "Purchase receipt",
+    purchase_cancel: "Purchase cancelled",
+    purchase_return: "Purchase return",
 };
 
 function StockMovementsDetail({ productId, storeId }) {
