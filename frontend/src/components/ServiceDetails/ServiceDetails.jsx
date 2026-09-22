@@ -8,6 +8,7 @@ import DeliverPaymentForm from "../DeliverPaymentForm/DeliverPaymentForm";
 import UnrepairableForm from "../UnrepairableForm/UnrepairableForm";
 import ReturnUnrepairableForm from "../ReturnUnrepairableForm/ReturnUnrepairableForm";
 import PdfViewerModal from "../PdfViewerModal/PdfViewerModal";
+import Pagination from "../Pagination/Pagination";
 import { showToast } from "../../lib/toast";
 import { PAYMENT_METHODS } from "../../lib/options";
 import { confirmAction } from "../../lib/confirm";
@@ -19,6 +20,27 @@ const EMPTY_PAYMENT_FORM = {
     paid_at: "",
     note: "",
 };
+
+const PAGE_SIZE = 5;
+
+function paginate(list, page) {
+    const total = list.length;
+    const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    const currentPage = Math.min(Math.max(1, page), lastPage);
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const items = list.slice(start, start + PAGE_SIZE);
+
+    return {
+        items,
+        meta: {
+            current_page: currentPage,
+            last_page: lastPage,
+            total,
+            from: total === 0 ? 0 : start + 1,
+            to: Math.min(start + PAGE_SIZE, total),
+        },
+    };
+}
 
 const STATUS_LEVELS = {
     pending: 1,
@@ -54,6 +76,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
     const [error, setError] = useState("");
     const [saving, setSaving] = useState(false);
     const [deliverModalOpen, setDeliverModalOpen] = useState(false);
+    const [delivering, setDelivering] = useState(false);
     const [unrepairableModalOpen, setUnrepairableModalOpen] = useState(false);
     const [returnModalOpen, setReturnModalOpen] = useState(false);
     const [markingUnrepairable, setMarkingUnrepairable] = useState(false);
@@ -65,6 +88,10 @@ function ServiceDetails({ serviceId, onUpdated }) {
     const [recordingPayment, setRecordingPayment] = useState(false);
 
     const [activeTab, setActiveTab] = useState("overview");
+
+    const [workPage, setWorkPage] = useState(1);
+    const [productsPage, setProductsPage] = useState(1);
+    const [paymentsPage, setPaymentsPage] = useState(1);
 
     useEffect(() => {
         let cancelled = false;
@@ -96,6 +123,9 @@ function ServiceDetails({ serviceId, onUpdated }) {
                 setWorkEntries(loadedWork);
                 setServiceProducts(loadedServiceProducts);
                 setPayments(loadedPayments);
+                setWorkPage(1);
+                setProductsPage(1);
+                setPaymentsPage(1);
 
                 const loadedWorkTotal = loadedWork.reduce(
                     (sum, entry) => sum + Number(entry.cost || 0),
@@ -158,6 +188,10 @@ function ServiceDetails({ serviceId, onUpdated }) {
             ? Math.max(0, Number(service.price) - paidTotal)
             : null;
 
+    const { items: pagedWorkEntries, meta: workMeta } = paginate(workEntries, workPage);
+    const { items: pagedServiceProducts, meta: productsMeta } = paginate(serviceProducts, productsPage);
+    const { items: pagedPayments, meta: paymentsMeta } = paginate(payments, paymentsPage);
+
     async function handleRecordPayment(event) {
         event.preventDefault();
         setRecordingPayment(true);
@@ -172,6 +206,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
             });
 
             setPayments((prev) => [response.data.payment, ...prev]);
+            setPaymentsPage(1);
             setPaymentForm(EMPTY_PAYMENT_FORM);
             showToast("Payment recorded successfully.");
         } catch (err) {
@@ -238,6 +273,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
                 });
 
                 setPayments((prev) => [paymentResponse.data.payment, ...prev]);
+                setPaymentsPage(1);
             }
         } catch (err) {
             setError(getErrorMessage(err, "Unable to record payment."));
@@ -284,6 +320,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
             // Reload products
             const spRes = await api.get("/service-products", { params: { service_id: serviceId } });
             setServiceProducts(spRes.data || []);
+            setProductsPage(1);
 
             if (onUpdated) {
                 onUpdated(response.data.service);
@@ -318,6 +355,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
             // Reload payments
             const paymentsRes = await api.get(`/services/${serviceId}/payments`);
             setPayments(paymentsRes.data || []);
+            setPaymentsPage(1);
 
             if (onUpdated) {
                 onUpdated(response.data.service);
@@ -790,9 +828,9 @@ function ServiceDetails({ serviceId, onUpdated }) {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {workEntries.map((entry, idx) => (
+                                            {pagedWorkEntries.map((entry, idx) => (
                                                 <tr key={entry.id || idx}>
-                                                    <td className="sd-table__cell-index">{idx + 1}</td>
+                                                    <td className="sd-table__cell-index">{workMeta.from + idx}</td>
                                                     <td className="sd-table__cell-desc">{entry.description || "—"}</td>
                                                     <td className="sd-table__cell-cost">
                                                         Rs. {Number(entry.cost || 0).toFixed(2)}
@@ -809,6 +847,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
                                             </tr>
                                         </tfoot>
                                     </table>
+                                    <Pagination meta={workMeta} onPageChange={setWorkPage} />
                                 </div>
                             ) : (
                                 <div className="sd-empty-state">
@@ -847,9 +886,9 @@ function ServiceDetails({ serviceId, onUpdated }) {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {serviceProducts.map((entry, idx) => (
+                                            {pagedServiceProducts.map((entry, idx) => (
                                                 <tr key={entry.id || idx}>
-                                                    <td className="sd-table__cell-index">{idx + 1}</td>
+                                                    <td className="sd-table__cell-index">{productsMeta.from + idx}</td>
                                                     <td className="sd-table__cell-desc">
                                                         {entry.product?.name || "—"}
                                                         {entry.disposition === "restocked" && (
@@ -887,6 +926,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
                                             </tr>
                                         </tfoot>
                                     </table>
+                                    <Pagination meta={productsMeta} onPageChange={setProductsPage} />
                                 </div>
                             ) : (
                                 <div className="sd-empty-state">
@@ -1129,7 +1169,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {payments.map((entry) => (
+                                                    {pagedPayments.map((entry) => (
                                                         <tr key={entry.id}>
                                                             <td>{entry.paid_at || "—"}</td>
                                                             <td>
@@ -1158,6 +1198,7 @@ function ServiceDetails({ serviceId, onUpdated }) {
                                                     ))}
                                                 </tbody>
                                             </table>
+                                            <Pagination meta={paymentsMeta} onPageChange={setPaymentsPage} />
                                         </div>
                                     ) : (
                                         <p className="sd-empty-text">No customer payments recorded yet.</p>
