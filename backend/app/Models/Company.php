@@ -14,6 +14,7 @@ class Company extends Model
         'owner_name',
         'owner_email',
         'owner_password',
+        'owner_email_verified_at',
         'database_name',
         'database_host',
         'database_port',
@@ -39,6 +40,7 @@ class Company extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'owner_email_verified_at' => 'datetime',
         'active_until' => 'datetime',
         'grace_ends_at' => 'datetime',
         'subscription_deactivated_at' => 'datetime',

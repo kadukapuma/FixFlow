@@ -2,11 +2,13 @@
 
 namespace App\Jobs;
 
+use App\Mail\CompanyApprovedMail;
 use App\Models\Company;
 use App\Services\TenantProvisioner;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 class ProvisionTenantCompany implements ShouldQueue
@@ -35,6 +37,17 @@ class ProvisionTenantCompany implements ShouldQueue
             'active_until' => now()->addDays(30),
             'grace_ends_at' => now()->addDays(35),
         ]);
+
+        // A mail failure must not bubble up: failed() would then flag a
+        // fully provisioned tenant as STATUS_FAILED.
+        try {
+            Mail::to($this->company->owner_email)->send(new CompanyApprovedMail($this->company));
+        } catch (Throwable $e) {
+            Log::error('Failed to send company approval email', [
+                'company_id' => $this->company->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function failed(Throwable $e): void

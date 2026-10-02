@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Central\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\ProvisionTenantCompany;
+use App\Mail\CompanyRejectedMail;
 use App\Models\Company;
 use App\Services\TenantProvisioner;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class CompanyApprovalController extends Controller
 {
@@ -162,8 +166,23 @@ class CompanyApprovalController extends Controller
             'rejection_reason' => $validated['reason'] ?? null,
         ]);
 
+        $emailed = true;
+
+        try {
+            Mail::to($company->owner_email)->send(new CompanyRejectedMail($company));
+        } catch (Throwable $e) {
+            $emailed = false;
+
+            Log::error('Failed to send company rejection email', [
+                'company_id' => $company->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         return response()->json([
-            'message' => 'Company registration rejected.',
+            'message' => $emailed
+                ? 'Company registration rejected. The owner has been notified by email.'
+                : 'Company registration rejected, but the notification email could not be sent.',
             'company' => $company->fresh(),
         ]);
     }

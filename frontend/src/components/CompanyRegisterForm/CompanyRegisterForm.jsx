@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import api, { getErrorMessage } from "../../api";
 import { subdomainUrl } from "../../lib/tenant";
 import PasswordInput from "../PasswordInput/PasswordInput";
@@ -54,14 +54,49 @@ function isFieldValid(field, value, form) {
     }
 }
 
+const RESEND_COOLDOWN_SECONDS = 60;
+
 function CompanyRegisterForm() {
     const [form, setForm] = useState(initialForm);
     const [errors, setErrors] = useState({});
     const [message, setMessage] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [step, setStep] = useState("details");
+    const [otp, setOtp] = useState("");
+    const [otpInfo, setOtpInfo] = useState("");
+    const [resendCooldown, setResendCooldown] = useState(0);
+    const [registered, setRegistered] = useState(false);
+
+    useEffect(() => {
+        if (resendCooldown <= 0) return undefined;
+        const timer = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
+        return () => clearTimeout(timer);
+    }, [resendCooldown]);
 
     function update(field) {
         return (event) => setForm({ ...form, [field]: event.target.value });
+    }
+
+    async function sendOtp() {
+        setSubmitting(true);
+        setErrors({});
+        setMessage("");
+
+        try {
+            const response = await api.post("/register-company/send-otp", form);
+
+            setOtpInfo(response.data.message);
+            setOtp("");
+            setStep("otp");
+            setResendCooldown(RESEND_COOLDOWN_SECONDS);
+        } catch (error) {
+            const fieldErrors = error.response?.data?.errors || {};
+            setErrors(fieldErrors);
+            setMessage(getErrorMessage(error, "Could not send the verification code."));
+            if (Object.keys(fieldErrors).length > 0) setStep("details");
+        } finally {
+            setSubmitting(false);
+        }
     }
 
     async function handleSubmit(event) {
@@ -73,21 +108,42 @@ function CompanyRegisterForm() {
             return;
         }
 
+        await sendOtp();
+    }
+
+    async function handleVerify(event) {
+        event.preventDefault();
+
         setSubmitting(true);
         setErrors({});
         setMessage("");
 
         try {
-            const response = await api.post("/register-company", form);
+            const response = await api.post("/register-company", { ...form, otp });
 
             setMessage(response.data.message);
             setForm(initialForm);
+            setOtp("");
+            setRegistered(true);
         } catch (error) {
-            setErrors(error.response?.data?.errors || {});
+            const fieldErrors = error.response?.data?.errors || {};
+            setErrors(fieldErrors);
             setMessage(getErrorMessage(error, "Registration failed."));
+
+            // Anything other than a bad code (e.g. the subdomain got taken
+            // meanwhile) has to be fixed on the details step.
+            if (Object.keys(fieldErrors).some((field) => field !== "otp")) {
+                setStep("details");
+            }
         } finally {
             setSubmitting(false);
         }
+    }
+
+    function backToDetails() {
+        setStep("details");
+        setErrors({});
+        setMessage("");
     }
 
     function fieldError(field) {
@@ -100,11 +156,61 @@ function CompanyRegisterForm() {
         return isFieldValid(field, value, form) ? "field-valid" : "field-invalid";
     }
 
-    if (message && Object.keys(errors).length === 0) {
+    if (registered) {
         return (
             <div className="company-register-form__success">
                 <p className="auth-success">{message}</p>
             </div>
+        );
+    }
+
+    if (step === "otp") {
+        return (
+            <form onSubmit={handleVerify} className="company-register-form">
+                <p className="company-register-form__otp-info">{otpInfo}</p>
+
+                <div className="auth-row auth-row--single">
+                    <label>
+                        Verification code
+                        <input
+                            value={otp}
+                            onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                            inputMode="numeric"
+                            autoComplete="one-time-code"
+                            maxLength={6}
+                            placeholder="123456"
+                            className={`company-register-form__otp-input ${otp.length === 6 ? "field-valid" : ""}`}
+                            autoFocus
+                            required
+                        />
+                        {fieldError("otp") && <span className="field-error">{fieldError("otp")}</span>}
+                    </label>
+                </div>
+
+                {message && !fieldError("otp") && (
+                    <p className="auth-error" role="alert">
+                        {message}
+                    </p>
+                )}
+
+                <button type="submit" disabled={submitting || otp.length !== 6} className="auth-submit">
+                    {submitting ? "Verifying..." : "Verify & register"}
+                </button>
+
+                <div className="company-register-form__otp-actions">
+                    <button type="button" className="company-register-form__link" onClick={backToDetails} disabled={submitting}>
+                        Change details
+                    </button>
+                    <button
+                        type="button"
+                        className="company-register-form__link"
+                        onClick={sendOtp}
+                        disabled={submitting || resendCooldown > 0}
+                    >
+                        {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
+                    </button>
+                </div>
+            </form>
         );
     }
 
@@ -209,7 +315,7 @@ function CompanyRegisterForm() {
             )}
 
             <button type="submit" disabled={submitting} className="auth-submit">
-                {submitting ? "Submitting..." : "Register my company"}
+                {submitting ? "Sending code..." : "Register my company"}
             </button>
         </form>
     );

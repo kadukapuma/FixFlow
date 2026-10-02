@@ -40,7 +40,10 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::post('/register-company', [CompanyRegistrationController::class, 'store']);
+Route::post('/register-company/send-otp', [CompanyRegistrationController::class, 'sendOtp'])
+    ->middleware('throttle:5,1');
+Route::post('/register-company', [CompanyRegistrationController::class, 'store'])
+    ->middleware('throttle:10,1');
 Route::post('/login-lookup', [CompanyLoginLookupController::class, 'lookup']);
 
 Route::post('/admin/login', [AdminAuthController::class, 'login']);
