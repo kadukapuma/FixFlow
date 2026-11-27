@@ -5,6 +5,17 @@
 
     RewriteEngine On
 
+    # Pass the Authorization header through to PHP (Sanctum bearer tokens).
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Don't allow laravel.php to be requested directly.
+    RewriteCond %{ENV:REDIRECT_STATUS} ^$
+    RewriteRule ^laravel\.php$ - [F,L]
+
+    # API lives on the same domain: /api/* -> Laravel (backend/).
+    RewriteRule ^api(/.*)?$ laravel.php [L]
+
     # Client-side routes (e.g. /admin, /acme/dashboard) aren't real files —
     # fall back to index.html and let React Router handle them.
     RewriteCond %{REQUEST_FILENAME} !-d
