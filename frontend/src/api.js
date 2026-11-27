@@ -2,12 +2,12 @@ import axios from "axios";
 import { getSubdomain } from "./lib/tenant";
 
 /*
- * The API is deployed as its own project, on a wildcard domain mirroring
- * the frontend's: acme.<VITE_ROOT_DOMAIN> talks to acme.<VITE_API_ROOT_DOMAIN>,
- * so the backend's IdentifyCompany middleware (which reads the tenant off
- * the request's own Host header) still resolves the right tenant database.
- * Without VITE_API_ROOT_DOMAIN set (local dev), falls back to the relative
- * "/api" that Vite's dev proxy / a same-origin production build expect.
+ * The API is served from the same host as the frontend, under /api
+ * (acme.<VITE_ROOT_DOMAIN>/api), so the backend's IdentifyCompany middleware
+ * reads the tenant off the request's own Host header. In production the
+ * .htaccess in public/ routes /api/* to Laravel; in dev, Vite's proxy does.
+ * Setting VITE_API_ROOT_DOMAIN instead points the API at a separate wildcard
+ * domain (acme.<VITE_API_ROOT_DOMAIN>/api) — the old two-domain setup.
  */
 function resolveBaseURL() {
     const apiRootDomain = import.meta.env.VITE_API_ROOT_DOMAIN;

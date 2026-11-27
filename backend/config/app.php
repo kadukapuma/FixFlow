@@ -58,6 +58,10 @@ return [
     // are built by prefixing the company subdomain onto this host.
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
 
+    // Root domains tenants live under, comma separated. The company is the
+    // label in front of one of these (acme.fixflow.kreethya.com -> "acme").
+    'tenant_root_domains' => env('TENANT_ROOT_DOMAINS', ''),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

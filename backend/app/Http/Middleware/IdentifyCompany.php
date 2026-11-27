@@ -38,20 +38,39 @@ class IdentifyCompany
             | Normal domain
             |--------------------------------------------------------------------------
             |
-            | company01.fixflow.local
+            | acme.fixflow.kreethya.com -> "acme", where "fixflow.kreethya.com"
+            | is one of TENANT_ROOT_DOMAINS (comma separated). Without that
+            | setting, fall back to the first label of a 3+ label host.
             |
             */
 
-            $parts = explode('.', $host);
+            $subdomain = null;
+            $roots = array_filter(array_map(
+                'trim',
+                explode(',', (string) config('app.tenant_root_domains'))
+            ));
 
-            if (count($parts) < 3) {
+            if ($roots) {
+                foreach ($roots as $root) {
+                    $suffix = '.' . strtolower($root);
+                    if (str_ends_with($host, $suffix)) {
+                        $label = substr($host, 0, -strlen($suffix));
+                        // Single label only ("acme", not "x.acme").
+                        $subdomain = str_contains($label, '.') ? null : $label;
+                        break;
+                    }
+                }
+            } else {
+                $parts = explode('.', $host);
+                $subdomain = count($parts) >= 3 ? $parts[0] : null;
+            }
+
+            if (!$subdomain || $subdomain === 'www') {
                 return response()->json([
                     'message' => 'Company subdomain is required.',
                     'host' => $host,
                 ], 400);
             }
-
-            $subdomain = $parts[0];
         }
 
         /*
